@@ -1,0 +1,33 @@
+# Node.js
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+**/dist/
+
+.next/
+**/.next/
+
+# Environment files
+.env
+.env.*
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+node_modules/
+**/node_modules/
+
+dist/
+**/dist/
+
+.next/
+**/.next/
+
+.env
+.env.*
