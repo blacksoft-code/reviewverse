@@ -20,14 +20,9 @@ dist/
 .DS_Store
 Thumbs.db
 
-node_modules/
-**/node_modules/
 
-dist/
-**/dist/
 
-.next/
-**/.next/
 
-.env
-.env.*
+
+
+
