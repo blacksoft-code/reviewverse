@@ -13,6 +13,8 @@ model User {
   email     String   @unique
   password  String
 
+  isActive  Boolean  @default(true)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -20,20 +22,32 @@ model User {
 }
 
 model Category {
-  id       String   @id @default(uuid())
-  name     String   @unique
+  id        String   @id @default(uuid())
+  name      String   @unique
+  slug      String   @unique
 
-  entities Entity[]
+  createdAt DateTime @default(now())
+
+  entities  Entity[]
 }
 
 model Entity {
-  id         String   @id @default(uuid())
-  name       String
+  id            String   @id @default(uuid())
 
-  categoryId String
-  category   Category @relation(fields: [categoryId], references: [id])
+  name          String
+  slug          String   @unique
 
-  reviews    Review[]
+  description   String?
+
+  averageRating Float    @default(0)
+
+  categoryId    String
+  category      Category @relation(fields: [categoryId], references: [id])
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  reviews       Review[]
 }
 
 model Review {
@@ -49,4 +63,7 @@ model Review {
   entity    Entity @relation(fields: [entityId], references: [id])
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, entityId])
 }
