@@ -1,0 +1,40 @@
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { CreateEntityDto } from './dto/create-entity.dto';
+
+@Injectable()
+export class EntitiesService {
+  constructor(private prisma: PrismaService) {}
+
+  async create(createEntityDto: CreateEntityDto) {
+    return this.prisma.entity.create({
+      data: {
+        name: createEntityDto.name,
+        slug: createEntityDto.slug,
+        categoryId: createEntityDto.categoryId,
+      },
+    });
+  }
+
+    async findAll() {
+    return this.prisma.entity.findMany({
+        include: {
+        category: true,
+        },
+        orderBy: {
+        createdAt: 'desc',
+        },
+    });
+    }
+
+    async findBySlug(slug: string) {
+    return this.prisma.entity.findUnique({
+        where: {
+        slug,
+        },
+        include: {
+        category: true,
+        },
+    });
+    }
+}
