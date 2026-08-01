@@ -122,4 +122,59 @@ export class ReviewsService {
       return review;
     }
 
+
+//review delete feature
+  async delete(reviewId: string) {
+  // finding the review
+  const review = await this.prisma.review.findUnique({
+    where: {
+      id: reviewId,
+    },
+  });
+
+  if (!review) {
+    throw new Error('Review not found');
+  }
+
+  // review delete 
+  await this.prisma.review.delete({
+    where: {
+      id: reviewId,
+    },
+  });
+
+  // finding other review
+  const reviews = await this.prisma.review.findMany({
+    where: {
+      entityId: review.entityId,
+    },
+    select: {
+      rating: true,
+    },
+  });
+
+  // average calculate 
+  const averageRating =
+    reviews.length > 0
+      ? reviews.reduce(
+          (sum, review) => sum + review.rating,
+          0,
+        ) / reviews.length
+      : 0;
+
+  // entity update 
+  await this.prisma.entity.update({
+    where: {
+      id: review.entityId,
+    },
+    data: {
+      averageRating,
+    },
+  });
+
+  return {
+    message: 'Review deleted successfully',
+  };
+}
+
 }
