@@ -1,9 +1,10 @@
-import {Body, Controller,Get, Param, Post, Req, UseGuards,} from '@nestjs/common';
+import {Body, Controller,Get, Patch, Param, Post, Req, UseGuards,} from '@nestjs/common';
 
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { UpdateReviewDto } from './dto/update-review.dto';
 
 @Controller('reviews')
 export class ReviewsController {
@@ -31,5 +32,16 @@ export class ReviewsController {
         entityId,
     );
     }
+
+   @Patch(':id')
+    update(
+      @Param('id') id: string,
+      @Body() updateReviewDto: UpdateReviewDto,
+    ) {
+      return this.reviewsService.update(
+        id,
+        updateReviewDto,
+      );
+    } 
 
 }

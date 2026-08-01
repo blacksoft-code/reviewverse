@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateReviewDto } from './dto/create-review.dto';
+import { UpdateReviewDto } from './dto/update-review.dto';
 
 @Injectable()
 export class ReviewsService {
@@ -83,4 +84,42 @@ export class ReviewsService {
       },
     });
   }
+  async update(
+      reviewId: string,
+      updateReviewDto: UpdateReviewDto,
+    ) {
+      const review = await this.prisma.review.update({
+        where: {
+          id: reviewId,
+        },
+        data: updateReviewDto,
+      });
+
+      const reviews = await this.prisma.review.findMany({
+        where: {
+          entityId: review.entityId,
+        },
+        select: {
+          rating: true,
+        },
+      });
+
+      const averageRating =
+        reviews.reduce(
+          (sum, review) => sum + review.rating,
+          0,
+        ) / reviews.length;
+
+      await this.prisma.entity.update({
+        where: {
+          id: review.entityId,
+        },
+        data: {
+          averageRating,
+        },
+      });
+
+      return review;
+    }
+
 }
