@@ -1,4 +1,4 @@
-import { Body, Controller,Get,Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { EntitiesService } from './entities.service';
 import { CreateEntityDto } from './dto/create-entity.dto';
 
@@ -22,12 +22,12 @@ findAll() {
   return this.entitiesService.findAll();
 }
 
+
 @Get(':slug')
-findBySlug(
+findOne(
   @Param('slug') slug: string,
 ) {
-  return this.entitiesService.findBySlug(
-    slug,
-  );
+  return this.entitiesService.findOne(slug);
 }
+
 }

@@ -37,4 +37,28 @@ export class EntitiesService {
         },
     });
     }
+
+    async findOne(slug: string) {
+      return this.prisma.entity.findUnique({
+        where: {
+          slug,
+        },
+        include: {
+          category: true,
+          reviews: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+            orderBy: {
+              createdAt: 'desc',
+            },
+          },
+        },
+      });
+    }
 }
