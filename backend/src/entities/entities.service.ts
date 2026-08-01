@@ -85,4 +85,16 @@ export class EntitiesService {
         },
       });
     }
+
+  async getTopRated() {
+  return this.prisma.entity.findMany({
+    orderBy: {
+      averageRating: 'desc',
+    },
+    take: 10,
+    include: {
+      category: true,
+    },
+  });
+}
 }

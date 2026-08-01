@@ -29,6 +29,11 @@ search(
   return this.entitiesService.search(query);
 }
 
+@Get('top-rated')
+getTopRated() {
+  return this.entitiesService.getTopRated();
+}
+
 @Get(':slug')
 findOne(
   @Param('slug') slug: string,
