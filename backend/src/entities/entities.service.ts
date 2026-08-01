@@ -61,4 +61,28 @@ export class EntitiesService {
         },
       });
     }
+
+    async search(query: string) {
+      return this.prisma.entity.findMany({
+        where: {
+          OR: [
+            {
+              name: {
+                contains: query,
+                mode: 'insensitive',
+              },
+            },
+            {
+              slug: {
+                contains: query,
+                mode: 'insensitive',
+              },
+            },
+          ],
+        },
+        orderBy: {
+          averageRating: 'desc',
+        },
+      });
+    }
 }
