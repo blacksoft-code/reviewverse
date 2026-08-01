@@ -18,8 +18,14 @@ export class EntitiesController {
   }
 
 @Get()
-findAll() {
-  return this.entitiesService.findAll();
+findAll(
+  @Query('page') page = '1',
+  @Query('limit') limit = '10',
+) {
+  return this.entitiesService.findAll(
+    Number(page),
+    Number(limit),
+  );
 }
 
 @Get('search')

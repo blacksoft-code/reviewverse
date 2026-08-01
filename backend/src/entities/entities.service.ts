@@ -16,16 +16,35 @@ export class EntitiesService {
     });
   }
 
-    async findAll() {
-    return this.prisma.entity.findMany({
+async findAll(
+  page: number,
+  limit: number,
+) {
+  const skip = (page - 1) * limit;
+
+  const [entities, total] =
+    await Promise.all([
+      this.prisma.entity.findMany({
+        skip,
+        take: limit,
         include: {
-        category: true,
+          category: true,
         },
         orderBy: {
-        createdAt: 'desc',
+          createdAt: 'desc',
         },
-    });
-    }
+      }),
+
+      this.prisma.entity.count(),
+    ]);
+
+  return {
+    data: entities,
+    page,
+    limit,
+    total,
+  };
+}
 
     async findBySlug(slug: string) {
     return this.prisma.entity.findUnique({
