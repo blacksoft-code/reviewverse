@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { 
+  Injectable,
+  ForbiddenException,
+  NotFoundException, 
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
@@ -84,66 +88,40 @@ export class ReviewsService {
       },
     });
   }
-  async update(
-      reviewId: string,
-      updateReviewDto: UpdateReviewDto,
-    ) {
-      const review = await this.prisma.review.update({
-        where: {
-          id: reviewId,
-        },
-        data: updateReviewDto,
-      });
 
-      const reviews = await this.prisma.review.findMany({
-        where: {
-          entityId: review.entityId,
-        },
-        select: {
-          rating: true,
-        },
-      });
+//update method  
 
-      const averageRating =
-        reviews.reduce(
-          (sum, review) => sum + review.rating,
-          0,
-        ) / reviews.length;
+async update(
+  userId: string,
+  reviewId: string,
+  updateReviewDto: UpdateReviewDto,
+) {
+  const existingReview =
+    await this.prisma.review.findUnique({
+      where: {
+        id: reviewId,
+      },
+    });
 
-      await this.prisma.entity.update({
-        where: {
-          id: review.entityId,
-        },
-        data: {
-          averageRating,
-        },
-      });
-
-      return review;
-    }
-
-
-//review delete feature
-  async delete(reviewId: string) {
-  // finding the review
-  const review = await this.prisma.review.findUnique({
-    where: {
-      id: reviewId,
-    },
-  });
-
-  if (!review) {
-    throw new Error('Review not found');
+  if (!existingReview) {
+    throw new NotFoundException(
+      'Review not found',
+    );
   }
 
-  // review delete 
-  await this.prisma.review.delete({
+  if (existingReview.userId !== userId) {
+    throw new ForbiddenException(
+      'You can only update your own review',
+    );
+  }
+
+  const review = await this.prisma.review.update({
     where: {
       id: reviewId,
     },
+    data: updateReviewDto,
   });
 
-  // finding other review
   const reviews = await this.prisma.review.findMany({
     where: {
       entityId: review.entityId,
@@ -153,7 +131,64 @@ export class ReviewsService {
     },
   });
 
-  // average calculate 
+  const averageRating =
+    reviews.reduce(
+      (sum, review) => sum + review.rating,
+      0,
+    ) / reviews.length;
+
+  await this.prisma.entity.update({
+    where: {
+      id: review.entityId,
+    },
+    data: {
+      averageRating,
+    },
+  });
+
+  return review;
+}
+
+
+//review delete feature
+async delete(
+  userId: string,
+  reviewId: string,
+) {
+  const review =
+    await this.prisma.review.findUnique({
+      where: {
+        id: reviewId,
+      },
+    });
+
+  if (!review) {
+    throw new NotFoundException(
+      'Review not found',
+    );
+  }
+
+  if (review.userId !== userId) {
+    throw new ForbiddenException(
+      'You can only delete your own review',
+    );
+  }
+
+  await this.prisma.review.delete({
+    where: {
+      id: reviewId,
+    },
+  });
+
+  const reviews = await this.prisma.review.findMany({
+    where: {
+      entityId: review.entityId,
+    },
+    select: {
+      rating: true,
+    },
+  });
+
   const averageRating =
     reviews.length > 0
       ? reviews.reduce(
@@ -162,7 +197,6 @@ export class ReviewsService {
         ) / reviews.length
       : 0;
 
-  // entity update 
   await this.prisma.entity.update({
     where: {
       id: review.entityId,

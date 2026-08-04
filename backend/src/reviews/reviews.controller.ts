@@ -34,21 +34,29 @@ export class ReviewsController {
     }
 
    @Patch(':id')
+    @UseGuards(JwtAuthGuard)
     update(
+      @Req() req: any,
       @Param('id') id: string,
       @Body() updateReviewDto: UpdateReviewDto,
     ) {
       return this.reviewsService.update(
+        req.user.userId,
         id,
         updateReviewDto,
       );
     } 
 
     @Delete(':id')
+      @UseGuards(JwtAuthGuard)
       delete(
+        @Req() req: any,
         @Param('id') id: string,
       ) {
-        return this.reviewsService.delete(id);
+        return this.reviewsService.delete(
+          req.user.userId,
+          id,
+        );
       }
 
 }
