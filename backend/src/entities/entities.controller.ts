@@ -2,11 +2,19 @@ import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { EntitiesService } from './entities.service';
 import { CreateEntityDto } from './dto/create-entity.dto';
 
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+
 @Controller('entities')
 export class EntitiesController {
   constructor(
     private readonly entitiesService: EntitiesService,
   ) {}
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
 
   @Post()
   create(
