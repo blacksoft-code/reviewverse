@@ -4,10 +4,15 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Security Headers
+  app.use(helmet());
 
   // CORS Configuration
   app.enableCors({
@@ -25,9 +30,15 @@ async function bootstrap() {
   }),
   );
 
+  app.useGlobalInterceptors(
+  new ResponseInterceptor(),
+  );
+
   app.useGlobalFilters(
   new HttpExceptionFilter(),
-);
+  );
+
+
 
   const config = new DocumentBuilder()
     .setTitle('ReviewVerse API')

@@ -38,11 +38,16 @@ async findAll(
       this.prisma.entity.count(),
     ]);
 
+  const totalPages = Math.ceil(total / limit);
+
   return {
     data: entities,
-    page,
-    limit,
-    total,
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages,
+    },
   };
 }
 
