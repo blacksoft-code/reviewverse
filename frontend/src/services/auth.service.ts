@@ -55,3 +55,22 @@ export async function loginUser(
     },
   );
 }
+
+export type ProfileResponse = {
+  success: boolean;
+  statusCode: number;
+  data: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    createdAt: string;
+  };
+  timestamp: string;
+};
+
+export async function getProfile() {
+  return apiFetch<ProfileResponse>(
+    '/auth/profile',
+  );
+}

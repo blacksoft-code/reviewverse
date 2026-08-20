@@ -73,4 +73,28 @@ export class AuthService {
     access_token,
   };
 }
+
+async getProfile(userId: string) {
+  const user = await this.prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      createdAt: true,
+    },
+  });
+
+  if (!user) {
+    throw new BadRequestException(
+      'User not found',
+    );
+  }
+
+  return user;
+}
+
 }

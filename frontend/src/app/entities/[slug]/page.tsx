@@ -1,4 +1,5 @@
 import { getEntityBySlug } from '@/services/entity.service';
+import ReviewSection from '@/components/reviews/ReviewSection';
 
 type EntityPageProps = {
   params: Promise<{
@@ -40,48 +41,13 @@ const entity = response.data;
           </p>
         )}
 
-        <section className="mt-10">
-          <h2 className="text-2xl font-semibold">
-            Reviews
-          </h2>
+      <ReviewSection
+      entityId={entity.id}
+      initialReviews={entity.reviews}
+      initialAverageRating={entity.averageRating}
+      />
 
-          <div className="mt-6 space-y-4">
-
-            {entity.reviews.length === 0 ? (
-              <p className="text-gray-500">
-                No reviews yet.
-              </p>
-            ) : (
-              entity.reviews.map((review) => (
-                <article
-                  key={review.id}
-                  className="rounded-lg border p-5"
-                >
-                  <div className="flex justify-between">
-                    <strong>
-                      {review.user.name}
-                    </strong>
-
-                    <span>
-                      ⭐ {review.rating}
-                    </span>
-                  </div>
-
-                  <p className="mt-3">
-                    {review.content}
-                  </p>
-
-                  <p className="mt-2 text-sm text-gray-500">
-                    {new Date(
-                      review.createdAt,
-                    ).toLocaleDateString()}
-                  </p>
-                </article>
-              ))
-            )}
-
-          </div>
-        </section>
+       
 
       </div>
     </main>
