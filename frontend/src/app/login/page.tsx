@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { loginUser } from '@/services/auth.service';
+import { loginUser, saveAccessToken } from '@/services/auth.service';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -27,8 +27,10 @@ export default function LoginPage() {
         password,
       });
 
-      localStorage.setItem(
-        'access_token',
+      // NEW:
+      // Login successful হলে JWT access token
+      // auth.service-এর মাধ্যমে localStorage-এ save করছি।
+      saveAccessToken(
         response.data.access_token,
       );
 

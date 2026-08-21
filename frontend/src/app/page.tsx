@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { getCategories } from '@/services/category.service';
 import { getEntities } from '@/services/entity.service';
 
+import SearchBar from '@/components/search/SearchBar';
+
 export default async function Home() {
   const [categoriesResponse, entitiesResponse] =
     await Promise.all([
@@ -15,6 +17,10 @@ export default async function Home() {
       <h1 className="text-3xl font-bold">
         ReviewVerse
       </h1>
+
+        <div className="mt-6">
+          <SearchBar />
+        </div>
 
       {/* Categories */}
       <section className="mt-8">

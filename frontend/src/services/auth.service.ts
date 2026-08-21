@@ -74,3 +74,31 @@ export async function getProfile() {
     '/auth/profile',
   );
 }
+
+// NEW:
+// Browser-এর localStorage-এ JWT access token save করবে.
+// Login successful হওয়ার পর এই function call করব।
+export function saveAccessToken(
+  token: string,
+) {
+  localStorage.setItem(
+    'access_token',
+    token,
+  );
+}
+
+// NEW:
+// localStorage থেকে JWT token বের করবে।
+export function getAccessToken() {
+  return localStorage.getItem(
+    'access_token',
+  );
+}
+
+// NEW:
+// Logout করার সময় JWT token remove করবে।
+export function removeAccessToken() {
+  localStorage.removeItem(
+    'access_token',
+  );
+}

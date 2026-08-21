@@ -48,3 +48,18 @@ export async function getEntityBySlug(
     `/entities/${decodeURIComponent(slug)}`,
   );
 }
+
+// NEW:
+// Backend-এর search API ব্যবহার করে entity খুঁজবে.
+export async function searchEntities(
+  query: string,
+) {
+  return apiFetch<{
+    success: boolean;
+    statusCode: number;
+    data: Entity[];
+    timestamp: string;
+  }>(
+    `/entities/search?q=${encodeURIComponent(query)}`,
+  );
+}

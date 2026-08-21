@@ -87,28 +87,35 @@ async findAll(
     }
 
     async search(query: string) {
-      return this.prisma.entity.findMany({
-        where: {
-          OR: [
-            {
-              name: {
-                contains: query,
-                mode: 'insensitive',
-              },
-            },
-            {
-              slug: {
-                contains: query,
-                mode: 'insensitive',
-              },
-            },
-          ],
+  return this.prisma.entity.findMany({
+    where: {
+      OR: [
+        {
+          name: {
+            contains: query,
+            mode: 'insensitive',
+          },
         },
-        orderBy: {
-          averageRating: 'desc',
+        {
+          slug: {
+            contains: query,
+            mode: 'insensitive',
+          },
         },
-      });
-    }
+      ],
+    },
+
+    orderBy: {
+      averageRating: 'desc',
+    },
+
+    // NEW:
+    // Search result-এর সাথে category information-ও পাঠাচ্ছি।
+    include: {
+      category: true,
+    },
+  });
+}
 
   async getTopRated() {
   return this.prisma.entity.findMany({

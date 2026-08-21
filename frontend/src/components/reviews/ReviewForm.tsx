@@ -1,7 +1,13 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import {
+  FormEvent,
+  useEffect,
+  useState,
+} from 'react';
+
 import { createReview } from '@/services/review.service';
+import { getProfile } from '@/services/auth.service';
 
 type Review = {
   id: string;
@@ -28,6 +34,39 @@ export default function ReviewForm({
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // NEW:
+  // User login করা আছে কি না সেটা track করবে।
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // NEW:
+  // Profile check করার সময় loading state দেখানোর জন্য।
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  // NEW:
+  // Component load হওয়ার পর current user-এর authentication
+  // status check করা হচ্ছে।
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        // Backend-এর /auth/profile endpoint call করবে।
+        // Valid JWT থাকলে request successful হবে।
+        await getProfile();
+
+        // Profile পাওয়া গেলে user logged in।
+        setIsLoggedIn(true);
+      } catch {
+        // Profile request fail করলে user logged out
+        // অথবা token invalid/expired ধরে নিচ্ছি।
+        setIsLoggedIn(false);
+      } finally {
+        // Authentication check শেষ।
+        setCheckingAuth(false);
+      }
+    }
+
+    checkAuth();
+  }, []);
+
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>,
   ) {
@@ -45,6 +84,7 @@ export default function ReviewForm({
       });
 
       // Send newly created review to ReviewSection
+      // যাতে refresh ছাড়াই review UI-তে দেখানো যায়।
       onReviewCreated(response.data);
 
       setContent('');
@@ -64,6 +104,45 @@ export default function ReviewForm({
     }
   }
 
+  // NEW:
+  // Profile check শেষ না হওয়া পর্যন্ত form দেখাব না।
+  // এতে authentication status determine হওয়ার আগে
+  // হঠাৎ করে form দেখানোর সমস্যা হবে না।
+  if (checkingAuth) {
+    return (
+      <section className="mt-10">
+        <p className="text-gray-500">
+          Checking authentication...
+        </p>
+      </section>
+    );
+  }
+
+  // NEW:
+  // User logged in না থাকলে review form দেখানো হবে না।
+  // পরিবর্তে login করার message দেখানো হবে।
+  if (!isLoggedIn) {
+    return (
+      <section className="mt-10 rounded-lg border p-5">
+        <h2 className="text-xl font-semibold">
+          Want to write a review?
+        </h2>
+
+        <p className="mt-2 text-gray-600">
+          Please login to share your experience.
+        </p>
+
+        <a
+          href="/login"
+          className="mt-4 inline-block rounded-lg bg-black px-5 py-3 font-medium text-white hover:bg-gray-800"
+        >
+          Login
+        </a>
+      </section>
+    );
+  }
+
+  // User logged in থাকলে নিচের actual review form render হবে।
   return (
     <section className="mt-10">
       <h2 className="text-2xl font-semibold">
@@ -86,11 +165,25 @@ export default function ReviewForm({
             }
             className="mt-1 rounded-lg border p-3"
           >
-            <option value={5}>⭐⭐⭐⭐⭐ — 5</option>
-            <option value={4}>⭐⭐⭐⭐ — 4</option>
-            <option value={3}>⭐⭐⭐ — 3</option>
-            <option value={2}>⭐⭐ — 2</option>
-            <option value={1}>⭐ — 1</option>
+            <option value={5}>
+              ⭐⭐⭐⭐⭐ — 5
+            </option>
+
+            <option value={4}>
+              ⭐⭐⭐⭐ — 4
+            </option>
+
+            <option value={3}>
+              ⭐⭐⭐ — 3
+            </option>
+
+            <option value={2}>
+              ⭐⭐ — 2
+            </option>
+
+            <option value={1}>
+              ⭐ — 1
+            </option>
           </select>
         </div>
 
