@@ -37,3 +37,28 @@ export async function createReview(
     },
   );
 }
+
+//update review
+
+type UpdateReviewPayload = {
+  rating: number;
+  content: string;
+};
+
+export async function updateReview(
+  reviewId: string,
+  payload: UpdateReviewPayload,
+) {
+  return apiFetch(`/reviews/${reviewId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteReview(
+  reviewId: string,
+) {
+  return apiFetch(`/reviews/${reviewId}`, {
+    method: 'DELETE',
+  });
+}
