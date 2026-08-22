@@ -27,6 +27,12 @@ async findBySlug(slug: string) {
     where: {
       slug,
     },
+
+    // NEW:
+    // Category-এর সাথে এই category-এর সব entities-ও আনছি।
+    include: {
+      entities: true,
+    },
   });
 }
 

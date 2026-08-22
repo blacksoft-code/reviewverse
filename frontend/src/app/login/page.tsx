@@ -2,10 +2,21 @@
 
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { loginUser, saveAccessToken } from '@/services/auth.service';
+
+import {
+  loginUser,
+  saveAccessToken,
+  getProfile,
+} from '@/services/auth.service';
+
+import { useAuth } from '@/context/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
+
+  // NEW:
+  // AuthContext থেকে global user state update করার function নিচ্ছি।
+  const { setUser } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,13 +38,24 @@ export default function LoginPage() {
         password,
       });
 
-      // NEW:
-      // Login successful হলে JWT access token
-      // auth.service-এর মাধ্যমে localStorage-এ save করছি।
+      // JWT access token localStorage-এ save করছি।
       saveAccessToken(
         response.data.access_token,
       );
 
+      // NEW:
+      // Login করার পর backend থেকে current user's
+      // profile নিয়ে আসছি।
+      const profileResponse = await getProfile();
+
+      // NEW:
+      // Global AuthContext-এর user update করছি।
+      //
+      // এর ফলে Navbar refresh ছাড়াই বুঝতে পারবে
+      // যে user login করেছে।
+      setUser(profileResponse.data);
+
+      // Home page-এ নিয়ে যাবে।
       router.push('/');
     } catch (error) {
       setError(
@@ -108,7 +130,9 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full rounded-lg bg-black px-4 py-3 font-medium text-white hover:bg-gray-800 disabled:opacity-50"
           >
-            {loading ? 'Logging in...' : 'Login'}
+            {loading
+              ? 'Logging in...'
+              : 'Login'}
           </button>
 
         </form>

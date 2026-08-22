@@ -63,3 +63,15 @@ export async function searchEntities(
     `/entities/search?q=${encodeURIComponent(query)}`,
   );
 }
+
+// NEW:
+// Backend-এর Top Rated API থেকে সর্বোচ্চ rating পাওয়া
+// entities নিয়ে আসবে।
+export async function getTopRated() {
+  return apiFetch<{
+    success: boolean;
+    statusCode: number;
+    data: Entity[];
+    timestamp: string;
+  }>('/entities/top-rated');
+}
