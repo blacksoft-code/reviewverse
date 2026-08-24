@@ -75,3 +75,25 @@ export async function getTopRated() {
     timestamp: string;
   }>('/entities/top-rated');
 }
+
+export type CreateEntityPayload = {
+  name: string;
+  slug: string;
+  categoryId: string;
+  location: string;
+};
+
+export async function createEntity(
+  payload: CreateEntityPayload,
+) {
+  return apiFetch<{
+    id: string;
+    name: string;
+    slug: string;
+    categoryId: string;
+    location: string;
+  }>('/entities', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}

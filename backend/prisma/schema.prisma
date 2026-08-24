@@ -13,61 +13,70 @@ enum Role {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
+  id       String @id @default(uuid())
+  name     String
+  email    String @unique
+  password String
 
-  role      Role     @default(USER)
+  role Role @default(USER)
 
-  isActive  Boolean  @default(true)
+  isActive Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  reviews   Review[]
+  reviews         Review[]
+  createdEntities Entity[] @relation("EntityCreatedBy")
 }
 
 model Category {
-  id        String   @id @default(uuid())
-  name      String   @unique
-  slug      String   @unique
+  id   String @id @default(uuid())
+  name String @unique
+  slug String @unique
 
   createdAt DateTime @default(now())
 
-  entities  Entity[]
+  entities Entity[]
 }
 
 model Entity {
-  id            String   @id @default(uuid())
+  id String @id @default(uuid())
 
-  name          String
-  slug          String   @unique
+  name String
+  slug String @unique
 
-  description   String?
+  description String?
 
-  averageRating Float    @default(0)
+  // NEW: Reviewer flow basic info
+  location String?
+  phone    String?
+  website  String?
+  email    String?
 
-  categoryId    String
-  category      Category @relation(fields: [categoryId], references: [id])
+  averageRating Float @default(0)
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdById String?
+  createdBy   User?   @relation("EntityCreatedBy", fields: [createdById], references: [id])
 
-  reviews       Review[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reviews    Review[]
+  category   Category? @relation(fields: [categoryId], references: [id])
+  categoryId String?
 }
 
 model Review {
-  id        String   @id @default(uuid())
+  id String @id @default(uuid())
 
-  rating    Int
-  content   String
+  rating  Int
+  content String
 
-  userId    String
-  entityId  String
+  userId   String
+  entityId String
 
-  user      User   @relation(fields: [userId], references: [id])
-  entity    Entity @relation(fields: [entityId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+  entity Entity @relation(fields: [entityId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

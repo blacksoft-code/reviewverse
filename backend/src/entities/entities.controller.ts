@@ -5,6 +5,7 @@ import {
   Param,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 
@@ -12,8 +13,7 @@ import { EntitiesService } from './entities.service';
 import { CreateEntityDto } from './dto/create-entity.dto';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
+
 
 import {
   ApiBearerAuth,
@@ -30,32 +30,34 @@ export class EntitiesController {
     private readonly entitiesService: EntitiesService,
   ) {}
 
-  @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Create a new entity',
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'Entity created successfully',
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Unauthorized',
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Only admins can create entities',
-  })
-  create(
-    @Body() createEntityDto: CreateEntityDto,
-  ) {
-    return this.entitiesService.create(
-      createEntityDto,
-    );
-  }
+@Post()
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
+@ApiOperation({
+  summary: 'Create a new business',
+})
+@ApiResponse({
+  status: 201,
+  description: 'Business created successfully',
+})
+@ApiResponse({
+  status: 401,
+  description: 'Unauthorized',
+})
+create(
+  @Body() createEntityDto: CreateEntityDto,
+  @Req() req: any,
+) {
+  // NEW:
+  // JWT strategy থেকে authenticated user's information
+  // req.user-এর মধ্যে পাওয়া যাচ্ছে।
+  //
+  // এখান থেকে user.id নিয়ে service-এ পাঠাচ্ছি।
+  return this.entitiesService.create(
+    createEntityDto,
+    req.user.id,
+  );
+}
 
   @Get()
   @ApiOperation({
