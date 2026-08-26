@@ -13,16 +13,17 @@ type Category = {
 };
 
 type Flow =
+  | null
   | 'reviewer'
   | 'owner'
   | 'reviewer-details'
-  | null;
+  | 'owner-details';
 
 export default function AddBusinessPage() {
   const router = useRouter();
 
   // =========================
-  // BASIC BUSINESS INFO
+  // Basic Information
   // =========================
 
   const [name, setName] = useState('');
@@ -30,36 +31,84 @@ export default function AddBusinessPage() {
   const [location, setLocation] = useState('');
 
   // =========================
-  // REVIEWER OPTIONAL INFO
+  // Reviewer / Common Details
   // =========================
 
   const [phone, setPhone] = useState('');
   const [website, setWebsite] = useState('');
+  const [email, setEmail] = useState('');
   const [description, setDescription] = useState('');
 
   // =========================
-  // CATEGORIES
+  // Owner Business Details
   // =========================
 
-  const [categories, setCategories] = useState<Category[]>(
-    [],
-  );
+  const [businessHours, setBusinessHours] =
+    useState('');
+
+  const [priceRange, setPriceRange] =
+    useState('');
+
+  const [serviceOptions, setServiceOptions] =
+    useState('');
+
+  const [coverPhoto, setCoverPhoto] =
+    useState('');
+
+  const [logo, setLogo] =
+    useState('');
+
+  const [amenities, setAmenities] =
+    useState('');
+
+  const [paymentMethods, setPaymentMethods] =
+    useState('');
+
+  const [socialLinks, setSocialLinks] =
+    useState('');
+
+  const [menu, setMenu] =
+    useState('');
+
+  // =========================
+  // Owner Information
+  // =========================
+
+  const [ownerName, setOwnerName] =
+    useState('');
+
+  const [ownerContact, setOwnerContact] =
+    useState('');
+
+  const [businessDocument, setBusinessDocument] =
+    useState('');
+
+  const [businessRelationship, setBusinessRelationship] =
+    useState('OWNER');
+
+  // =========================
+  // Categories
+  // =========================
+
+  const [categories, setCategories] =
+    useState<Category[]>([]);
 
   const [loadingCategories, setLoadingCategories] =
     useState(true);
 
   // =========================
-  // FLOW
+  // Flow / UI states
   // =========================
 
   const [flow, setFlow] = useState<Flow>(null);
 
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting, setSubmitting] =
+    useState(false);
 
   const [error, setError] = useState('');
 
   // =========================
-  // LOAD CATEGORIES
+  // Load Categories
   // =========================
 
   useEffect(() => {
@@ -83,8 +132,20 @@ export default function AddBusinessPage() {
   }, []);
 
   // =========================
-  // STEP 1
-  // BASIC INFO SUBMIT
+  // Slug Generator
+  // =========================
+
+  function generateSlug(value: string) {
+    return value
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
+  // =========================
+  // Step 1
+  // Basic Information
   // =========================
 
   function handleBasicInfoSubmit(
@@ -94,26 +155,19 @@ export default function AddBusinessPage() {
 
     setError('');
 
-    // Basic information complete.
-    // এখন Reviewer / Owner selection দেখাব।
     setFlow('reviewer');
   }
 
   // =========================
-  // REVIEWER
-  // CREATE BUSINESS
+  // Reviewer Flow
   // =========================
 
-  async function handleReviewerContinue() {
+  async function handleReviewerCreate() {
     setError('');
     setSubmitting(true);
 
     try {
-      const slug = name
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '');
+      const slug = generateSlug(name);
 
       const response = await createEntity({
         name: name.trim(),
@@ -121,24 +175,18 @@ export default function AddBusinessPage() {
         categoryId,
         location: location.trim(),
 
-        // Optional fields
-        ...(phone.trim() && {
-          phone: phone.trim(),
-        }),
-
-        ...(website.trim() && {
-          website: website.trim(),
-        }),
-
-        ...(description.trim() && {
-          description: description.trim(),
-        }),
+        phone: phone.trim() || undefined,
+        website: website.trim() || undefined,
+        email: email.trim() || undefined,
+        description:
+          description.trim() || undefined,
       });
 
-      console.log('Business created:', response);
+      console.log(
+        'Reviewer business created:',
+        response,
+      );
 
-      // Business create হওয়ার পরে
-      // entity details page-এ নিয়ে যাব।
       router.push(`/entities/${slug}`);
     } catch (error) {
       setError(
@@ -151,13 +199,98 @@ export default function AddBusinessPage() {
     }
   }
 
+  // =========================
+  // Owner Flow
+  // =========================
+
+  async function handleOwnerCreate() {
+    setError('');
+    setSubmitting(true);
+
+    try {
+      const slug = generateSlug(name);
+
+      const response = await createEntity({
+        name: name.trim(),
+        slug,
+        categoryId,
+        location: location.trim(),
+
+        // Common information
+        phone: phone.trim() || undefined,
+        website: website.trim() || undefined,
+        email: email.trim() || undefined,
+        description:
+          description.trim() || undefined,
+
+        // Business details
+        businessHours:
+          businessHours.trim() || undefined,
+
+        priceRange:
+          priceRange.trim() || undefined,
+
+        serviceOptions:
+          serviceOptions.trim() || undefined,
+
+        // Visual
+        coverPhoto:
+          coverPhoto.trim() || undefined,
+
+        logo:
+          logo.trim() || undefined,
+
+        // Additional
+        amenities:
+          amenities.trim() || undefined,
+
+        paymentMethods:
+          paymentMethods.trim() || undefined,
+
+        socialLinks:
+          socialLinks.trim() || undefined,
+
+        menu:
+          menu.trim() || undefined,
+
+        // Owner information
+        ownerName:
+          ownerName.trim() || undefined,
+
+        ownerContact:
+          ownerContact.trim() || undefined,
+
+        businessDocument:
+          businessDocument.trim() || undefined,
+
+        businessRelationship:
+          businessRelationship || undefined,
+      });
+
+      console.log(
+        'Owner business created:',
+        response,
+      );
+
+      router.push(`/entities/${slug}`);
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to create business',
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  // =========================
+  // UI
+  // =========================
+
   return (
     <main className="min-h-screen p-8">
-      <div className="mx-auto max-w-2xl">
-
-        {/* ========================= */}
-        {/* PAGE HEADER */}
-        {/* ========================= */}
+      <div className="mx-auto max-w-3xl">
 
         <h1 className="text-3xl font-bold">
           Add a Business
@@ -167,17 +300,17 @@ export default function AddBusinessPage() {
           Add a business to ReviewVerse.
         </p>
 
-        {/* ================================================= */}
-        {/* STEP 1 — BASIC BUSINESS INFORMATION */}
-        {/* ================================================= */}
+        {/* ================================= */}
+        {/* STEP 1 — BASIC INFORMATION */}
+        {/* ================================= */}
 
         {flow === null && (
           <form
             onSubmit={handleBasicInfoSubmit}
             className="mt-8 space-y-6"
           >
-
             {/* Business Name */}
+
             <div>
               <label className="block text-sm font-medium">
                 Business Name
@@ -196,6 +329,7 @@ export default function AddBusinessPage() {
             </div>
 
             {/* Category */}
+
             <div>
               <label className="block text-sm font-medium">
                 Category
@@ -228,6 +362,7 @@ export default function AddBusinessPage() {
             </div>
 
             {/* Location */}
+
             <div>
               <label className="block text-sm font-medium">
                 Location
@@ -245,14 +380,12 @@ export default function AddBusinessPage() {
               />
             </div>
 
-            {/* Error */}
             {error && (
               <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
                 {error}
               </p>
             )}
 
-            {/* Continue */}
             <button
               type="submit"
               disabled={loadingCategories}
@@ -260,15 +393,15 @@ export default function AddBusinessPage() {
             >
               Continue
             </button>
-
           </form>
         )}
 
-        {/* ================================================= */}
-        {/* STEP 2 — REVIEWER / OWNER */}
-        {/* ================================================= */}
+        {/* ================================= */}
+        {/* STEP 2 — FLOW SELECTION */}
+        {/* ================================= */}
 
-        {(flow === 'reviewer' || flow === 'owner') && (
+        {(flow === 'reviewer' ||
+          flow === 'owner') && (
           <section className="mt-8">
 
             <div className="mb-6">
@@ -284,13 +417,13 @@ export default function AddBusinessPage() {
 
             <div className="grid gap-5 sm:grid-cols-2">
 
-              {/* ========================= */}
-              {/* REVIEWER CARD */}
-              {/* ========================= */}
+              {/* Reviewer */}
 
               <button
                 type="button"
-                onClick={() => setFlow('reviewer')}
+                onClick={() =>
+                  setFlow('reviewer')
+                }
                 className={`rounded-xl border p-6 text-left transition ${
                   flow === 'reviewer'
                     ? 'border-black ring-2 ring-black'
@@ -306,18 +439,18 @@ export default function AddBusinessPage() {
                 </p>
 
                 <p className="mt-4 text-sm text-gray-500">
-                  Add basic business information and
-                  continue directly to reviewing.
+                  Add basic information and optional
+                  details before leaving a review.
                 </p>
               </button>
 
-              {/* ========================= */}
-              {/* OWNER CARD */}
-              {/* ========================= */}
+              {/* Owner */}
 
               <button
                 type="button"
-                onClick={() => setFlow('owner')}
+                onClick={() =>
+                  setFlow('owner')
+                }
                 className={`rounded-xl border p-6 text-left transition ${
                   flow === 'owner'
                     ? 'border-black ring-2 ring-black'
@@ -335,70 +468,45 @@ export default function AddBusinessPage() {
 
                 <p className="mt-4 text-sm text-gray-500">
                   Add detailed business information and
-                  verify your ownership.
+                  ownership details.
                 </p>
               </button>
-
             </div>
 
-            {/* Error */}
             {error && (
               <p className="mt-5 rounded-lg bg-red-50 p-3 text-sm text-red-600">
                 {error}
               </p>
             )}
 
-            {/* ========================= */}
-            {/* REVIEWER CONTINUE */}
-            {/* ========================= */}
+            {/* Reviewer Continue */}
 
             {flow === 'reviewer' && (
-              <div className="mt-6">
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFlow('reviewer-details')
-                  }
-                  className="w-full rounded-lg bg-black px-5 py-3 font-medium text-white hover:bg-gray-800"
-                >
-                  Continue as Reviewer
-                </button>
-
-              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setFlow('reviewer-details')
+                }
+                className="mt-6 w-full rounded-lg bg-black px-5 py-3 font-medium text-white hover:bg-gray-800"
+              >
+                Continue as Reviewer
+              </button>
             )}
 
-            {/* ========================= */}
-            {/* OWNER PLACEHOLDER */}
-            {/* ========================= */}
+            {/* Owner Continue */}
 
             {flow === 'owner' && (
-              <div className="mt-6 rounded-lg border p-5">
-
-                <h3 className="font-semibold">
-                  Owner flow
-                </h3>
-
-                <p className="mt-2 text-sm text-gray-600">
-                  Ownership verification and detailed
-                  business information will be added
-                  here next.
-                </p>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFlow('reviewer')
-                  }
-                  className="mt-4 text-sm underline"
-                >
-                  Switch to Reviewer
-                </button>
-
-              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setFlow('owner-details')
+                }
+                className="mt-6 w-full rounded-lg bg-black px-5 py-3 font-medium text-white hover:bg-gray-800"
+              >
+                Continue as Owner
+              </button>
             )}
 
-            {/* Back */}
             <button
               type="button"
               onClick={() => setFlow(null)}
@@ -406,34 +514,27 @@ export default function AddBusinessPage() {
             >
               ← Back to basic information
             </button>
-
           </section>
         )}
 
-        {/* ================================================= */}
-        {/* STEP 3 — REVIEWER OPTIONAL DETAILS */}
-        {/* ================================================= */}
+        {/* ================================= */}
+        {/* REVIEWER DETAILS */}
+        {/* ================================= */}
 
         {flow === 'reviewer-details' && (
           <section className="mt-8">
 
-            <div>
-              <h2 className="text-2xl font-semibold">
-                Business Details
-              </h2>
+            <h2 className="text-2xl font-semibold">
+              Business Details
+            </h2>
 
-              <p className="mt-2 text-gray-600">
-                These details are optional. Add more
-                information to help people learn about
-                this business.
-              </p>
-            </div>
+            <p className="mt-2 text-gray-600">
+              These details are optional.
+            </p>
 
-            <div className="mt-8 space-y-6">
+            <div className="mt-6 space-y-5">
 
-              {/* ========================= */}
-              {/* PHONE */}
-              {/* ========================= */}
+              {/* Phone */}
 
               <div>
                 <label className="block text-sm font-medium">
@@ -441,7 +542,7 @@ export default function AddBusinessPage() {
                 </label>
 
                 <input
-                  type="tel"
+                  type="text"
                   value={phone}
                   onChange={(event) =>
                     setPhone(event.target.value)
@@ -451,9 +552,7 @@ export default function AddBusinessPage() {
                 />
               </div>
 
-              {/* ========================= */}
-              {/* WEBSITE */}
-              {/* ========================= */}
+              {/* Website */}
 
               <div>
                 <label className="block text-sm font-medium">
@@ -471,9 +570,25 @@ export default function AddBusinessPage() {
                 />
               </div>
 
-              {/* ========================= */}
-              {/* DESCRIPTION */}
-              {/* ========================= */}
+              {/* Email */}
+
+              <div>
+                <label className="block text-sm font-medium">
+                  Email
+                </label>
+
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(event) =>
+                    setEmail(event.target.value)
+                  }
+                  placeholder="contact@example.com"
+                  className="mt-1 w-full rounded-lg border p-3"
+                />
+              </div>
+
+              {/* Description */}
 
               <div>
                 <label className="block text-sm font-medium">
@@ -485,26 +600,21 @@ export default function AddBusinessPage() {
                   onChange={(event) =>
                     setDescription(event.target.value)
                   }
-                  placeholder="Tell people a little about this business..."
+                  placeholder="Tell people something about this business..."
                   rows={4}
                   className="mt-1 w-full rounded-lg border p-3"
                 />
               </div>
 
-              {/* Error */}
               {error && (
                 <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
                   {error}
                 </p>
               )}
 
-              {/* ========================= */}
-              {/* CREATE BUSINESS */}
-              {/* ========================= */}
-
               <button
                 type="button"
-                onClick={handleReviewerContinue}
+                onClick={handleReviewerCreate}
                 disabled={submitting}
                 className="w-full rounded-lg bg-black px-5 py-3 font-medium text-white hover:bg-gray-800 disabled:opacity-50"
               >
@@ -513,22 +623,506 @@ export default function AddBusinessPage() {
                   : 'Create Business & Continue to Review'}
               </button>
 
-              {/* Back */}
               <button
                 type="button"
                 onClick={() =>
                   setFlow('reviewer')
                 }
-                className="w-full text-sm text-gray-500 hover:text-black"
+                className="text-sm text-gray-500 hover:text-black"
               >
                 ← Back
               </button>
-
             </div>
-
           </section>
         )}
 
+        {/* ================================= */}
+        {/* OWNER DETAILS */}
+        {/* ================================= */}
+
+        {flow === 'owner-details' && (
+          <section className="mt-8">
+
+            <div>
+              <h2 className="text-2xl font-semibold">
+                Owner Business Details
+              </h2>
+
+              <p className="mt-2 text-gray-600">
+                Add detailed information about your
+                business.
+              </p>
+            </div>
+
+            {/* ================================= */}
+            {/* COMMON BUSINESS INFORMATION */}
+            {/* ================================= */}
+
+            <div className="mt-8 rounded-xl border p-6">
+
+              <h3 className="text-xl font-semibold">
+                Business Information
+              </h3>
+
+              <div className="mt-5 space-y-5">
+
+                {/* Phone */}
+
+                <div>
+                  <label className="block text-sm font-medium">
+                    Phone Number
+                  </label>
+
+                  <input
+                    type="text"
+                    value={phone}
+                    onChange={(event) =>
+                      setPhone(event.target.value)
+                    }
+                    placeholder="+8801712345678"
+                    className="mt-1 w-full rounded-lg border p-3"
+                  />
+                </div>
+
+                {/* Website */}
+
+                <div>
+                  <label className="block text-sm font-medium">
+                    Website URL
+                  </label>
+
+                  <input
+                    type="url"
+                    value={website}
+                    onChange={(event) =>
+                      setWebsite(event.target.value)
+                    }
+                    placeholder="https://example.com"
+                    className="mt-1 w-full rounded-lg border p-3"
+                  />
+                </div>
+
+                {/* Email */}
+
+                <div>
+                  <label className="block text-sm font-medium">
+                    Email Address
+                  </label>
+
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(event) =>
+                      setEmail(event.target.value)
+                    }
+                    placeholder="contact@example.com"
+                    className="mt-1 w-full rounded-lg border p-3"
+                  />
+                </div>
+
+                {/* Description */}
+
+                <div>
+                  <label className="block text-sm font-medium">
+                    Business Description
+                  </label>
+
+                  <textarea
+                    value={description}
+                    onChange={(event) =>
+                      setDescription(event.target.value)
+                    }
+                    rows={4}
+                    placeholder="Tell customers about your business..."
+                    className="mt-1 w-full rounded-lg border p-3"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* ================================= */}
+            {/* OPERATIONAL INFORMATION */}
+            {/* ================================= */}
+
+            <div className="mt-6 rounded-xl border p-6">
+
+              <h3 className="text-xl font-semibold">
+                Operational Information
+              </h3>
+
+              <div className="mt-5 space-y-5">
+
+                {/* Business Hours */}
+
+                <div>
+                  <label className="block text-sm font-medium">
+                    Business Hours
+                  </label>
+
+                  <textarea
+                    value={businessHours}
+                    onChange={(event) =>
+                      setBusinessHours(
+                        event.target.value,
+                      )
+                    }
+                    rows={3}
+                    placeholder="Mon-Fri: 10:00 AM - 10:00 PM&#10;Sat-Sun: 11:00 AM - 11:00 PM"
+                    className="mt-1 w-full rounded-lg border p-3"
+                  />
+                </div>
+
+                {/* Price Range */}
+
+                <div>
+                  <label className="block text-sm font-medium">
+                    Price Range
+                  </label>
+
+                  <select
+                    value={priceRange}
+                    onChange={(event) =>
+                      setPriceRange(event.target.value)
+                    }
+                    className="mt-1 w-full rounded-lg border p-3"
+                  >
+                    <option value="">
+                      Select price range
+                    </option>
+
+                    <option value="$">
+                      $ — Budget
+                    </option>
+
+                    <option value="$$">
+                      $$ — Moderate
+                    </option>
+
+                    <option value="$$$">
+                      $$$ — Expensive
+                    </option>
+
+                    <option value="$$$$">
+                      $$$$ — Premium
+                    </option>
+                  </select>
+                </div>
+
+                {/* Service Options */}
+
+                <div>
+                  <label className="block text-sm font-medium">
+                    Service Options
+                  </label>
+
+                  <input
+                    type="text"
+                    value={serviceOptions}
+                    onChange={(event) =>
+                      setServiceOptions(
+                        event.target.value,
+                      )
+                    }
+                    placeholder="Dine-in, Takeaway, Delivery"
+                    className="mt-1 w-full rounded-lg border p-3"
+                  />
+                </div>
+
+                {/* Amenities */}
+
+                <div>
+                  <label className="block text-sm font-medium">
+                    Amenities
+                  </label>
+
+                  <input
+                    type="text"
+                    value={amenities}
+                    onChange={(event) =>
+                      setAmenities(
+                        event.target.value,
+                      )
+                    }
+                    placeholder="WiFi, Parking, Wheelchair Accessible"
+                    className="mt-1 w-full rounded-lg border p-3"
+                  />
+                </div>
+
+                {/* Payment Methods */}
+
+                <div>
+                  <label className="block text-sm font-medium">
+                    Payment Methods
+                  </label>
+
+                  <input
+                    type="text"
+                    value={paymentMethods}
+                    onChange={(event) =>
+                      setPaymentMethods(
+                        event.target.value,
+                      )
+                    }
+                    placeholder="Cash, Visa, Mastercard, bKash"
+                    className="mt-1 w-full rounded-lg border p-3"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* ================================= */}
+            {/* VISUAL CONTENT */}
+            {/* ================================= */}
+
+            <div className="mt-6 rounded-xl border p-6">
+
+              <h3 className="text-xl font-semibold">
+                Visual Content
+              </h3>
+
+              <div className="mt-5 space-y-5">
+
+                {/* Cover */}
+
+                <div>
+                  <label className="block text-sm font-medium">
+                    Cover Photo URL
+                  </label>
+
+                  <input
+                    type="url"
+                    value={coverPhoto}
+                    onChange={(event) =>
+                      setCoverPhoto(
+                        event.target.value,
+                      )
+                    }
+                    placeholder="https://example.com/cover.jpg"
+                    className="mt-1 w-full rounded-lg border p-3"
+                  />
+                </div>
+
+                {/* Logo */}
+
+                <div>
+                  <label className="block text-sm font-medium">
+                    Business Logo URL
+                  </label>
+
+                  <input
+                    type="url"
+                    value={logo}
+                    onChange={(event) =>
+                      setLogo(event.target.value)
+                    }
+                    placeholder="https://example.com/logo.jpg"
+                    className="mt-1 w-full rounded-lg border p-3"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* ================================= */}
+            {/* SOCIAL / ADDITIONAL */}
+            {/* ================================= */}
+
+            <div className="mt-6 rounded-xl border p-6">
+
+              <h3 className="text-xl font-semibold">
+                Social & Additional Information
+              </h3>
+
+              <div className="mt-5 space-y-5">
+
+                {/* Social */}
+
+                <div>
+                  <label className="block text-sm font-medium">
+                    Social Media Links
+                  </label>
+
+                  <textarea
+                    value={socialLinks}
+                    onChange={(event) =>
+                      setSocialLinks(
+                        event.target.value,
+                      )
+                    }
+                    rows={3}
+                    placeholder="Facebook, Instagram, TikTok..."
+                    className="mt-1 w-full rounded-lg border p-3"
+                  />
+                </div>
+
+                {/* Menu */}
+
+                <div>
+                  <label className="block text-sm font-medium">
+                    Menu URL
+                  </label>
+
+                  <input
+                    type="url"
+                    value={menu}
+                    onChange={(event) =>
+                      setMenu(event.target.value)
+                    }
+                    placeholder="https://example.com/menu"
+                    className="mt-1 w-full rounded-lg border p-3"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* ================================= */}
+            {/* OWNER INFORMATION */}
+            {/* ================================= */}
+
+            <div className="mt-6 rounded-xl border p-6">
+
+              <h3 className="text-xl font-semibold">
+                Owner Information
+              </h3>
+
+              <p className="mt-2 text-sm text-gray-500">
+                This information will be used later for
+                ownership verification.
+              </p>
+
+              <div className="mt-5 space-y-5">
+
+                {/* Owner Name */}
+
+                <div>
+                  <label className="block text-sm font-medium">
+                    Owner / Manager Name
+                  </label>
+
+                  <input
+                    type="text"
+                    value={ownerName}
+                    onChange={(event) =>
+                      setOwnerName(
+                        event.target.value,
+                      )
+                    }
+                    placeholder="John Doe"
+                    className="mt-1 w-full rounded-lg border p-3"
+                  />
+                </div>
+
+                {/* Owner Contact */}
+
+                <div>
+                  <label className="block text-sm font-medium">
+                    Owner Contact Number / Email
+                  </label>
+
+                  <input
+                    type="text"
+                    value={ownerContact}
+                    onChange={(event) =>
+                      setOwnerContact(
+                        event.target.value,
+                      )
+                    }
+                    placeholder="+8801812345678"
+                    className="mt-1 w-full rounded-lg border p-3"
+                  />
+                </div>
+
+                {/* Business Document */}
+
+                <div>
+                  <label className="block text-sm font-medium">
+                    Business Document
+                  </label>
+
+                  <input
+                    type="text"
+                    value={businessDocument}
+                    onChange={(event) =>
+                      setBusinessDocument(
+                        event.target.value,
+                      )
+                    }
+                    placeholder="Business registration document reference"
+                    className="mt-1 w-full rounded-lg border p-3"
+                  />
+
+                  <p className="mt-1 text-xs text-gray-500">
+                    File upload will be connected later.
+                  </p>
+                </div>
+
+                {/* Relationship */}
+
+                <div>
+                  <label className="block text-sm font-medium">
+                    Relationship to Business
+                  </label>
+
+                  <select
+                    value={businessRelationship}
+                    onChange={(event) =>
+                      setBusinessRelationship(
+                        event.target.value,
+                      )
+                    }
+                    className="mt-1 w-full rounded-lg border p-3"
+                  >
+                    <option value="OWNER">
+                      Owner
+                    </option>
+
+                    <option value="MANAGER">
+                      Manager
+                    </option>
+
+                    <option value="EMPLOYEE">
+                      Employee
+                    </option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* ================================= */}
+            {/* ERROR */}
+            {/* ================================= */}
+
+            {error && (
+              <p className="mt-6 rounded-lg bg-red-50 p-3 text-sm text-red-600">
+                {error}
+              </p>
+            )}
+
+            {/* ================================= */}
+            {/* CREATE */}
+            {/* ================================= */}
+
+            <button
+              type="button"
+              onClick={handleOwnerCreate}
+              disabled={submitting}
+              className="mt-6 w-full rounded-lg bg-black px-5 py-3 font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+            >
+              {submitting
+                ? 'Creating Business...'
+                : 'Create Business'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                setFlow('owner')
+              }
+              className="mt-4 text-sm text-gray-500 hover:text-black"
+            >
+              ← Back to Owner Selection
+            </button>
+          </section>
+        )}
       </div>
     </main>
   );

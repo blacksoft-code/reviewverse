@@ -78,4 +78,104 @@ export class CreateEntityDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+
+// =========================
+  // Owner business details
+  // =========================
+
+  @ApiPropertyOptional({
+    example: 'Mon-Fri: 10:00 AM - 10:00 PM',
+  })
+  @IsOptional()
+  @IsString()
+  businessHours?: string;
+
+  @ApiPropertyOptional({
+    example: '$$',
+  })
+  @IsOptional()
+  @IsString()
+  priceRange?: string;
+
+  @ApiPropertyOptional({
+    example: 'Dine-in, Takeaway, Delivery',
+  })
+  @IsOptional()
+  @IsString()
+  serviceOptions?: string;
+
+  @ApiPropertyOptional({
+    example: 'https://example.com/cover.jpg',
+  })
+  @IsOptional()
+  @IsUrl()
+  coverPhoto?: string;
+
+  @ApiPropertyOptional({
+    example: 'https://example.com/logo.png',
+  })
+  @IsOptional()
+  @IsUrl()
+  logo?: string;
+
+  @ApiPropertyOptional({
+    example: 'Wi-Fi, Parking, Wheelchair accessible',
+  })
+  @IsOptional()
+  @IsString()
+  amenities?: string;
+
+  @ApiPropertyOptional({
+    example: 'Cash, Visa, Mastercard, bKash',
+  })
+  @IsOptional()
+  @IsString()
+  paymentMethods?: string;
+
+  @ApiPropertyOptional({
+    example: 'Facebook: https://facebook.com/example',
+  })
+  @IsOptional()
+  @IsString()
+  socialLinks?: string;
+
+  @ApiPropertyOptional({
+    example: 'https://example.com/menu.pdf',
+  })
+  @IsOptional()
+  @IsUrl()
+  menu?: string;
+
+  // =========================
+  // Owner / Claim information
+  // =========================
+
+  @ApiPropertyOptional({
+    example: 'John Doe',
+  })
+  @IsOptional()
+  @IsString()
+  ownerName?: string;
+
+  @ApiPropertyOptional({
+    example: '+8801712345678',
+  })
+  @IsOptional()
+  @IsString()
+  ownerContact?: string;
+
+  @ApiPropertyOptional({
+    example: 'trade-license.pdf',
+  })
+  @IsOptional()
+  @IsString()
+  businessDocument?: string;
+
+  @ApiPropertyOptional({
+    example: 'OWNER',
+  })
+  @IsOptional()
+  @IsString()
+  businessRelationship?: string;
 }

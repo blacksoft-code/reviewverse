@@ -53,16 +53,37 @@ model Entity {
   website  String?
   email    String?
 
+  // Owner business details
+  businessHours  String?
+  priceRange     String?
+  serviceOptions String?
+
+  coverPhoto String?
+  logo       String?
+
+  amenities      String?
+  paymentMethods String?
+
+  socialLinks String?
+  menu        String?
+
+  // Owner / Claim information
+  ownerName            String?
+  ownerContact         String?
+  businessDocument     String?
+  businessRelationship String?
+
   averageRating Float @default(0)
 
   createdById String?
-  createdBy   User?   @relation("EntityCreatedBy", fields: [createdById], references: [id])
+  category    Category? @relation(fields: [categoryId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  reviews    Review[]
-  category   Category? @relation(fields: [categoryId], references: [id])
+  reviews Review[]
+
+  createdBy  User?   @relation("EntityCreatedBy", fields: [createdById], references: [id])
   categoryId String?
 }
 

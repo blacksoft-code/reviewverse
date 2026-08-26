@@ -45,12 +45,35 @@ export class EntitiesService {
           name: createEntityDto.name,
           slug: createEntityDto.slug,
           categoryId: createEntityDto.categoryId,
+
           createdById: userId,
+
           location: createEntityDto.location,
           phone: createEntityDto.phone,
           website: createEntityDto.website,
           email: createEntityDto.email,
           description: createEntityDto.description,
+
+          // Owner business details
+          businessHours: createEntityDto.businessHours,
+          priceRange: createEntityDto.priceRange,
+          serviceOptions: createEntityDto.serviceOptions,
+
+          coverPhoto: createEntityDto.coverPhoto,
+          logo: createEntityDto.logo,
+
+          amenities: createEntityDto.amenities,
+          paymentMethods: createEntityDto.paymentMethods,
+
+          socialLinks: createEntityDto.socialLinks,
+          menu: createEntityDto.menu,
+
+          // Owner / Claim information
+          ownerName: createEntityDto.ownerName,
+          ownerContact: createEntityDto.ownerContact,
+          businessDocument: createEntityDto.businessDocument,
+          businessRelationship:
+            createEntityDto.businessRelationship,
         },
       });
     } catch (error) {
