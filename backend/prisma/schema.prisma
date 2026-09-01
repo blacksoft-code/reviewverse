@@ -12,6 +12,13 @@ enum Role {
   ADMIN
 }
 
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
 model User {
   id       String @id @default(uuid())
   name     String
@@ -27,6 +34,21 @@ model User {
 
   reviews         Review[]
   createdEntities Entity[] @relation("EntityCreatedBy")
+
+  following UserFollow[] @relation("UserFollowing")
+  followers UserFollow[] @relation("UserFollowers")
+
+  sentRequests     FriendRequest[] @relation("FriendRequestSender")
+  receivedRequests FriendRequest[] @relation("FriendRequestReceiver")
+
+  blockedUsers   UserBlock[] @relation("UserBlocker")
+  blockedByUsers UserBlock[] @relation("UserBlocked")
+
+  entityFollows EntityFollow[]
+  entityBlocks  EntityBlock[]
+
+  friendshipsAsUser1 Friendship[] @relation("FriendshipUser1")
+  friendshipsAsUser2 Friendship[] @relation("FriendshipUser2")
 }
 
 model Category {
@@ -47,13 +69,11 @@ model Entity {
 
   description String?
 
-  // NEW: Reviewer flow basic info
   location String?
   phone    String?
   website  String?
   email    String?
 
-  // Owner business details
   businessHours  String?
   priceRange     String?
   serviceOptions String?
@@ -67,7 +87,6 @@ model Entity {
   socialLinks String?
   menu        String?
 
-  // Owner / Claim information
   ownerName            String?
   ownerContact         String?
   businessDocument     String?
@@ -76,15 +95,18 @@ model Entity {
   averageRating Float @default(0)
 
   createdById String?
-  category    Category? @relation(fields: [categoryId], references: [id])
+  categoryId  String?
+
+  category  Category? @relation(fields: [categoryId], references: [id])
+  createdBy User?     @relation("EntityCreatedBy", fields: [createdById], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   reviews Review[]
 
-  createdBy  User?   @relation("EntityCreatedBy", fields: [createdById], references: [id])
-  categoryId String?
+  followers      EntityFollow[]
+  blockedByUsers EntityBlock[]
 }
 
 model Review {
@@ -103,4 +125,104 @@ model Review {
   updatedAt DateTime @updatedAt
 
   @@unique([userId, entityId])
+}
+
+model UserFollow {
+  id String @id @default(uuid())
+
+  followerId  String
+  followingId String
+
+  follower  User @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+model FriendRequest {
+  id String @id @default(uuid())
+
+  senderId   String
+  receiverId String
+
+  status FriendRequestStatus @default(PENDING)
+
+  sender   User @relation("FriendRequestSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("FriendRequestReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([senderId, receiverId])
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([receiverId, status])
+}
+
+model Friendship {
+  id String @id @default(uuid())
+
+  userId1 String
+  userId2 String
+
+  user1 User @relation("FriendshipUser1", fields: [userId1], references: [id], onDelete: Cascade)
+  user2 User @relation("FriendshipUser2", fields: [userId2], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId1, userId2])
+  @@index([userId1])
+  @@index([userId2])
+}
+
+model UserBlock {
+  id String @id @default(uuid())
+
+  blockerId String
+  blockedId String
+
+  blocker User @relation("UserBlocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("UserBlocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@index([blockerId])
+  @@index([blockedId])
+}
+
+model EntityFollow {
+  id String @id @default(uuid())
+
+  userId   String
+  entityId String
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entity Entity @relation(fields: [entityId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, entityId])
+  @@index([userId])
+  @@index([entityId])
+}
+
+model EntityBlock {
+  id String @id @default(uuid())
+
+  userId   String
+  entityId String
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entity Entity @relation(fields: [entityId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, entityId])
+  @@index([userId])
+  @@index([entityId])
 }
