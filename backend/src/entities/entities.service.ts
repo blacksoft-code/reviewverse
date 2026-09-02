@@ -167,4 +167,32 @@ export class EntitiesService {
       include: { category: true },
     });
   }
+async getFollowers(entityId: string) {
+  return this.prisma.entityFollow.findMany({
+    where: {
+      entityId,
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          createdAt: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  });
+}
+
+async getFollowersCount(entityId: string) {
+  return this.prisma.entityFollow.count({
+    where: {
+      entityId,
+    },
+  });
+}
+  //last brc
 }

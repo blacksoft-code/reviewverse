@@ -383,7 +383,94 @@ unblockUser(
     targetUserId,
   );
 }
+@Get('entity/:entityId/status')
+@UseGuards(JwtAuthGuard)
+getEntityRelationshipStatus(
+  @Req() req: any,
+  @Param('entityId') entityId: string,
+) {
+  return this.usersService.getEntityRelationshipStatus(
+    req.user.userId,
+    entityId,
+  );
+}
+//follow entity
+@Post('entity/:entityId/follow')
+@UseGuards(JwtAuthGuard)
+@ApiOperation({
+  summary: 'Follow entity',
+})
+@ApiResponse({
+  status: 201,
+  description: 'Entity followed successfully',
+})
+followEntity(
+  @Req() req: any,
+  @Param('entityId') entityId: string,
+) {
+  return this.usersService.followEntity(
+    req.user.userId,
+    entityId,
+  );
+}
 
+
+@Delete('entity/:entityId/unfollow')
+@UseGuards(JwtAuthGuard)
+@ApiOperation({
+  summary: 'Unfollow entity',
+})
+@ApiResponse({
+  status: 200,
+  description: 'Entity unfollowed successfully',
+})
+unfollowEntity(
+  @Req() req: any,
+  @Param('entityId') entityId: string,
+) {
+  return this.usersService.unfollowEntity(
+    req.user.userId,
+    entityId,
+  );
+}
+
+@Post('entity/:entityId/block')
+@UseGuards(JwtAuthGuard)
+@ApiOperation({
+  summary: 'Block entity',
+})
+@ApiResponse({
+  status: 201,
+  description: 'Entity blocked successfully',
+})
+blockEntity(
+  @Req() req: any,
+  @Param('entityId') entityId: string,
+) {
+  return this.usersService.blockEntity(
+    req.user.userId,
+    entityId,
+  );
+}
+
+@Delete('entity/:entityId/unblock')
+@UseGuards(JwtAuthGuard)
+@ApiOperation({
+  summary: 'Unblock entity',
+})
+@ApiResponse({
+  status: 200,
+  description: 'Entity unblocked successfully',
+})
+unblockEntity(
+  @Req() req: any,
+  @Param('entityId') entityId: string,
+) {
+  return this.usersService.unblockEntity(
+    req.user.userId,
+    entityId,
+  );
+}
 //last brac
 }
 

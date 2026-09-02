@@ -2,6 +2,8 @@ import Link from 'next/link';
 
 import { getEntityBySlug } from '@/services/entity.service';
 import ReviewSection from '@/components/reviews/ReviewSection';
+import EntityActions from '@/components/entities/EntityActions';
+import EntityFollowersLink from '@/components/entities/EntityFollowersLink';
 
 type EntityPageProps = {
   params: Promise<{
@@ -137,15 +139,18 @@ export default async function EntityPage({
           {/* ========================================= */}
           {/* ACTION BUTTONS */}
           {/* ========================================= */}
+          <div className="mt-6 flex flex-wrap gap-3">
+            <EntityFollowersLink
+            entityId={entity.id}
+            slug={entity.slug}
+            />
+          </div>
 
           <div className="mt-6 flex flex-wrap gap-3">
-
-            <button
-              type="button"
-              className="rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-800"
-            >
-              Follow
-            </button>
+            
+            
+            
+            <EntityActions entityId={entity.id} />
 
             <button
               type="button"

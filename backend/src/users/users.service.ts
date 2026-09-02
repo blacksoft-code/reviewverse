@@ -736,6 +736,193 @@ isBlocked: !!blocked,
 isBlockedByTarget: !!blockedByTarget,
 };
 }
+//follow entity
+async followEntity(
+  userId: string,
+  entityId: string,
+) {
+  console.log('FOLLOW:', {
+  userId,
+  entityId,
+});
+  const entity =
+    await this.prisma.entity.findUnique({
+      where: {
+        id: entityId,
+      },
+    });
 
+  if (!entity) {
+    throw new NotFoundException(
+      'Entity not found.',
+    );
+  }
+
+  const existingFollow =
+    await this.prisma.entityFollow.findUnique({
+      where: {
+        userId_entityId: {
+          userId,
+          entityId,
+        },
+      },
+    });
+
+  if (existingFollow) {
+    throw new BadRequestException(
+      'You are already following this entity.',
+    );
+  }
+
+  const follow =
+    await this.prisma.entityFollow.create({
+      data: {
+        userId,
+        entityId,
+      },
+    });
+
+  return follow;
+}
+
+async unfollowEntity(
+  userId: string,
+  entityId: string,
+) {
+  const follow =
+    await this.prisma.entityFollow.findUnique({
+      where: {
+        userId_entityId: {
+          userId,
+          entityId,
+        },
+      },
+    });
+
+  if (!follow) {
+    throw new NotFoundException(
+      'You are not following this entity.',
+    );
+  }
+
+  await this.prisma.entityFollow.delete({
+    where: {
+      id: follow.id,
+    },
+  });
+
+  return {
+    message: 'Entity unfollowed successfully.',
+  };
+}
+
+async blockEntity(
+  userId: string,
+  entityId: string,
+) {
+  const entity =
+    await this.prisma.entity.findUnique({
+      where: {
+        id: entityId,
+      },
+    });
+
+  if (!entity) {
+    throw new NotFoundException(
+      'Entity not found.',
+    );
+  }
+
+  const existingBlock =
+    await this.prisma.entityBlock.findUnique({
+      where: {
+        userId_entityId: {
+          userId,
+          entityId,
+        },
+      },
+    });
+
+  if (existingBlock) {
+    throw new BadRequestException(
+      'You have already blocked this entity.',
+    );
+  }
+
+  const block =
+    await this.prisma.entityBlock.create({
+      data: {
+        userId,
+        entityId,
+      },
+    });
+
+  return block;
+}
+
+async unblockEntity(
+  userId: string,
+  entityId: string,
+) {
+  const block =
+    await this.prisma.entityBlock.findUnique({
+      where: {
+        userId_entityId: {
+          userId,
+          entityId,
+        },
+      },
+    });
+
+  if (!block) {
+    throw new NotFoundException(
+      'You have not blocked this entity.',
+    );
+  }
+
+  await this.prisma.entityBlock.delete({
+    where: {
+      id: block.id,
+    },
+  });
+
+  return {
+    message: 'Entity unblocked successfully.',
+  };
+}
+
+async getEntityRelationshipStatus(
+  userId: string,
+  entityId: string,
+) {
+  console.log('STATUS CHECK:', {
+    userId,
+    entityId,
+  });
+
+  const [follow, block] = await Promise.all([
+    this.prisma.entityFollow.findUnique({
+      where: {
+        userId_entityId: {
+          userId,
+          entityId,
+        },
+      },
+    }),
+    this.prisma.entityBlock.findUnique({
+      where: {
+        userId_entityId: {
+          userId,
+          entityId,
+        },
+      },
+    }),
+  ]);
+
+  return {
+    isFollowing: !!follow,
+    isBlocked: !!block,
+  };
+}
 //last brac
 }

@@ -121,6 +121,34 @@ create(
     return this.entitiesService.getTopRated();
   }
 
+@Get(':id/followers')
+@ApiOperation({
+  summary: 'Get entity followers',
+})
+@ApiResponse({
+  status: 200,
+  description: 'Entity followers retrieved successfully',
+})
+getFollowers(
+  @Param('id') entityId: string,
+) {
+  return this.entitiesService.getFollowers(entityId);
+}
+
+@Get(':id/followers/count')
+@ApiOperation({
+  summary: 'Get entity followers count',
+})
+@ApiResponse({
+  status: 200,
+  description: 'Entity followers count retrieved successfully',
+})
+getFollowersCount(
+  @Param('id') entityId: string,
+) {
+  return this.entitiesService.getFollowersCount(entityId);
+}
+
   @Get(':slug')
   @ApiOperation({
     summary: 'Get an entity by slug',

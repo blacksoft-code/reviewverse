@@ -97,3 +97,41 @@ export async function createEntity(
     body: JSON.stringify(payload),
   });
 }
+
+export type EntityFollower = {
+  id: string;
+  name: string;
+  createdAt: string;
+};
+
+export async function getEntityFollowersCount(
+  entityId: string,
+) {
+  return apiFetch<{
+    success: boolean;
+    statusCode: number;
+    data: number;
+    timestamp: string;
+  }>(
+    `/entities/${entityId}/followers/count`,
+  );
+}
+
+export async function getEntityFollowers(
+  entityId: string,
+) {
+  return apiFetch<{
+    success: boolean;
+    statusCode: number;
+    data: {
+      id: string;
+      userId: string;
+      entityId: string;
+      createdAt: string;
+      user: EntityFollower;
+    }[];
+    timestamp: string;
+  }>(
+    `/entities/${entityId}/followers`,
+  );
+}

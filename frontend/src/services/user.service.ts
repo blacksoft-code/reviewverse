@@ -232,3 +232,44 @@ method: 'DELETE',
 },
 );
 }
+
+export async function followEntity(entityId: string) {
+  return request(`/users/entity/${entityId}/follow`, {
+    method: 'POST',
+  });
+}
+
+export async function unfollowEntity(entityId: string) {
+  return request(`/users/entity/${entityId}/unfollow`, {
+    method: 'DELETE',
+  });
+}
+
+export async function blockEntity(entityId: string) {
+  return request(`/users/entity/${entityId}/block`, {
+    method: 'POST',
+  });
+}
+
+export async function unblockEntity(entityId: string) {
+  return request(`/users/entity/${entityId}/unblock`, {
+    method: 'DELETE',
+  });
+
+
+}
+export async function getEntityRelationshipStatus(
+  entityId: string,
+) {
+  return request(
+    `/users/entity/${entityId}/status`,
+  ) as Promise<{
+    success: boolean;
+    statusCode: number;
+    data: {
+      isFollowing: boolean;
+      isBlocked: boolean;
+    };
+    timestamp: string;
+  }>;
+}

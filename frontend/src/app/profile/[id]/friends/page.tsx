@@ -38,7 +38,7 @@ export default async function FriendsPage({
               </h1>
 
               <p className="mt-2 text-gray-500">
-                0 followers · 0 following
+              
               </p>
             </div>
 
