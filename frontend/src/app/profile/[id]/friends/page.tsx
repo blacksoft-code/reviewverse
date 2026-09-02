@@ -1,5 +1,6 @@
 
 import { getUserProfile } from '@/services/user.service';
+import FriendsContent from '@/components/profile/FriendsContent';
 
 type FriendsPageProps = {
   params: Promise<{
@@ -80,48 +81,10 @@ export default async function FriendsPage({
       </section>
 
       {/* Friends */}
-      <section className="mx-auto max-w-5xl px-6 py-8">
-
-        <div className="rounded-xl bg-black p-6 shadow-sm">
-
-          <div className="flex items-center justify-between">
-
-            <div>
-              <h2 className="text-2xl font-bold">
-                Friends
-              </h2>
-
-              <p className="mt-1 text-sm text-gray-500">
-                Friends of {user.name}
-              </p>
-            </div>
-
-            <span className="text-sm text-gray-500">
-              0 friends
-            </span>
-
-          </div>
-
-          {/* Empty State */}
-          <div className="py-16 text-center">
-
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-2xl">
-              👥
-            </div>
-
-            <h3 className="mt-4 text-lg font-semibold">
-              No friends yet
-            </h3>
-
-            <p className="mt-2 text-sm text-gray-500">
-              {user.name} hasn't added any friends yet.
-            </p>
-
-          </div>
-
-        </div>
-
-      </section>
+      <FriendsContent
+        userId={user.id}
+        userName={user.name}
+      />
 
     </main>
   );

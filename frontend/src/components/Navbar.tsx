@@ -56,9 +56,12 @@ export default function Navbar() {
               {user ? (
                 <>
                   {/* Logged-in user */}
-                  <span className="text-sm text-gray-600">
-                    Hi, {user.name}
-                  </span>
+                  <a
+                    href={`/profile/${user.id}`}
+                    className="text-sm text-gray-600"
+                  >
+                    Hey, {user.name}
+                  </a>
 
                   {/* Logout */}
                   <button

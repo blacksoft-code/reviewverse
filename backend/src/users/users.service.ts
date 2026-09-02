@@ -405,17 +405,16 @@ async rejectFriendRequest(
     );
   }
 
-  const updatedRequest =
-    await this.prisma.friendRequest.update({
-      where: {
-        id: requestId,
-      },
-      data: {
-        status: 'REJECTED',
-      },
-    });
+  await this.prisma.friendRequest.delete({
+  where: {
+    id: requestId,
+  },
+});
 
-  return updatedRequest;
+return {
+  message: 'Friend request rejected successfully.',
+};
+
 }
 async cancelFriendRequest(
   currentUserId: string,

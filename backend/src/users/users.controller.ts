@@ -208,6 +208,27 @@ cancelFriendRequest(
   );
 }
 
+@Get('friend-requests')
+@UseGuards(JwtAuthGuard)
+@ApiOperation({
+  summary: 'Get pending friend requests',
+})
+@ApiResponse({
+  status: 200,
+  description: 'Pending friend requests retrieved successfully',
+})
+@ApiResponse({
+  status: 401,
+  description: 'Unauthorized',
+})
+getPendingFriendRequests(
+  @Req() req: any,
+) {
+  return this.usersService.getPendingFriendRequests(
+    req.user.userId,
+  );
+}
+
 @Get(':id')
 @ApiOperation({
   summary: 'Get user profile',
@@ -299,26 +320,7 @@ unfriendUser(
   );
 }
 
-@Get('friend-requests')
-@UseGuards(JwtAuthGuard)
-@ApiOperation({
-  summary: 'Get pending friend requests',
-})
-@ApiResponse({
-  status: 200,
-  description: 'Pending friend requests retrieved successfully',
-})
-@ApiResponse({
-  status: 401,
-  description: 'Unauthorized',
-})
-getPendingFriendRequests(
-  @Req() req: any,
-) {
-  return this.usersService.getPendingFriendRequests(
-    req.user.userId,
-  );
-}
+
 
 @Post(':id/block')
 @UseGuards(JwtAuthGuard)

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { getProfile } from '@/services/auth.service';
 
 import {
 acceptFriendRequest,
@@ -54,9 +55,29 @@ useState<string | null>(null);
 const [initialLoading, setInitialLoading] =
 useState(true);
 
+const [isOwnProfile, setIsOwnProfile] =
+  useState(false);
+
 useEffect(() => {
 let mounted = true;
 
+async function loadCurrentUser() {
+  try {
+    const response = await getProfile();
+
+    if (!mounted) {
+      return;
+    }
+
+    setIsOwnProfile(
+      response.data.id === userId,
+    );
+  } catch {
+    if (mounted) {
+      setIsOwnProfile(false);
+    }
+  }
+}
 
 async function loadRelationship() {
   try {
@@ -74,10 +95,6 @@ async function loadRelationship() {
     setIsFriend(
       response.data.isFriend,
     );
-
-    setFriendRequestId(
-  response.data.friendRequestId,
-);
 
     // CHANGE: Backend থেকে friend request ID নেওয়া হচ্ছে
     setFriendRequestId(
@@ -113,7 +130,7 @@ async function loadRelationship() {
     }
   }
 }
-
+loadCurrentUser();
 loadRelationship();
 
 return () => {
@@ -308,7 +325,10 @@ const actionsDisabled =
 loading !== null ||
 isBlockedByTarget;
 
-return ( <div className="mt-5 flex flex-wrap gap-3">
+return ( 
+ <>
+    {!isOwnProfile && (
+<div className="mt-5 flex flex-wrap gap-3">
 <button
 type="button"
 onClick={handleFollow}
@@ -396,8 +416,8 @@ className="rounded-lg bg-black px-5 py-2 text-sm font-medium text-white transiti
         ? 'Unblock'
         : 'Block'}
   </button>
-</div>
-
-
+   </div>
+    )}
+  </>
 );
 }
