@@ -7,6 +7,9 @@ import {
 } from '@/services/entity.service';
 
 import SearchBar from '@/components/search/SearchBar';
+import SearchBox from '@/components/search/SearchBox';
+
+import FeedSection from '@/components/feed/FeedSection';
 
 export default async function Home() {
   const [
@@ -30,8 +33,10 @@ export default async function Home() {
       </h1>
 
       <div className="mt-6">
-        <SearchBar />
+   
       </div>
+      <SearchBox />
+       <FeedSection />
 
       {/* =========================
           Top Rated
