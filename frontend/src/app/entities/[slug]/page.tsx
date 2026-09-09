@@ -4,6 +4,7 @@ import { getEntityBySlug } from '@/services/entity.service';
 import ReviewSection from '@/components/reviews/ReviewSection';
 import EntityActions from '@/components/entities/EntityActions';
 import EntityFollowersLink from '@/components/entities/EntityFollowersLink';
+import ClaimBusinessButton from '@/components/entities/ClaimBusinessButton';
 
 type EntityPageProps = {
   params: Promise<{
@@ -151,6 +152,7 @@ export default async function EntityPage({
             
             
             <EntityActions entityId={entity.id} />
+            <ClaimBusinessButton entityId={entity.id} />
 
             <button
               type="button"

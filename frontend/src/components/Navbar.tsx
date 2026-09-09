@@ -55,6 +55,24 @@ export default function Navbar() {
             <>
               {user ? (
                 <>
+
+                {/* NEW: My Businesses */}
+        <Link
+          href="/my-businesses"
+          className="rounded-lg border bg-black px-4 py-2 text-sm hover:bg-gray-50"
+        >
+          My Businesses
+        </Link>
+
+        {/* NEW: Admin-only Claims link */}
+        {user.role === 'ADMIN' && (
+          <Link
+            href="/admin/claims"
+            className="rounded-lg border bg-black px-4 py-2 text-sm hover:bg-gray-50"
+          >
+            Claims
+          </Link>
+        )}
                   {/* Logged-in user */}
                   <a
                     href={`/profile/${user.id}`}
