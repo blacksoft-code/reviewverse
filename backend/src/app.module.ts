@@ -10,6 +10,7 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { FeedModule } from './feed/feed.module';
 import { SearchModule } from './search/search.module';
 import { EntityMembershipsModule } from './entity-memberships/entity-memberships.module';
+import { EntityPostsModule } from './entity-posts/entity-posts.module';
 
 import { ConfigModule } from '@nestjs/config';
 import * as Joi from 'joi';
@@ -42,7 +43,7 @@ import { APP_GUARD } from '@nestjs/core';
     ]),
 
 
-    PrismaModule, UsersModule, AuthModule, CategoriesModule, EntitiesModule, ReviewsModule, FeedModule, SearchModule, EntityMembershipsModule,],
+    PrismaModule, UsersModule, AuthModule, CategoriesModule, EntitiesModule, ReviewsModule, FeedModule, SearchModule, EntityMembershipsModule, EntityPostsModule,],
   controllers: [AppController],
   providers: [
     AppService,

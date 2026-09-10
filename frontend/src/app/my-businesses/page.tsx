@@ -124,25 +124,29 @@ export default function MyBusinessesPage() {
           ) : (
             <div className="mt-4 space-y-3">
               {memberships.map((membership) => (
-                <Link
+                <div
                   key={membership.id}
-                  href={`/entities/${membership.entity?.slug}`}
-                  className="flex items-center justify-between rounded-lg border p-4 hover:bg-gray-50"
+                  className="flex items-center justify-between rounded-lg border p-4"
                 >
-                  <div>
+                  <Link
+                    href={`/entities/${membership.entity?.slug}`}
+                    className="hover:underline"
+                  >
                     <p className="font-medium">
                       {membership.entity?.name}
                     </p>
-
                     <p className="text-sm text-gray-500">
                       Role: {membership.role}
                     </p>
-                  </div>
+                  </Link>
 
-                  <span className="text-sm text-gray-400">
-                    →
-                  </span>
-                </Link>
+                  <Link
+                    href={`/my-businesses/${membership.entityId}/posts`}
+                    className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-gray-50"
+                  >
+                    Manage Posts
+                  </Link>
+                </div>
               ))}
             </div>
           )}

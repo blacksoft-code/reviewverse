@@ -180,6 +180,13 @@ export default async function EntityPage({
           <div className="flex min-w-max border-b">
 
             <a
+              href={`/entities/${slug}/posts`}
+              className="px-6 py-4 text-sm font-medium text-gray-600 hover:text-black"
+            >
+              Posts
+            </a>
+
+            <a
               href={`/entities/${slug}/about`}
               className="border-b-2 border-black px-6 py-4 text-sm font-medium"
             >

@@ -52,6 +52,8 @@ model User {
 
   entityMemberships EntityMembership[]
   entityClaims      EntityClaim[]
+
+  entityPosts EntityPost[]
 }
 
 model Category {
@@ -113,6 +115,7 @@ model Entity {
 
   memberships EntityMembership[]
   claims      EntityClaim[]
+  posts       EntityPost[]
 
   reviews Review[]
 
@@ -287,4 +290,23 @@ model EntityClaim {
   @@index([entityId])
   @@index([userId])
   @@index([status])
+}
+
+model EntityPost {
+  id String @id @default(uuid())
+
+  entityId String
+  authorId String
+
+  content String
+  image   String?
+
+  entity Entity @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  author User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([entityId])
+  @@index([authorId])
 }
