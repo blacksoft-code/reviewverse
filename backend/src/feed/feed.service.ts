@@ -1,14 +1,69 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
+// কত দিনের মধ্যের পোস্ট/রিভিউকে "fresh" ধরা হবে
+const FRESHNESS_DAYS = 3;
+
+type FeedRelations = {
+  friendIds: string[];
+  followedUserIds: string[];
+  followedEntityIds: string[];
+  blockedUserIds: string[];
+  blockedEntityIds: string[];
+};
+
+export type FeedItem =
+  | {
+      type: 'review';
+      id: string;
+      createdAt: Date;
+      priority: number;
+      review: {
+        id: string;
+        rating: number;
+        content: string;
+        userId: string;
+        entityId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        user: { id: string; name: string };
+        entity: {
+          id: string;
+          name: string;
+          slug: string;
+          location: string | null;
+        };
+      };
+    }
+  | {
+      type: 'post';
+      id: string;
+      createdAt: Date;
+      priority: number;
+      post: {
+        id: string;
+        content: string;
+        image: string | null;
+        createdAt: Date;
+        entity: {
+          id: string;
+          name: string;
+          slug: string;
+          logo: string | null;
+        };
+      };
+    };
+
 @Injectable()
 export class FeedService {
-  constructor(
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  async getFeed(userId: string) {
-    // 1. Current user's relationships বের করি
+  // ─────────────────────────────
+  // Friend/follow/block সম্পর্কগুলো বের করা (আগের মতোই)
+  // ─────────────────────────────
+  private async getRelations(
+    userId: string,
+  ): Promise<FeedRelations> {
     const [
       friendships,
       followedUsers,
@@ -16,94 +71,118 @@ export class FeedService {
       blockedUsers,
       blockedEntities,
     ] = await Promise.all([
-         this.prisma.friendship.findMany({
+      this.prisma.friendship.findMany({
         where: {
-          OR: [{ userId1: userId }, { userId2: userId }],
+          OR: [
+            { userId1: userId },
+            { userId2: userId },
+          ],
         },
         select: { userId1: true, userId2: true },
       }),
       this.prisma.userFollow.findMany({
-        where: {
-          followerId: userId,
-        },
-        select: {
-          followingId: true,
-        },
+        where: { followerId: userId },
+        select: { followingId: true },
       }),
-
       this.prisma.entityFollow.findMany({
-        where: {
-          userId,
-        },
-        select: {
-          entityId: true,
-        },
+        where: { userId },
+        select: { entityId: true },
       }),
-
       this.prisma.userBlock.findMany({
-        where: {
-          blockerId: userId,
-        },
-        select: {
-          blockedId: true,
-        },
+        where: { blockerId: userId },
+        select: { blockedId: true },
       }),
-
       this.prisma.entityBlock.findMany({
-        where: {
-          userId,
-        },
-        select: {
-          entityId: true,
-        },
+        where: { userId },
+        select: { entityId: true },
       }),
     ]);
 
-    // Friendship মিউচুয়াল, তাই userId1/userId2 যেকোনো একটা "আমি" হতে পারি —
-    // অন্যপাশেরটাই friend
     const friendIds = friendships.map((f) =>
       f.userId1 === userId ? f.userId2 : f.userId1,
     );
 
-    const followedUserIds =
-      followedUsers.map(
-        (item) => item.followingId,
-      );
+    return {
+      friendIds,
+      followedUserIds: followedUsers.map(
+        (i) => i.followingId,
+      ),
+      followedEntityIds: followedEntities.map(
+        (i) => i.entityId,
+      ),
+      blockedUserIds: blockedUsers.map(
+        (i) => i.blockedId,
+      ),
+      blockedEntityIds: blockedEntities.map(
+        (i) => i.entityId,
+      ),
+    };
+  }
 
-    const followedEntityIds =
-      followedEntities.map(
-        (item) => item.entityId,
-      );
+  private priorityForReview(
+    review: { userId: string; entityId: string },
+    relations: FeedRelations,
+  ): number {
+    if (relations.friendIds.includes(review.userId)) {
+      return 1; // Friends
+    }
 
-    const blockedUserIds =
-      blockedUsers.map(
-        (item) => item.blockedId,
-      );
+    if (
+      relations.followedUserIds.includes(
+        review.userId,
+      )
+    ) {
+      return 2; // Followed user
+    }
 
-    const blockedEntityIds =
-      blockedEntities.map(
-        (item) => item.entityId,
-      );
+    if (
+      relations.followedEntityIds.includes(
+        review.entityId,
+      )
+    ) {
+      return 3; // Followed entity
+    }
 
-    // 2. Blocked user/entity-এর reviews বাদ দিয়ে
-    // সব public reviews নিয়ে আসি
-    const reviews =
-      await this.prisma.review.findMany({
+    return 4; // Everyone else
+  }
+
+  private priorityForPost(
+    post: { entityId: string },
+    relations: FeedRelations,
+  ): number {
+    // Followed business-এর পোস্ট উপরে থাকবে (review-এর
+    // "followed entity" tier-এর সাথে সমান priority)
+    if (
+      relations.followedEntityIds.includes(
+        post.entityId,
+      )
+    ) {
+      return 3;
+    }
+
+    return 4; // Non-followed business — এখনো discovery হিসেবে দেখাবে, কিন্তু নিচে
+  }
+
+  // ─────────────────────────────
+  // মূল feed — pagination + freshness window (fallback সহ)
+  // ─────────────────────────────
+  async getFeed(
+    userId: string,
+    skip: number,
+    take: number,
+  ) {
+    const relations = await this.getRelations(userId);
+
+    const [reviews, posts] = await Promise.all([
+      this.prisma.review.findMany({
         where: {
-          userId: {
-            notIn: blockedUserIds,
-          },
+          userId: { notIn: relations.blockedUserIds },
           entityId: {
-            notIn: blockedEntityIds,
+            notIn: relations.blockedEntityIds,
           },
         },
         include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
+          user: { select: { id: true, name: true } },
           entity: {
             select: {
               id: true,
@@ -113,49 +192,134 @@ export class FeedService {
             },
           },
         },
-        orderBy: {
-          createdAt: 'desc',
+      }),
+      this.prisma.entityPost.findMany({
+        where: {
+          entityId: {
+            notIn: relations.blockedEntityIds,
+          },
         },
-      });
+        select: {
+          id: true,
+          content: true,
+          image: true,
+          createdAt: true,
+          entityId: true,
+          entity: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              logo: true,
+            },
+          },
+        },
+      }),
+    ]);
 
-    // 3. প্রতিটি review-এর priority determine করি
-    const feed = reviews.map((review) => {
-      let priority = 4;
+    const items: FeedItem[] = [
+      ...reviews.map(
+        (review): FeedItem => ({
+          type: 'review',
+          id: review.id,
+          createdAt: review.createdAt,
+          priority: this.priorityForReview(
+            review,
+            relations,
+          ),
+          review,
+        }),
+      ),
+      ...posts.map(
+        (post): FeedItem => ({
+          type: 'post',
+          id: post.id,
+          createdAt: post.createdAt,
+          priority: this.priorityForPost(
+            post,
+            relations,
+          ),
+          post,
+        }),
+      ),
+    ];
 
-      if (friendIds.includes(review.userId)) {
-        priority = 1; // Friends
-      }
-
-      // Followed user's review
-      if (followedUserIds.includes(review.userId)) {
-        priority = 2;
-      }
-
-      // Followed entity's review
-      else if (
-        followedEntityIds.includes(review.entityId,)) {
-        priority = 3;
-      }
-
-      return {
-        ...review,
-        priority,
-      };
-    });
-
-    // 4. Priority ASC
-    // এবং একই priority-এর মধ্যে latest first
-    feed.sort((a, b) => {
+    // Priority ASC, তারপর একই priority-তে সবচেয়ে নতুনটা আগে
+    items.sort((a, b) => {
       if (a.priority !== b.priority) {
         return a.priority - b.priority;
       }
-
       return (
-        new Date(b.createdAt).getTime() -
-        new Date(a.createdAt).getTime()
+        b.createdAt.getTime() - a.createdAt.getTime()
       );
     });
 
-    return feed;
+    // ───── Freshness window + fallback ─────
+    // আগে "fresh" (গত FRESHNESS_DAYS দিনের) item গুলো, তারপর বাকি
+    // পুরনো item গুলো — দুটো গ্রুপের ভেতরেই আগের sort অর্ডার বজায় থাকে
+    const freshCutoff = new Date(
+      Date.now() -
+        FRESHNESS_DAYS * 24 * 60 * 60 * 1000,
+    );
+
+    const freshItems = items.filter(
+      (i) => i.createdAt >= freshCutoff,
+    );
+    const staleItems = items.filter(
+      (i) => i.createdAt < freshCutoff,
+    );
+
+    const ordered = [...freshItems, ...staleItems];
+
+    const page = ordered.slice(skip, skip + take);
+    const hasMore = skip + take < ordered.length;
+
+    return {
+      items: page,
+      hasMore,
+      total: ordered.length,
+    };
+  }
+
+  // ─────────────────────────────
+  // Scroll করার মাঝেই friend/followed business-এর নতুন
+  // post/review এসেছে কিনা — polling করে চেক করার জন্য
+  // ─────────────────────────────
+  async getNewSince(userId: string, since: Date) {
+    const relations = await this.getRelations(userId);
+
+    const relevantUserIds = [
+      ...relations.friendIds,
+      ...relations.followedUserIds,
+    ];
+
+    const [newReviewsCount, newPostsCount] =
+      await Promise.all([
+        this.prisma.review.count({
+          where: {
+            createdAt: { gt: since },
+            userId: {
+              in: relevantUserIds,
+              notIn: relations.blockedUserIds,
+            },
+            entityId: {
+              notIn: relations.blockedEntityIds,
+            },
+          },
+        }),
+        this.prisma.entityPost.count({
+          where: {
+            createdAt: { gt: since },
+            entityId: {
+              in: relations.followedEntityIds,
+              notIn: relations.blockedEntityIds,
+            },
+          },
+        }),
+      ]);
+
+    return {
+      count: newReviewsCount + newPostsCount,
+    };
   }
 }

@@ -18,15 +18,62 @@ export type FeedReview = {
     slug: string;
     location: string | null;
   };
-  priority: number;
 };
 
-export type FeedResponse = {
+export type FeedPost = {
+  id: string;
+  content: string;
+  image: string | null;
+  createdAt: string;
+  entity: {
+    id: string;
+    name: string;
+    slug: string;
+    logo: string | null;
+  };
+};
+
+export type FeedEntry =
+  | {
+      type: 'review';
+      id: string;
+      createdAt: string;
+      priority: number;
+      review: FeedReview;
+    }
+  | {
+      type: 'post';
+      id: string;
+      createdAt: string;
+      priority: number;
+      post: FeedPost;
+    };
+
+export type FeedPage = {
+  items: FeedEntry[];
+  hasMore: boolean;
+  total: number;
+};
+
+type ApiEnvelope<T> = {
   success: boolean;
   statusCode: number;
-  data: FeedReview[];
+  data: T;
 };
 
-export async function getFeed() {
-  return apiFetch<FeedResponse>('/feed');
+export async function getFeed(
+  skip: number,
+  take: number,
+) {
+  return apiFetch<ApiEnvelope<FeedPage>>(
+    `/feed?skip=${skip}&take=${take}`,
+  );
+}
+
+export async function getNewSince(since: string) {
+  return apiFetch<ApiEnvelope<{ count: number }>>(
+    `/feed/new-since?since=${encodeURIComponent(
+      since,
+    )}`,
+  );
 }
