@@ -4,6 +4,7 @@ import "./globals.css";
 
 import Navbar from '@/components/Navbar';
 import { AuthProvider } from '@/context/AuthContext';
+import { BusinessProvider } from '@/context/BusinessContext'; // ← NEW
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,8 +29,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <AuthProvider>        
-          <Navbar />        
-          {children}
+          <BusinessProvider>       {/* ← NEW */}
+            <Navbar />
+            {children}
+          </BusinessProvider>      {/* ← NEW */}
         </AuthProvider>
 
       </body>

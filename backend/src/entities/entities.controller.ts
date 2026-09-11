@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -11,6 +12,7 @@ import {
 
 import { EntitiesService } from './entities.service';
 import { CreateEntityDto } from './dto/create-entity.dto';
+import { UpdateEntityDto } from './dto/update-entity.dto';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
@@ -55,7 +57,7 @@ create(
   // এখান থেকে user.id নিয়ে service-এ পাঠাচ্ছি।
   return this.entitiesService.create(
     createEntityDto,
-    req.user.id,
+    req.user.userId,
   );
 }
 
@@ -147,6 +149,34 @@ getFollowersCount(
   @Param('id') entityId: string,
 ) {
   return this.entitiesService.getFollowersCount(entityId);
+}
+
+@Get('id/:id')
+@ApiOperation({ summary: 'Get an entity by ID (for editing)' })
+findById(@Param('id') id: string) {
+  return this.entitiesService.findById(id);
+}
+
+@Patch(':id')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
+@ApiOperation({
+  summary: '[Owner/Manager/Employee] Update business info',
+})
+@ApiResponse({
+  status: 403,
+  description: 'Not a member of this business',
+})
+update(
+  @Param('id') id: string,
+  @Body() updateEntityDto: UpdateEntityDto,
+  @Req() req: any,
+) {
+  return this.entitiesService.update(
+    id,
+    req.user.userId,
+    updateEntityDto,
+  );
 }
 
   @Get(':slug')

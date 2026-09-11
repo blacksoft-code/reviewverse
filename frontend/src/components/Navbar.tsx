@@ -6,6 +6,8 @@ import {
   useAuth,
 } from '@/context/AuthContext';
 
+import BusinessSwitcher from '@/components/BusinessSwitcher';
+
 
 
 export default function Navbar() {
@@ -57,12 +59,7 @@ export default function Navbar() {
                 <>
 
                 {/* NEW: My Businesses */}
-        <Link
-          href="/my-businesses"
-          className="rounded-lg border bg-black px-4 py-2 text-sm hover:bg-gray-50"
-        >
-          My Businesses
-        </Link>
+      
 
         {/* NEW: Admin-only Claims link */}
         {user.role === 'ADMIN' && (
@@ -74,12 +71,7 @@ export default function Navbar() {
           </Link>
         )}
                   {/* Logged-in user */}
-                  <a
-                    href={`/profile/${user.id}`}
-                    className="text-sm text-gray-600"
-                  >
-                    Hey, {user.name}
-                  </a>
+                  <BusinessSwitcher />
 
                   {/* Logout */}
                   <button

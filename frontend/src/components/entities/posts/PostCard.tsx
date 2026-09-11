@@ -20,7 +20,7 @@ export default function PostCard({
   actions,
 }: PostCardProps) {
   return (
-    <div className="rounded-xl border bg-white p-5 shadow-sm">
+    <div className="rounded-xl border bg-black p-5 shadow-sm">
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gray-200">
           {logo ? (
