@@ -33,6 +33,7 @@ export type FeedItem =
           slug: string;
           location: string | null;
         };
+        media: { id: string; url: string }[];
       };
     }
   | {
@@ -43,7 +44,10 @@ export type FeedItem =
       post: {
         id: string;
         content: string;
-        image: string | null;
+        media: {
+          id: string;
+          url: string;
+        }[];
         createdAt: Date;
         entity: {
           id: string;
@@ -182,16 +186,20 @@ export class FeedService {
           },
         },
         include: {
-          user: { select: { id: true, name: true } },
-          entity: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-              location: true,
+            user: { select: { id: true, name: true } },
+            entity: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                location: true,
+              },
+            },
+            media: {
+              select: { id: true, url: true },
+              orderBy: { createdAt: 'asc' },
             },
           },
-        },
       }),
       this.prisma.entityPost.findMany({
         where: {
@@ -202,7 +210,10 @@ export class FeedService {
         select: {
           id: true,
           content: true,
-          image: true,
+          media: {
+            select: { id: true, url: true },
+            orderBy: { createdAt: 'asc' },
+          },
           createdAt: true,
           entityId: true,
           entity: {

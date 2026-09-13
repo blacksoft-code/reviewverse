@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { FeedReview } from '@/services/feed.service';
+import PhotoGrid from '@/components/media/PhotoGrid';
 
 export default function FeedItem({
   review,
@@ -31,7 +32,12 @@ export default function FeedItem({
 
       <p className="mt-3 text-sm">
         {review.content}
+        
       </p>
+
+            {review.media && review.media.length > 0 && (
+        <PhotoGrid photos={review.media} />
+      )}
     </div>
   );
 }

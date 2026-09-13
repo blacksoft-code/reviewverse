@@ -109,14 +109,14 @@ export class CreateEntityDto {
     example: 'https://example.com/cover.jpg',
   })
   @IsOptional()
-  @IsUrl()
+  @IsUrl({ require_tld: false })
   coverPhoto?: string;
 
   @ApiPropertyOptional({
     example: 'https://example.com/logo.png',
   })
   @IsOptional()
-  @IsUrl()
+  @IsUrl({ require_tld: false })
   logo?: string;
 
   @ApiPropertyOptional({

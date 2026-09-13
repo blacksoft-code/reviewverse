@@ -20,10 +20,15 @@ export type FeedReview = {
   };
 };
 
+export type FeedPostMedia = {
+  id: string;
+  url: string;
+};
+
 export type FeedPost = {
   id: string;
   content: string;
-  image: string | null;
+  media: FeedPostMedia[];
   createdAt: string;
   entity: {
     id: string;

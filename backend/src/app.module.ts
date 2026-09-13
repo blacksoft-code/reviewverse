@@ -17,6 +17,7 @@ import * as Joi from 'joi';
 
 import { ThrottlerGuard, ThrottlerModule, } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { MediaModule } from './media/media.module';
 
 @Module({
   imports: [
@@ -43,7 +44,7 @@ import { APP_GUARD } from '@nestjs/core';
     ]),
 
 
-    PrismaModule, UsersModule, AuthModule, CategoriesModule, EntitiesModule, ReviewsModule, FeedModule, SearchModule, EntityMembershipsModule, EntityPostsModule,],
+    PrismaModule, UsersModule, AuthModule, CategoriesModule, EntitiesModule, ReviewsModule, FeedModule, SearchModule, EntityMembershipsModule, EntityPostsModule, MediaModule,],
   controllers: [AppController],
   providers: [
     AppService,

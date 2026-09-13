@@ -49,12 +49,12 @@ export class EntityPostsService {
         entityId,
         authorId: userId,
         content: dto.content,
-        image: dto.image,
       },
       include: {
         author: {
           select: { id: true, name: true, email: true },
         },
+        media: true, // নতুন তৈরি হওয়া post-এ শুরুতে media থাকবে না (empty array), কিন্তু shape consistent রাখতে include রাখা হলো
       },
     });
   }
@@ -69,9 +69,12 @@ export class EntityPostsService {
       select: {
         id: true,
         content: true,
-        image: true,
         createdAt: true,
         updatedAt: true,
+        media: {
+          select: { id: true, url: true },
+          orderBy: { createdAt: 'asc' },
+        },
         entity: {
           select: {
             id: true,
@@ -91,9 +94,12 @@ export class EntityPostsService {
       select: {
         id: true,
         content: true,
-        image: true,
         createdAt: true,
         updatedAt: true,
+        media: {
+          select: { id: true, url: true },
+          orderBy: { createdAt: 'asc' },
+        },
         entity: {
           select: {
             id: true,
@@ -134,6 +140,9 @@ export class EntityPostsService {
         author: {
           select: { id: true, name: true, email: true },
         },
+        media: {
+          orderBy: { createdAt: 'asc' },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -170,7 +179,11 @@ export class EntityPostsService {
       where: { id: postId },
       data: {
         content: dto.content,
-        image: dto.image,
+      },
+      include: {
+        media: {
+          orderBy: { createdAt: 'asc' },
+        },
       },
     });
   }

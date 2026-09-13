@@ -6,6 +6,11 @@ export type CreateReviewPayload = {
   entityId: string;
 };
 
+export type ReviewMedia = {
+  id: string;
+  url: string;
+};
+
 export type Review = {
   id: string;
   rating: number;
@@ -17,6 +22,7 @@ export type Review = {
     id: string;
     name: string;
   };
+  media?: ReviewMedia[];
 };
 
 export type CreateReviewResponse = {

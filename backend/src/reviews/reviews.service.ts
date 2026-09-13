@@ -70,25 +70,29 @@ export class ReviewsService {
     return review;
   }
 
-  async findByEntity(entityId: string) {
-    return this.prisma.review.findMany({
-      where: {
-        entityId,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-          },
+async findByEntity(entityId: string) {
+  return this.prisma.review.findMany({
+    where: {
+      entityId,
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
         },
       },
-      orderBy: {
-        createdAt: 'desc',
+      media: {
+        orderBy: {
+          createdAt: 'asc',
+        },
       },
-    });
-  }
-
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  });
+}
 //update method  
 
 async update(

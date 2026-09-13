@@ -1,10 +1,14 @@
 import { ReactNode } from 'react';
 
+import PhotoGrid, {
+  GridPhoto,
+} from '@/components/media/PhotoGrid';
+
 type PostCardProps = {
   name: string;
   logo?: string | null;
   content: string;
-  image?: string | null;
+  media?: GridPhoto[];
   createdAt: string;
   authorLabel?: string;
   actions?: ReactNode;
@@ -14,7 +18,7 @@ export default function PostCard({
   name,
   logo,
   content,
-  image,
+  media,
   createdAt,
   authorLabel,
   actions,
@@ -50,12 +54,8 @@ export default function PostCard({
         {content}
       </p>
 
-      {image && (
-        <img
-          src={image}
-          alt="Post image"
-          className="mt-3 max-h-96 w-full rounded-lg object-cover"
-        />
+      {media && media.length > 0 && (
+        <PhotoGrid photos={media} />
       )}
 
       {actions && (

@@ -1,7 +1,6 @@
 import {
   IsOptional,
   IsString,
-  IsUrl,
   MaxLength,
 } from 'class-validator';
 
@@ -16,12 +15,4 @@ export class UpdateEntityPostDto {
   @IsString()
   @MaxLength(5000)
   content?: string;
-
-  @ApiPropertyOptional({
-    example: 'https://example.com/images/promo-2.jpg',
-    description: 'Updated image URL',
-  })
-  @IsOptional()
-  @IsUrl()
-  image?: string;
 }

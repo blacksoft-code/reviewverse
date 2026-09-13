@@ -1,12 +1,10 @@
 import {
   IsNotEmpty,
-  IsOptional,
   IsString,
-  IsUrl,
   MaxLength,
 } from 'class-validator';
 
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateEntityPostDto {
   @ApiProperty({
@@ -18,11 +16,6 @@ export class CreateEntityPostDto {
   @MaxLength(5000)
   content: string;
 
-  @ApiPropertyOptional({
-    example: 'https://example.com/images/promo.jpg',
-    description: 'Optional image URL attached to the post',
-  })
-  @IsOptional()
-  @IsUrl()
-  image?: string;
+  // ছবি এখানে না — post তৈরি হওয়ার পর post.id দিয়ে
+  // POST /media/upload-multiple (type=ENTITY_POST) কল হবে
 }

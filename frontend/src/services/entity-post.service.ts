@@ -13,11 +13,16 @@ export type EntityPostSummaryEntity = {
   logo: string | null;
 };
 
+export type PostMedia = {
+  id: string;
+  url: string;
+};
+
 // Public feed / single post — author info নেই
 export type PublicEntityPost = {
   id: string;
   content: string;
-  image: string | null;
+  media: PostMedia[];
   createdAt: string;
   updatedAt: string;
   entity: EntityPostSummaryEntity;
@@ -29,7 +34,7 @@ export type ManagedEntityPost = {
   entityId: string;
   authorId: string;
   content: string;
-  image: string | null;
+  media: PostMedia[];
   createdAt: string;
   updatedAt: string;
   author: EntityPostAuthor;
@@ -46,12 +51,10 @@ type ApiEnvelope<T> = {
 
 export type CreateEntityPostInput = {
   content: string;
-  image?: string;
 };
 
 export type UpdateEntityPostInput = {
   content?: string;
-  image?: string;
 };
 
 // =========================

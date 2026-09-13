@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import type { FeedPost } from '@/services/feed.service';
+import PhotoGrid from '@/components/media/PhotoGrid';
 
 export default function FeedPostCard({
   post,
@@ -19,26 +20,20 @@ export default function FeedPostCard({
             />
           ) : (
             <span className="text-xs font-bold text-gray-500">
-              {post.entity.name
-                .charAt(0)
-                .toUpperCase()}
+              {post.entity.name.charAt(0).toUpperCase()}
             </span>
           )}
         </div>
 
         <Link
-          href={`/entities/${encodeURIComponent(
-            post.entity.slug,
-          )}`}
+          href={`/entities/${encodeURIComponent(post.entity.slug)}`}
           className="font-medium hover:underline"
         >
           {post.entity.name}
         </Link>
 
         <span className="ml-auto text-xs text-gray-400">
-          {new Date(
-            post.createdAt,
-          ).toLocaleDateString()}
+          {new Date(post.createdAt).toLocaleDateString()}
         </span>
       </div>
 
@@ -46,12 +41,8 @@ export default function FeedPostCard({
         {post.content}
       </p>
 
-      {post.image && (
-        <img
-          src={post.image}
-          alt="Post"
-          className="mt-3 max-h-96 w-full rounded-lg object-cover"
-        />
+      {post.media && post.media.length > 0 && (
+        <PhotoGrid photos={post.media} />
       )}
     </div>
   );

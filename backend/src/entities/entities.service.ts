@@ -129,7 +129,12 @@ async create(
 async findById(id: string) {
   const entity = await this.prisma.entity.findUnique({
     where: { id },
-    include: { category: true },
+    include: { 
+      category: true,
+      media: {
+        where: { type: { in: ['ENTITY_LOGO', 'ENTITY_COVER'] } },
+      },
+     },
   });
 
   if (!entity) {
@@ -213,6 +218,9 @@ async update(
       where: { slug },
       include: {
         category: true,
+        media: {
+          where: { type: { in: ['ENTITY_LOGO', 'ENTITY_COVER'] } },
+        },
         reviews: {
           include: {
             user: {

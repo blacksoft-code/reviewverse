@@ -8,6 +8,7 @@ import {
   deleteReview,
   Review,
 } from '@/services/review.service';
+import PhotoGrid from '@/components/media/PhotoGrid';
 
 type ReviewSectionProps = {
   entityId: string;
@@ -267,6 +268,9 @@ async function handleUpdate(reviewId: string) {
                     <p className="mt-3">
                       {review.content}
                     </p>
+                    {review.media && review.media.length > 0 && (
+                      <PhotoGrid photos={review.media} />
+                    )}
 
                     {isOwner && (
                       <div className="mt-4 flex gap-2">

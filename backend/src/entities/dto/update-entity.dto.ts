@@ -66,15 +66,15 @@ export class UpdateEntityDto {
     example: 'https://example.com/cover.jpg',
   })
   @IsOptional()
-  @IsUrl()
-  coverPhoto?: string;
+@IsUrl({ require_tld: false })
+coverPhoto?: string;
 
   @ApiPropertyOptional({
     example: 'https://example.com/logo.png',
   })
   @IsOptional()
-  @IsUrl()
-  logo?: string;
+@IsUrl({ require_tld: false })
+logo?: string;
 
   @ApiPropertyOptional({
     example: 'Wi-Fi, Parking, Wheelchair accessible',

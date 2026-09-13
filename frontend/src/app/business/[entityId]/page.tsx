@@ -27,6 +27,13 @@ import {
   updateEntity,
 } from '@/services/entity-management.service';
 
+// Media components
+import MultiImageUploader from '@/components/media/MultiImageUploader';
+import SingleImageUploader from '@/components/media/SingleImageUploader';
+
+// Media service
+import { uploadImages } from '@/services/media.service';
+
 type Tab = 'posts' | 'info';
 
 export default function BusinessHomePage() {
@@ -45,32 +52,48 @@ export default function BusinessHomePage() {
   const [error, setError] = useState('');
 
   // ───────── Posts state ─────────
+
   const [posts, setPosts] = useState<
     ManagedEntityPost[]
   >([]);
+
   const [content, setContent] = useState('');
-  const [image, setImage] = useState('');
+
+  // নতুন Media system:
+  // Post-এর জন্য একাধিক image/file রাখা হবে।
+  const [postPhotos, setPostPhotos] =
+    useState<File[]>([]);
+
   const [submitting, setSubmitting] = useState(false);
+
   const isSubmittingRef = useRef(false);
 
-  const [editingPostId, setEditingPostId] = useState<
-    string | null
-  >(null);
+  // ───────── Edit Post state ─────────
+
+  const [editingPostId, setEditingPostId] =
+    useState<string | null>(null);
+
   const [editingContent, setEditingContent] =
     useState('');
-  const [editingImage, setEditingImage] = useState('');
+
   const [actingOn, setActingOn] = useState<
     string | null
   >(null);
 
   // ───────── Edit Info state ─────────
+
   const [form, setForm] = useState<
     Partial<EntityDetail>
   >({});
+
   const [savingInfo, setSavingInfo] = useState(false);
   const [infoSaved, setInfoSaved] = useState(false);
 
   const { setActiveBusiness } = useBusinessContext();
+
+  // ─────────────────────────────
+  // Auth + initial loading
+  // ─────────────────────────────
 
   useEffect(() => {
     if (authLoading) {
@@ -83,34 +106,49 @@ export default function BusinessHomePage() {
     }
 
     loadAll();
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, user, entityId]);
 
+  // ─────────────────────────────
+  // Clear active business
+  // when leaving this page
+  // ─────────────────────────────
+
   useEffect(() => {
     return () => {
-        setActiveBusiness(null);
+      setActiveBusiness(null);
     };
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+  }, []);
+
+  // ─────────────────────────────
+  // Load business + posts
+  // ─────────────────────────────
 
   async function loadAll() {
     try {
       setLoading(true);
 
-      const [entityRes, postsRes] = await Promise.all([
-        getEntityById(entityId),
-        getManageFeed(entityId),
-      ]);
+      const [entityRes, postsRes] =
+        await Promise.all([
+          getEntityById(entityId),
+          getManageFeed(entityId),
+        ]);
 
       setEntity(entityRes.data);
       setForm(entityRes.data);
-      // NEW: Informing Navbar-that i m on whitch business
+
+      // Navbar-কে জানাচ্ছি কোন business active
       setActiveBusiness({
-      id: entityRes.data.id,
-      name: entityRes.data.name,
-      logo: entityRes.data.logo,
+        id: entityRes.data.id,
+        name: entityRes.data.name,
+        logo: entityRes.data.logo,
       });
+
       setPosts(postsRes.data);
+
       setError('');
     } catch (err) {
       setError(
@@ -123,28 +161,59 @@ export default function BusinessHomePage() {
     }
   }
 
-  // ───────── Posts handlers ─────────
+  // ─────────────────────────────
+  // Create Post
+  // ─────────────────────────────
 
   async function handleCreate(e: FormEvent) {
     e.preventDefault();
 
+    // Prevent duplicate submit
     if (isSubmittingRef.current) {
       return;
     }
 
     isSubmittingRef.current = true;
+
     setError('');
     setSubmitting(true);
 
     try {
-      const response = await createPost(entityId, {
-        content,
-        image: image || undefined,
-      });
+      // ─────────────────────────────
+      // Step 1:
+      // আগে শুধু Post তৈরি করছি
+      // ─────────────────────────────
 
-      setPosts((prev) => [response.data, ...prev]);
+      const response = await createPost(entityId, { content,});
+      let post = response.data;
+
+      // ─────────────────────────────
+      // Step 2:
+      // Post তৈরি হওয়ার পরে তার ID পাওয়া গেছে।
+      // এখন selected photos Media table-এ upload হবে।
+      // ─────────────────────────────
+
+      if (postPhotos.length > 0) {
+        const media = await uploadImages(
+          postPhotos,
+          'ENTITY_POST',
+          post.id,
+        );
+
+        // Uploaded media post-এর সাথে attach করছি
+        post = { ...post, media, };
+      }
+
+      // ─────────────────────────────
+      // Step 3:
+      // নতুন post feed-এর উপরে যোগ করছি
+      // ─────────────────────────────
+
+      setPosts((prev) => [post, ...prev]);
+
+      // Form reset
       setContent('');
-      setImage('');
+      setPostPhotos([]);
     } catch (err) {
       setError(
         err instanceof Error
@@ -157,17 +226,27 @@ export default function BusinessHomePage() {
     }
   }
 
+  // ─────────────────────────────
+  // Start editing post
+  // ─────────────────────────────
+
   function startEditing(post: ManagedEntityPost) {
     setEditingPostId(post.id);
     setEditingContent(post.content);
-    setEditingImage(post.image ?? '');
   }
+
+  // ─────────────────────────────
+  // Cancel editing
+  // ─────────────────────────────
 
   function cancelEditing() {
     setEditingPostId(null);
     setEditingContent('');
-    setEditingImage('');
   }
+
+  // ─────────────────────────────
+  // Update Post
+  // ─────────────────────────────
 
   async function handleUpdatePost(postId: string) {
     setActingOn(postId);
@@ -176,7 +255,6 @@ export default function BusinessHomePage() {
     try {
       const response = await updatePost(postId, {
         content: editingContent,
-        image: editingImage || undefined,
       });
 
       setPosts((prev) =>
@@ -197,12 +275,17 @@ export default function BusinessHomePage() {
     }
   }
 
+  // ─────────────────────────────
+  // Delete Post
+  // ─────────────────────────────
+
   async function handleDeletePost(postId: string) {
     setActingOn(postId);
     setError('');
 
     try {
       await deletePost(postId);
+
       setPosts((prev) =>
         prev.filter((p) => p.id !== postId),
       );
@@ -217,41 +300,81 @@ export default function BusinessHomePage() {
     }
   }
 
-  // ───────── Edit Info handlers ─────────
+  // ─────────────────────────────
+  // Edit Business Info
+  // ─────────────────────────────
 
   function handleFormChange(
     field: keyof EntityDetail,
     value: string,
   ) {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+
     setInfoSaved(false);
   }
 
+  // ─────────────────────────────
+  // Save Business Info
+  // ─────────────────────────────
+
   async function handleSaveInfo(e: FormEvent) {
     e.preventDefault();
+
     setSavingInfo(true);
     setError('');
 
     try {
-      const response = await updateEntity(entityId, {
-        name: form.name,
-        description: form.description ?? undefined,
-        location: form.location ?? undefined,
-        phone: form.phone ?? undefined,
-        website: form.website ?? undefined,
-        email: form.email ?? undefined,
-        businessHours: form.businessHours ?? undefined,
-        priceRange: form.priceRange ?? undefined,
-        serviceOptions:
-          form.serviceOptions ?? undefined,
-        coverPhoto: form.coverPhoto ?? undefined,
-        logo: form.logo ?? undefined,
-        amenities: form.amenities ?? undefined,
-        paymentMethods:
-          form.paymentMethods ?? undefined,
-        socialLinks: form.socialLinks ?? undefined,
-        menu: form.menu ?? undefined,
-      });
+      const response = await updateEntity(
+        entityId,
+        {
+          name: form.name,
+
+          description:
+            form.description ?? undefined,
+
+          location:
+            form.location ?? undefined,
+
+          phone:
+            form.phone ?? undefined,
+
+          website:
+            form.website || undefined,
+
+          email:
+            form.email ?? undefined,
+
+          businessHours:
+            form.businessHours ?? undefined,
+
+          priceRange:
+            form.priceRange ?? undefined,
+
+          serviceOptions:
+            form.serviceOptions ?? undefined,
+
+          coverPhoto:
+            form.coverPhoto || undefined,
+
+          logo:
+            form.logo || undefined,
+
+          amenities:
+            form.amenities ?? undefined,
+
+          paymentMethods:
+            form.paymentMethods ?? undefined,
+
+          socialLinks:
+            form.socialLinks ?? undefined,
+
+          menu:
+            form.menu || undefined,
+        },
+      );
 
       setEntity(response.data);
       setForm(response.data);
@@ -267,13 +390,23 @@ export default function BusinessHomePage() {
     }
   }
 
+  // ─────────────────────────────
+  // Loading
+  // ─────────────────────────────
+
   if (authLoading || loading) {
     return (
       <main className="min-h-screen p-8">
-        <p className="text-gray-500">Loading...</p>
+        <p className="text-gray-500">
+          Loading...
+        </p>
       </main>
     );
   }
+
+  // ─────────────────────────────
+  // Business not found
+  // ─────────────────────────────
 
   if (!entity) {
     return (
@@ -287,9 +420,14 @@ export default function BusinessHomePage() {
 
   return (
     <main className="min-h-screen bg-gray-50 pb-16">
-      {/* ───────── Header ───────── */}
+
+      {/* ───────────────────────────── */}
+      {/* Header */}
+      {/* ───────────────────────────── */}
+
       <div className="border-b bg-white">
         <div className="mx-auto max-w-3xl px-6 py-6">
+
           <Link
             href="/my-businesses"
             className="text-sm text-gray-500 hover:text-black"
@@ -298,7 +436,10 @@ export default function BusinessHomePage() {
           </Link>
 
           <div className="mt-3 flex items-center gap-4">
+
+            {/* Business logo */}
             <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-gray-200">
+
               {entity.logo ? (
                 <img
                   src={entity.logo}
@@ -307,26 +448,36 @@ export default function BusinessHomePage() {
                 />
               ) : (
                 <span className="text-lg font-bold text-gray-500">
-                  {entity.name.charAt(0).toUpperCase()}
+                  {entity.name
+                    .charAt(0)
+                    .toUpperCase()}
                 </span>
               )}
+
             </div>
 
             <div>
+
               <h1 className="text-2xl font-bold">
                 {entity.name}
               </h1>
+
               <Link
                 href={`/entities/${entity.slug}`}
                 className="text-sm text-gray-500 hover:underline"
               >
                 View public page →
               </Link>
+
             </div>
           </div>
 
-          {/* ───────── Tabs ───────── */}
+          {/* ───────────────────────────── */}
+          {/* Tabs */}
+          {/* ───────────────────────────── */}
+
           <div className="mt-5 flex gap-2 border-b">
+
             <button
               type="button"
               onClick={() => setTab('posts')}
@@ -350,27 +501,37 @@ export default function BusinessHomePage() {
             >
               Edit Info
             </button>
+
           </div>
+
         </div>
       </div>
 
       <div className="mx-auto max-w-3xl px-6">
+
+        {/* Error */}
         {error && (
           <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">
             {error}
           </p>
         )}
 
-        {/* ================================= */}
+        {/* ================================================= */}
         {/* POSTS TAB */}
-        {/* ================================= */}
+        {/* ================================================= */}
 
         {tab === 'posts' && (
           <div className="mt-6">
+
+            {/* ───────────────────────────── */}
+            {/* Create Post */}
+            {/* ───────────────────────────── */}
+
             <form
               onSubmit={handleCreate}
               className="rounded-xl border bg-black p-5"
             >
+
               <textarea
                 value={content}
                 onChange={(e) =>
@@ -382,38 +543,53 @@ export default function BusinessHomePage() {
                 className="w-full resize-none rounded-lg border p-3 text-sm"
               />
 
-              <input
-                type="url"
-                value={image}
-                onChange={(e) =>
-                  setImage(e.target.value)
-                }
-                placeholder="Image URL (optional)"
-                className="mt-3 w-full rounded-lg border p-2.5 text-sm"
-              />
+              {/* ───────────────────────────── */}
+              {/* Multiple Post Images */}
+              {/* ───────────────────────────── */}
+
+              <div className="mt-3">
+                <MultiImageUploader
+                  maxFiles={10}
+                  onChange={setPostPhotos}
+                />
+              </div>
 
               <button
                 type="submit"
                 disabled={submitting}
                 className="mt-3 rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
               >
-                {submitting ? 'Posting...' : 'Post'}
+                {submitting
+                  ? 'Posting...'
+                  : 'Post'}
               </button>
+
             </form>
 
+            {/* ───────────────────────────── */}
+            {/* Posts List */}
+            {/* ───────────────────────────── */}
+
             <div className="mt-6 space-y-4">
+
               {posts.length === 0 ? (
                 <p className="text-sm text-gray-500">
-                  No posts yet — publish your first
-                  update above.
+                  No posts yet — publish your
+                  first update above.
                 </p>
               ) : (
                 posts.map((post) =>
                   editingPostId === post.id ? (
+
+                    /* ─────────────────────── */
+                    /* Edit Post */
+                    /* ─────────────────────── */
+
                     <div
                       key={post.id}
                       className="rounded-xl border bg-white p-5"
                     >
+
                       <textarea
                         value={editingContent}
                         onChange={(e) =>
@@ -425,23 +601,14 @@ export default function BusinessHomePage() {
                         className="w-full resize-none rounded-lg border p-3 text-sm"
                       />
 
-                      <input
-                        type="url"
-                        value={editingImage}
-                        onChange={(e) =>
-                          setEditingImage(
-                            e.target.value,
-                          )
-                        }
-                        placeholder="Image URL (optional)"
-                        className="mt-3 w-full rounded-lg border p-2.5 text-sm"
-                      />
-
                       <div className="mt-3 flex gap-2">
+
                         <button
                           type="button"
                           onClick={() =>
-                            handleUpdatePost(post.id)
+                            handleUpdatePost(
+                              post.id,
+                            )
                           }
                           disabled={
                             actingOn === post.id
@@ -458,21 +625,37 @@ export default function BusinessHomePage() {
                         >
                           Cancel
                         </button>
+
                       </div>
                     </div>
+
                   ) : (
+
+                    /* ─────────────────────── */
+                    /* Normal Post */
+                    /* ─────────────────────── */
+
                     <PostCard
                       key={post.id}
+
                       name={entity.name}
+
                       logo={entity.logo}
+
                       content={post.content}
-                      image={post.image}
+
+                      // পুরোনো image-এর পরিবর্তে
+                      // এখন Media array পাঠানো হচ্ছে
+                      media={post.media ?? []}
+
                       createdAt={post.createdAt}
+
                       authorLabel={
                         post.author
                           ? `Posted by ${post.author.name}`
                           : undefined
                       }
+
                       actions={
                         <>
                           <button
@@ -488,7 +671,9 @@ export default function BusinessHomePage() {
                           <button
                             type="button"
                             onClick={() =>
-                              handleDeletePost(post.id)
+                              handleDeletePost(
+                                post.id,
+                              )
                             }
                             disabled={
                               actingOn === post.id
@@ -502,32 +687,41 @@ export default function BusinessHomePage() {
                         </>
                       }
                     />
+
                   ),
                 )
               )}
+
             </div>
           </div>
         )}
 
-        {/* ================================= */}
+        {/* ================================================= */}
         {/* EDIT INFO TAB */}
-        {/* ================================= */}
+        {/* ================================================= */}
 
         {tab === 'info' && (
           <form
             onSubmit={handleSaveInfo}
             className="mt-6 space-y-4 rounded-xl border bg-black p-6"
           >
+
+            {/* Success message */}
             {infoSaved && (
               <p className="rounded-lg bg-green-50 p-3 text-sm text-green-700">
                 Business info updated successfully.
               </p>
             )}
 
+            {/* ───────────────────────────── */}
+            {/* Business Name */}
+            {/* ───────────────────────────── */}
+
             <div>
               <label className="text-sm font-medium">
                 Business name
               </label>
+
               <input
                 value={form.name ?? ''}
                 onChange={(e) =>
@@ -540,10 +734,15 @@ export default function BusinessHomePage() {
               />
             </div>
 
+            {/* ───────────────────────────── */}
+            {/* Description */}
+            {/* ───────────────────────────── */}
+
             <div>
               <label className="text-sm font-medium">
                 Description
               </label>
+
               <textarea
                 value={form.description ?? ''}
                 onChange={(e) =>
@@ -557,11 +756,18 @@ export default function BusinessHomePage() {
               />
             </div>
 
+            {/* ───────────────────────────── */}
+            {/* Basic Business Information */}
+            {/* ───────────────────────────── */}
+
             <div className="grid grid-cols-2 gap-4">
+
+              {/* Location */}
               <div>
                 <label className="text-sm font-medium">
                   Location
                 </label>
+
                 <input
                   value={form.location ?? ''}
                   onChange={(e) =>
@@ -574,10 +780,12 @@ export default function BusinessHomePage() {
                 />
               </div>
 
+              {/* Phone */}
               <div>
                 <label className="text-sm font-medium">
                   Phone
                 </label>
+
                 <input
                   value={form.phone ?? ''}
                   onChange={(e) =>
@@ -590,10 +798,12 @@ export default function BusinessHomePage() {
                 />
               </div>
 
+              {/* Website */}
               <div>
                 <label className="text-sm font-medium">
                   Website
                 </label>
+
                 <input
                   value={form.website ?? ''}
                   onChange={(e) =>
@@ -606,10 +816,12 @@ export default function BusinessHomePage() {
                 />
               </div>
 
+              {/* Email */}
               <div>
                 <label className="text-sm font-medium">
                   Email
                 </label>
+
                 <input
                   value={form.email ?? ''}
                   onChange={(e) =>
@@ -622,12 +834,16 @@ export default function BusinessHomePage() {
                 />
               </div>
 
+              {/* Business Hours */}
               <div>
                 <label className="text-sm font-medium">
                   Business hours
                 </label>
+
                 <input
-                  value={form.businessHours ?? ''}
+                  value={
+                    form.businessHours ?? ''
+                  }
                   onChange={(e) =>
                     handleFormChange(
                       'businessHours',
@@ -638,10 +854,12 @@ export default function BusinessHomePage() {
                 />
               </div>
 
+              {/* Price Range */}
               <div>
                 <label className="text-sm font-medium">
                   Price range
                 </label>
+
                 <input
                   value={form.priceRange ?? ''}
                   onChange={(e) =>
@@ -654,43 +872,66 @@ export default function BusinessHomePage() {
                 />
               </div>
 
-              <div>
-                <label className="text-sm font-medium">
-                  Logo URL
-                </label>
-                <input
-                  value={form.logo ?? ''}
-                  onChange={(e) =>
-                    handleFormChange(
-                      'logo',
-                      e.target.value,
-                    )
-                  }
-                  className="mt-1 w-full rounded-lg border p-2.5 text-sm"
-                />
-              </div>
+            </div>
 
-              <div>
-                <label className="text-sm font-medium">
-                  Cover photo URL
-                </label>
-                <input
-                  value={form.coverPhoto ?? ''}
-                  onChange={(e) =>
-                    handleFormChange(
-                      'coverPhoto',
-                      e.target.value,
-                    )
+            {/* ───────────────────────────── */}
+            {/* Logo */}
+            {/* ───────────────────────────── */}
+
+            <div>
+              <label className="text-sm font-medium">
+                Logo
+              </label>
+
+              <div className="mt-2">
+                <SingleImageUploader
+                  type="ENTITY_LOGO"
+                  targetId={entityId}
+                  currentUrl={entity.logo}
+                  shape="circle"
+                  onUploaded={(url) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      logo: url,
+                    }))
                   }
-                  className="mt-1 w-full rounded-lg border p-2.5 text-sm"
                 />
               </div>
             </div>
+
+            {/* ───────────────────────────── */}
+            {/* Cover Photo */}
+            {/* ───────────────────────────── */}
+
+            <div>
+              <label className="text-sm font-medium">
+                Cover Photo
+              </label>
+
+              <div className="mt-2">
+                <SingleImageUploader
+                  type="ENTITY_COVER"
+                  targetId={entityId}
+                  currentUrl={entity.coverPhoto}
+                  onUploaded={(url) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      coverPhoto: url,
+                    }))
+                  }
+                />
+              </div>
+            </div>
+
+            {/* ───────────────────────────── */}
+            {/* Amenities */}
+            {/* ───────────────────────────── */}
 
             <div>
               <label className="text-sm font-medium">
                 Amenities
               </label>
+
               <input
                 value={form.amenities ?? ''}
                 onChange={(e) =>
@@ -704,12 +945,19 @@ export default function BusinessHomePage() {
               />
             </div>
 
+            {/* ───────────────────────────── */}
+            {/* Payment Methods */}
+            {/* ───────────────────────────── */}
+
             <div>
               <label className="text-sm font-medium">
                 Payment methods
               </label>
+
               <input
-                value={form.paymentMethods ?? ''}
+                value={
+                  form.paymentMethods ?? ''
+                }
                 onChange={(e) =>
                   handleFormChange(
                     'paymentMethods',
@@ -721,6 +969,10 @@ export default function BusinessHomePage() {
               />
             </div>
 
+            {/* ───────────────────────────── */}
+            {/* Save */}
+            {/* ───────────────────────────── */}
+
             <button
               type="submit"
               disabled={savingInfo}
@@ -730,8 +982,10 @@ export default function BusinessHomePage() {
                 ? 'Saving...'
                 : 'Save changes'}
             </button>
+
           </form>
         )}
+
       </div>
     </main>
   );

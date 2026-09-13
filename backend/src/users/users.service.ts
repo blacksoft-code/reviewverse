@@ -563,6 +563,9 @@ async getUserProfile(userId: string) {
       id: true,
       name: true,
       createdAt: true,
+      media: {
+        where: { type: { in: ['USER_PROFILE', 'USER_COVER'] } },
+      },
       reviews: {
         select: {
           id: true,
@@ -601,6 +604,7 @@ async getUserProfile(userId: string) {
     name: user.name,
     createdAt: user.createdAt,
     reviewCount: user.reviews.length,
+    media: user.media,
     reviews: user.reviews,
   };
 }

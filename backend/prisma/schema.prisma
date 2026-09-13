@@ -33,6 +33,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   reviews         Review[]
+  media           Media[]
   createdEntities Entity[] @relation("EntityCreatedBy")
 
   following UserFollow[] @relation("UserFollowing")
@@ -118,6 +119,7 @@ model Entity {
   posts       EntityPost[]
 
   reviews Review[]
+  media   Media[]
 
   followers      EntityFollow[]
   blockedByUsers EntityBlock[]
@@ -138,7 +140,43 @@ model Review {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  media Media[]
+
   @@unique([userId, entityId])
+}
+
+enum MediaType {
+  USER_PROFILE
+  USER_COVER
+  ENTITY_LOGO
+  ENTITY_COVER
+  REVIEW
+  ENTITY_POST
+}
+
+model Media {
+  id String @id @default(uuid())
+
+  url  String
+  type MediaType
+
+  userId       String?
+  entityId     String?
+  reviewId     String?
+  entityPostId String?
+
+  user       User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entity     Entity?     @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  review     Review?     @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  entityPost EntityPost? @relation(fields: [entityPostId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([entityId])
+  @@index([reviewId])
+  @@index([type])
+  @@index([entityPostId])
 }
 
 model UserFollow {
@@ -299,7 +337,7 @@ model EntityPost {
   authorId String
 
   content String
-  image   String?
+  media   Media[]
 
   entity Entity @relation(fields: [entityId], references: [id], onDelete: Cascade)
   author User   @relation(fields: [authorId], references: [id], onDelete: Cascade)

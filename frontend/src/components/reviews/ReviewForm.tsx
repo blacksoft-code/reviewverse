@@ -6,17 +6,14 @@ import {
   useState,
 } from 'react';
 
-import { createReview } from '@/services/review.service';
+import {
+  createReview,
+  Review,
+} from '@/services/review.service';
 import { getProfile } from '@/services/auth.service';
+import { uploadImages } from '@/services/media.service';
 
-type Review = {
-  id: string;
-  rating: number;
-  content: string;
-  userId: string;
-  entityId: string;
-  createdAt: string;
-};
+import MultiImageUploader from '@/components/media/MultiImageUploader';
 
 type ReviewFormProps = {
   entityId: string;
@@ -29,37 +26,26 @@ export default function ReviewForm({
 }: ReviewFormProps) {
   const [rating, setRating] = useState(5);
   const [content, setContent] = useState('');
+  const [photos, setPhotos] = useState<File[]>([]);
 
   const [loading, setLoading] = useState(false);
+  const [uploadingPhotos, setUploadingPhotos] =
+    useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // NEW:
-  // User login করা আছে কি না সেটা track করবে।
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [checkingAuth, setCheckingAuth] =
+    useState(true);
 
-  // NEW:
-  // Profile check করার সময় loading state দেখানোর জন্য।
-  const [checkingAuth, setCheckingAuth] = useState(true);
-
-  // NEW:
-  // Component load হওয়ার পর current user-এর authentication
-  // status check করা হচ্ছে।
   useEffect(() => {
     async function checkAuth() {
       try {
-        // Backend-এর /auth/profile endpoint call করবে।
-        // Valid JWT থাকলে request successful হবে।
         await getProfile();
-
-        // Profile পাওয়া গেলে user logged in।
         setIsLoggedIn(true);
       } catch {
-        // Profile request fail করলে user logged out
-        // অথবা token invalid/expired ধরে নিচ্ছি।
         setIsLoggedIn(false);
       } finally {
-        // Authentication check শেষ।
         setCheckingAuth(false);
       }
     }
@@ -77,26 +63,58 @@ export default function ReviewForm({
     setLoading(true);
 
     try {
+      // ১. আগে review টেক্সট তৈরি হবে (id পাওয়ার জন্য)
       const response = await createReview({
         rating,
         content,
         entityId,
       });
 
-      // Send newly created review to ReviewSection
-      // যাতে refresh ছাড়াই review UI-তে দেখানো যায়।
-      onReviewCreated(response.data);
+      let review = response.data;
+
+      // ২. review তৈরি হয়ে গেলে, ছবি থাকলে সেগুলো upload
+      // হবে review.id-কে targetId হিসেবে ব্যবহার করে
+      if (photos.length > 0) {
+        setUploadingPhotos(true);
+
+        try {
+          const media = await uploadImages(
+            photos,
+            'REVIEW',
+            review.id,
+          );
+
+          // Media array-টা review object-এ বসিয়ে দেওয়া হলো,
+          // যাতে refresh ছাড়াই ছবিসহ review দেখা যায়
+          review = { ...review, media };
+        } catch (uploadErr) {
+          // Review টেক্সট সফলভাবে তৈরি হয়েছে, শুধু ছবি
+          // upload ব্যর্থ হয়েছে — সেটা আলাদাভাবে জানানো হচ্ছে
+          setError(
+            uploadErr instanceof Error
+              ? `Review submitted, but photo upload failed: ${uploadErr.message}`
+              : 'Review submitted, but photo upload failed.',
+          );
+        } finally {
+          setUploadingPhotos(false);
+        }
+      }
+
+      onReviewCreated(review);
 
       setContent('');
       setRating(5);
+      setPhotos([]);
 
-      setSuccess(
-        'Review submitted successfully!',
-      );
-    } catch (error) {
+      if (!error) {
+        setSuccess(
+          'Review submitted successfully!',
+        );
+      }
+    } catch (err) {
       setError(
-        error instanceof Error
-          ? error.message
+        err instanceof Error
+          ? err.message
           : 'Failed to submit review',
       );
     } finally {
@@ -104,10 +122,6 @@ export default function ReviewForm({
     }
   }
 
-  // NEW:
-  // Profile check শেষ না হওয়া পর্যন্ত form দেখাব না।
-  // এতে authentication status determine হওয়ার আগে
-  // হঠাৎ করে form দেখানোর সমস্যা হবে না।
   if (checkingAuth) {
     return (
       <section className="mt-10">
@@ -118,9 +132,6 @@ export default function ReviewForm({
     );
   }
 
-  // NEW:
-  // User logged in না থাকলে review form দেখানো হবে না।
-  // পরিবর্তে login করার message দেখানো হবে।
   if (!isLoggedIn) {
     return (
       <section className="mt-10 rounded-lg border p-5">
@@ -142,7 +153,6 @@ export default function ReviewForm({
     );
   }
 
-  // User logged in থাকলে নিচের actual review form render হবে।
   return (
     <section className="mt-10">
       <h2 className="text-2xl font-semibold">
@@ -168,19 +178,15 @@ export default function ReviewForm({
             <option value={5}>
               ⭐⭐⭐⭐⭐ — 5
             </option>
-
             <option value={4}>
               ⭐⭐⭐⭐ — 4
             </option>
-
             <option value={3}>
               ⭐⭐⭐ — 3
             </option>
-
             <option value={2}>
               ⭐⭐ — 2
             </option>
-
             <option value={1}>
               ⭐ — 1
             </option>
@@ -204,6 +210,17 @@ export default function ReviewForm({
           />
         </div>
 
+        <div>
+          <label className="block text-sm font-medium">
+            Photos (optional, up to 10)
+          </label>
+
+          <MultiImageUploader
+            maxFiles={10}
+            onChange={setPhotos}
+          />
+        </div>
+
         {error && (
           <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
             {error}
@@ -218,12 +235,14 @@ export default function ReviewForm({
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || uploadingPhotos}
           className="rounded-lg bg-black px-5 py-3 font-medium text-white hover:bg-gray-800 disabled:opacity-50"
         >
           {loading
             ? 'Submitting...'
-            : 'Submit Review'}
+            : uploadingPhotos
+              ? 'Uploading photos...'
+              : 'Submit Review'}
         </button>
       </form>
     </section>
