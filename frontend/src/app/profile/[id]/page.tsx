@@ -15,6 +15,8 @@ import ProfileActions from '@/components/profile/ProfileActions';
 import SingleImageUploader from '@/components/media/SingleImageUploader';
 
 import { useAuth } from '@/context/AuthContext';
+import ReactionButton from '@/components/reviews/ReactionButton';
+import CommentSection from '@/components/reviews/CommentSection';
 
 type ProfileMedia = {
   id: string;
@@ -77,6 +79,7 @@ export default function ProfilePage() {
   const [coverPhotoUrl, setCoverPhotoUrl] =
     useState<string | null>(null);
 
+  const [openCommentsFor, setOpenCommentsFor] = useState<string | null>(null);
   // ─────────────────────────────
   // Is this my own profile?
   // ─────────────────────────────
@@ -424,29 +427,32 @@ export default function ProfilePage() {
                   {/* Review Actions */}
                   {/* ───────────────────────────── */}
 
-                  <div className="mt-5 flex gap-6 border-t pt-4 text-sm text-gray-500">
+                  <div className="mt-5 flex items-center gap-6 border-t pt-4 text-sm">
+                    <ReactionButton reviewId={review.id} />
 
-                    <button type="button">
-                      Like
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setOpenCommentsFor((prev) =>
+                          prev === review.id ? null : review.id,
+                        )
+                      }
+                      className="font-medium text-gray-500 hover:underline"
+                    >
+                      💬 Comments
                     </button>
 
-                    <button type="button">
-                      Heart
+                    <button
+                      type="button"
+                      className="font-medium text-gray-500 hover:underline"
+                    >
+                      ↗ Share
                     </button>
-
-                    <button type="button">
-                      Dislike
-                    </button>
-
-                    <button type="button">
-                      Comments
-                    </button>
-
-                    <button type="button">
-                      Share
-                    </button>
-
                   </div>
+
+                  {openCommentsFor === review.id && (
+                    <CommentSection reviewId={review.id} />
+                  )}
 
                 </article>
 

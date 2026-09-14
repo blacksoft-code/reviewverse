@@ -69,7 +69,9 @@ model User {
   entityMemberships EntityMembership[]
   entityClaims      EntityClaim[]
 
-  entityPosts EntityPost[]
+  entityPosts     EntityPost[]
+  reviewReactions ReviewReaction[]
+  reviewComments  ReviewComment[]
 }
 
 model Category {
@@ -155,7 +157,9 @@ model Review {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  media Media[]
+  media           Media[]
+  reviewReactions ReviewReaction[]
+  reviewComments  ReviewComment[]
 
   @@unique([userId, entityId])
 }
@@ -362,4 +366,45 @@ model EntityPost {
 
   @@index([entityId])
   @@index([authorId])
+}
+
+enum ReactionType {
+  HELPFUL
+  LOVE
+  ACCURATE
+  HAHA
+  DISLIKE
+}
+
+model ReviewReaction {
+  id        String       @id @default(uuid())
+  type      ReactionType
+  userId    String
+  reviewId  String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  review    Review       @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([userId, reviewId])
+  @@index([reviewId])
+  @@index([userId])
+}
+
+model ReviewComment {
+  id        String          @id @default(uuid())
+  content   String
+  userId    String
+  reviewId  String
+  parentId  String?
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  review    Review          @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  parent    ReviewComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   ReviewComment[] @relation("CommentReplies")
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@index([reviewId])
+  @@index([parentId])
+  @@index([userId])
 }

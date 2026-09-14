@@ -19,6 +19,9 @@ import { ThrottlerGuard, ThrottlerModule, } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { MediaModule } from './media/media.module';
 
+import { ReviewReactionsModule } from './review-reactions/review-reactions.module';
+import { ReviewCommentsModule } from './review-comments/review-comments.module';
+
 @Module({
   imports: [
 
@@ -44,7 +47,10 @@ import { MediaModule } from './media/media.module';
     ]),
 
 
-    PrismaModule, UsersModule, AuthModule, CategoriesModule, EntitiesModule, ReviewsModule, FeedModule, SearchModule, EntityMembershipsModule, EntityPostsModule, MediaModule,],
+    PrismaModule, UsersModule, AuthModule, CategoriesModule, EntitiesModule, ReviewsModule, FeedModule, 
+    SearchModule, EntityMembershipsModule, EntityPostsModule, 
+    MediaModule, ReviewReactionsModule, 
+    ReviewCommentsModule ],
   controllers: [AppController],
   providers: [
     AppService,
