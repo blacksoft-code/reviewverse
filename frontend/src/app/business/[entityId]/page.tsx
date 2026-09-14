@@ -33,6 +33,9 @@ import SingleImageUploader from '@/components/media/SingleImageUploader';
 
 // Media service
 import { uploadImages } from '@/services/media.service';
+import PostReactionButton from '@/components/entities/posts/PostReactionButton';
+import PostCommentSection from '@/components/entities/posts/PostCommentSection';
+
 
 type Tab = 'posts' | 'info';
 
@@ -634,9 +637,9 @@ export default function BusinessHomePage() {
                     /* ─────────────────────── */
                     /* Normal Post */
                     /* ─────────────────────── */
-
+ <div key={post.id} className="rounded-xl border bg-white">
                     <PostCard
-                      key={post.id}
+                     
 
                       name={entity.name}
 
@@ -687,6 +690,11 @@ export default function BusinessHomePage() {
                         </>
                       }
                     />
+                    <div className="px-5 pb-4">
+                      <PostReactionButton postId={post.id} />
+                      <PostCommentSection postId={post.id} />
+                    </div>
+                    </div>
 
                   ),
                 )

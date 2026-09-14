@@ -61,7 +61,6 @@ export default function FeedItem({
           💬 Comments
         </button>
       </div>
-
       {showComments && (
         <CommentSection reviewId={review.id} />
       )}

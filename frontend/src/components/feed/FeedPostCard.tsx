@@ -2,6 +2,8 @@ import Link from 'next/link';
 
 import type { FeedPost } from '@/services/feed.service';
 import PhotoGrid from '@/components/media/PhotoGrid';
+import PostReactionButton from '@/components/entities/posts/PostReactionButton';
+import PostCommentSection from '@/components/entities/posts/PostCommentSection';
 
 export default function FeedPostCard({
   post,
@@ -44,6 +46,13 @@ export default function FeedPostCard({
       {post.media && post.media.length > 0 && (
         <PhotoGrid photos={post.media} />
       )}
+     
+      <div className="mt-4 border-t pt-3">
+        <PostReactionButton postId={post.id} />
+        <PostCommentSection postId={post.id} />
+      </div>
+        
+      
     </div>
   );
 }

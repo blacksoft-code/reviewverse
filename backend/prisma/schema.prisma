@@ -72,6 +72,8 @@ model User {
   entityPosts     EntityPost[]
   reviewReactions ReviewReaction[]
   reviewComments  ReviewComment[]
+  postReactions   PostReaction[]
+  postComments    PostComment[]
 }
 
 model Category {
@@ -364,6 +366,9 @@ model EntityPost {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  reactions PostReaction[]
+  comments  PostComment[]
+
   @@index([entityId])
   @@index([authorId])
 }
@@ -405,6 +410,48 @@ model ReviewComment {
   updatedAt DateTime        @updatedAt
 
   @@index([reviewId])
+  @@index([parentId])
+  @@index([userId])
+}
+
+model PostReaction {
+  id String @id @default(uuid())
+
+  type ReactionType // আগের এনাম-ই reuse করা হচ্ছে (HELPFUL/LOVE/ACCURATE/HAHA/DISLIKE)
+
+  userId String
+  postId String
+
+  user User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post EntityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, postId])
+  @@index([postId])
+  @@index([userId])
+}
+
+model PostComment {
+  id String @id @default(uuid())
+
+  content String
+
+  userId String
+  postId String
+
+  parentId String?
+
+  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post    EntityPost    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parent  PostComment?  @relation("PostCommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies PostComment[] @relation("PostCommentReplies")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([postId])
   @@index([parentId])
   @@index([userId])
 }

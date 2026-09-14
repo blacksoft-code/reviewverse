@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 
 import PostCard from './PostCard';
+import PostReactionButton from './PostReactionButton';
+import PostCommentSection from './PostCommentSection';
 import {
   getPublicFeed,
   PublicEntityPost,
@@ -65,16 +67,22 @@ export default function EntityPublicPostsFeed({
 
   return (
     <div className="space-y-4">
-      {posts.map((post) => (
+     {posts.map((post) => (
+      <div key={post.id}>
         <PostCard
-          key={post.id}
           name={post.entity.name}
           logo={post.entity.logo}
           content={post.content}
-          image={post.image}
+          media={post.media}
           createdAt={post.createdAt}
         />
-      ))}
+
+        <div className="px-5 pb-4">
+          <PostReactionButton postId={post.id} />
+          <PostCommentSection postId={post.id} />
+        </div>
+      </div>
+    ))}
     </div>
   );
 }

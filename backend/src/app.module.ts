@@ -21,6 +21,8 @@ import { MediaModule } from './media/media.module';
 
 import { ReviewReactionsModule } from './review-reactions/review-reactions.module';
 import { ReviewCommentsModule } from './review-comments/review-comments.module';
+import { PostReactionsModule } from './post-reactions/post-reaction.module';
+import { PostCommentsModule } from './post-comments/post-comments.module';
 
 @Module({
   imports: [
@@ -49,8 +51,11 @@ import { ReviewCommentsModule } from './review-comments/review-comments.module';
 
     PrismaModule, UsersModule, AuthModule, CategoriesModule, EntitiesModule, ReviewsModule, FeedModule, 
     SearchModule, EntityMembershipsModule, EntityPostsModule, 
-    MediaModule, ReviewReactionsModule, 
-    ReviewCommentsModule ],
+    MediaModule, 
+    ReviewReactionsModule, 
+    ReviewCommentsModule, 
+    PostReactionsModule, 
+    PostCommentsModule ],
   controllers: [AppController],
   providers: [
     AppService,
