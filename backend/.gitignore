@@ -20,13 +20,6 @@ dist/
 .DS_Store
 Thumbs.db
 
-
-
-
-
-
-
-
 /generated/prisma
 # Uploads
 backend/uploads/
