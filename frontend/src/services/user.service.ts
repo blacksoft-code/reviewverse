@@ -273,3 +273,28 @@ export async function getEntityRelationshipStatus(
     timestamp: string;
   }>;
 }
+
+export type Gender =
+  | 'MALE'
+  | 'FEMALE'
+  | 'OTHER'
+  | 'PREFER_NOT_TO_SAY';
+
+export type UpdateUserInfoInput = {
+  worksAt?: string;
+  studiesAt?: string;
+  livesIn?: string;
+  from?: string;
+  birthday?: string; // ISO date string, e.g. '1998-05-14'
+  gender?: Gender;
+  bio?: string;
+};
+
+export async function updateUserInfo(
+  input: UpdateUserInfoInput,
+) {
+  return request('/users/me/info', {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}

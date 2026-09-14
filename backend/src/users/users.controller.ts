@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Delete,
   Get,
@@ -11,13 +12,13 @@ import {
 
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-
 import {
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { UpdateUserInfoDto } from './dto/update-user-info.dto';
 
 @ApiTags('Users')
 @ApiBearerAuth()
@@ -245,6 +246,31 @@ getUserProfile(
   @Param('id') userId: string,
 ) {
   return this.usersService.getUserProfile(userId);
+}
+
+@Patch('me/info')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
+@ApiOperation({
+  summary:
+    'Update your own profile info (work, study, location, birthday, gender, bio)',
+})
+@ApiResponse({
+  status: 200,
+  description: 'Profile info updated successfully',
+})
+@ApiResponse({
+  status: 401,
+  description: 'Unauthorized',
+})
+updateMyInfo(
+  @Body() dto: UpdateUserInfoDto,
+  @Req() req: any,
+) {
+  return this.usersService.updateUserInfo(
+    req.user.userId,
+    dto,
+  );
 }
 
 @Get(':id/friends')

@@ -19,11 +19,26 @@ enum FriendRequestStatus {
   CANCELLED
 }
 
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
 model User {
   id       String @id @default(uuid())
   name     String
   email    String @unique
   password String
+
+  worksAt   String?
+  studiesAt String?
+  livesIn   String?
+  from      String?
+  birthday  DateTime?
+  gender    Gender?
+  bio       String?
 
   role Role @default(USER)
 

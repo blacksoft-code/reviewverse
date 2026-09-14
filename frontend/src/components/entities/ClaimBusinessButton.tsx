@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 
 import {
   claimBusiness,
+  getEntityMemberships,
   getMyClaims,
   getMyMemberships,
 } from '@/services/entity-membership.service';
@@ -21,7 +22,10 @@ type Status =
   | 'claimable'
   | 'pending'
   | 'owner'
-  | 'has-other-role';
+  | 'has-other-role'
+  // NEW: এই business-এর ইতিমধ্যে একজন owner আছে,
+  // কিন্তু সেটা এই viewer না
+  | 'already-owned-by-other';
 
 export default function ClaimBusinessButton({
   entityId,
@@ -42,8 +46,26 @@ export default function ClaimBusinessButton({
         return;
       }
 
+      // NEW: viewer login করা থাকুক বা না থাকুক, business-টার
+      // আদৌ owner আছে কিনা সেটা সবার আগে চেক করা হচ্ছে
+      let entityHasOwner = false;
+
+      try {
+        const membershipsRes =
+          await getEntityMemberships(entityId);
+        entityHasOwner = membershipsRes.data.some(
+          (m) => m.role === 'OWNER',
+        );
+      } catch {
+        // চেক ব্যর্থ হলেও নিচের normal flow চলবে
+      }
+
       if (!user) {
-        setStatus('not-logged-in');
+        setStatus(
+          entityHasOwner
+            ? 'already-owned-by-other'
+            : 'not-logged-in',
+        );
         return;
       }
 
@@ -54,16 +76,23 @@ export default function ClaimBusinessButton({
             getMyClaims(),
           ]);
 
-        const membership = membershipsRes.data.find(
+        const myMembership = membershipsRes.data.find(
           (m) => m.entityId === entityId,
         );
 
-        if (membership) {
+        if (myMembership) {
           setStatus(
-            membership.role === 'OWNER'
+            myMembership.role === 'OWNER'
               ? 'owner'
               : 'has-other-role',
           );
+          return;
+        }
+
+        // এই viewer-এর নিজের membership নেই, কিন্তু business-এর
+        // অন্য কেউ owner হয়ে গেছে — claim বাটন দেখানো ঠিক না
+        if (entityHasOwner) {
+          setStatus('already-owned-by-other');
           return;
         }
 
@@ -78,8 +107,11 @@ export default function ClaimBusinessButton({
 
         setStatus('claimable');
       } catch {
-        // Status চেক করতে না পারলেও claim button দেখানো হবে
-        setStatus('claimable');
+        setStatus(
+          entityHasOwner
+            ? 'already-owned-by-other'
+            : 'claimable',
+        );
       }
     }
 
@@ -118,6 +150,15 @@ export default function ClaimBusinessButton({
 
   if (status === 'has-other-role') {
     return null;
+  }
+
+  // NEW: অন্য কারো owned business — claim বাটনই দেখাবে না
+  if (status === 'already-owned-by-other') {
+    return (
+      <span className="rounded-lg border px-5 py-2.5 text-sm font-medium text-gray-400">
+         Claimed ✅
+      </span>
+    );
   }
 
   if (status === 'pending') {

@@ -7,6 +7,7 @@ import {
 } from '@/context/AuthContext';
 
 import BusinessSwitcher from '@/components/BusinessSwitcher';
+import SearchBox from '@/components/search/SearchBox';
 
 
 
@@ -42,6 +43,8 @@ export default function Navbar() {
           ReviewVerse
         </Link>
 
+        <SearchBox />
+
         <div className="flex items-center gap-5">
 
           {/* Home */}
@@ -68,6 +71,15 @@ export default function Navbar() {
             className="rounded-lg border bg-black px-4 py-2 text-sm hover:bg-gray-50"
           >
             Claims
+          </Link>
+          
+        )}
+        {user.role === 'ADMIN' && (
+          <Link
+            href="/admin/categories"
+            className="rounded-lg border bg-black px-4 py-2 text-sm hover:bg-gray-50"
+          >
+            Categories
           </Link>
         )}
                   {/* Logged-in user */}

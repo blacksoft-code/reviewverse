@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { UpdateUserInfoDto } from './dto/update-user-info.dto';
 
 @Injectable()
 export class UsersService {
@@ -563,6 +564,13 @@ async getUserProfile(userId: string) {
       id: true,
       name: true,
       createdAt: true,
+      worksAt: true,
+      studiesAt: true,
+      livesIn: true,
+      from: true,
+      birthday: true,
+      gender: true,
+      bio: true,
       media: {
         where: { type: { in: ['USER_PROFILE', 'USER_COVER'] } },
       },
@@ -600,13 +608,52 @@ async getUserProfile(userId: string) {
   }
 
   return {
-    id: user.id,
-    name: user.name,
-    createdAt: user.createdAt,
-    reviewCount: user.reviews.length,
-    media: user.media,
-    reviews: user.reviews,
-  };
+  id: user.id,
+  name: user.name,
+  createdAt: user.createdAt,
+  worksAt: user.worksAt,
+  studiesAt: user.studiesAt,
+  livesIn: user.livesIn,
+  from: user.from,
+  birthday: user.birthday,
+  gender: user.gender,
+  bio: user.bio,
+  reviewCount: user.reviews.length,
+  media: user.media,
+  reviews: user.reviews,
+};
+}
+
+// NEW — নিজের profile info (work, study, location, birthday, gender, bio) আপডেট
+async updateUserInfo(
+  userId: string,
+  dto: UpdateUserInfoDto,
+) {
+  return this.prisma.user.update({
+    where: { id: userId },
+    data: {
+      worksAt: dto.worksAt,
+      studiesAt: dto.studiesAt,
+      livesIn: dto.livesIn,
+      from: dto.from,
+      birthday: dto.birthday
+        ? new Date(dto.birthday)
+        : undefined,
+      gender: dto.gender,
+      bio: dto.bio,
+    },
+    select: {
+      id: true,
+      name: true,
+      worksAt: true,
+      studiesAt: true,
+      livesIn: true,
+      from: true,
+      birthday: true,
+      gender: true,
+      bio: true,
+    },
+  });
 }
 
 async getRelationship(

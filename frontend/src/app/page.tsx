@@ -28,14 +28,12 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen p-8">
-      <h1 className="text-3xl font-bold">
-        ReviewVerse
-      </h1>
+     
 
       <div className="mt-6">
    
       </div>
-      <SearchBox />
+  
        <FeedSection />
 
       {/* =========================

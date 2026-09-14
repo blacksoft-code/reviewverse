@@ -290,9 +290,7 @@ export default function ProfilePage() {
                 {profile.reviewCount} reviews
               </p>
 
-              <ProfileActions
-                userId={profile.id}
-              />
+              <ProfileActions userId={profile.id} userName={profile.name} />
 
             </div>
 
