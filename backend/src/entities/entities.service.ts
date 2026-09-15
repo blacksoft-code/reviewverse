@@ -229,6 +229,11 @@ async update(
                 name: true,
               },
             },
+             media: {              // ← user-এর সাথে একই লেভেলে, include-এর ভেতরে
+            orderBy: {
+              createdAt: 'asc',
+            },
+          },
           },
           orderBy: {
             createdAt: 'desc',

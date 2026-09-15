@@ -85,6 +85,10 @@ async getProfile(userId: string) {
       email: true,
       role: true,
       createdAt: true,
+      media: {                         // New with Mahdi Zahin
+        where: { type: 'USER_PROFILE' },
+        select: { url: true },
+      },
     },
   });
 
@@ -93,8 +97,12 @@ async getProfile(userId: string) {
       'User not found',
     );
   }
+  const { media, ...rest } = user; 
 
-  return user;
+  return {
+    ...rest,
+    avatarUrl: media[0]?.url ?? null,
+  };
 }
 
 }

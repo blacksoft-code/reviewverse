@@ -14,6 +14,7 @@ type User = {
   name: string;
   email: string;
   role: string;
+  avatarUrl?: string | null;   //new by mz
 };
 
 type AuthContextType = {

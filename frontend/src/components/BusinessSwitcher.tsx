@@ -13,7 +13,7 @@ import {
 } from '@/services/entity-membership.service';
 
 export default function BusinessSwitcher() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
 
   const { activeBusiness, setActiveBusiness } =
@@ -26,6 +26,7 @@ export default function BusinessSwitcher() {
   >([]);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -102,7 +103,20 @@ export default function BusinessSwitcher() {
             {activeBusiness.name} ▾
           </>
         ) : (
-          <>Hey, {user.name} ▾</>
+          <>
+            <span className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-gray-700 text-xs">
+              {user.avatarUrl ? (
+                <img
+                  src={user.avatarUrl}
+                  alt={user.name}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                user.name.charAt(0).toUpperCase()
+              )}
+            </span>
+            ▾
+          </>
         )}
       </button>
 
@@ -192,6 +206,19 @@ export default function BusinessSwitcher() {
           >
             View all my businesses
           </Link>
+
+          <div className="my-1 border-t" />
+          <button
+            type="button"
+            onClick={() => {
+              logout();
+              setOpen(false);
+              router.push('/');
+            }}
+            className="block w-full rounded-md px-3 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
+          >
+            Logout
+          </button>
         </div>
       )}
     </div>

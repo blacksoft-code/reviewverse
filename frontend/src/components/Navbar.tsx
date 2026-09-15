@@ -85,14 +85,7 @@ export default function Navbar() {
                   {/* Logged-in user */}
                   <BusinessSwitcher />
 
-                  {/* Logout */}
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    className="rounded-lg border bg-black px-4 py-2 text-sm hover:bg-gray-50"
-                  >
-                    Logout
-                  </button>
+                  
                 </>
               ) : (
                 <>

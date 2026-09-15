@@ -275,49 +275,46 @@ async function handleUpdate(reviewId: string) {
                       <PhotoGrid photos={review.media} />
                     )}
 
-                    {isOwner && (
-                      <>
-                        <div className="mt-4 flex items-center gap-6 border-t pt-3">
-                          <ReactionButton reviewId={review.id} />
+                    <div className="mt-4 flex items-center gap-6 border-t pt-3">
+                      <ReactionButton reviewId={review.id} />
 
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setOpenCommentsFor((prev) =>
-                                prev === review.id ? null : review.id,
-                              )
-                            }
-                            className="text-sm font-medium text-gray-500 hover:underline"
-                          >
-                            💬 Comments 
-                          </button>
-                        </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setOpenCommentsFor((prev) =>
+                            prev === review.id ? null : review.id,
+                          )
+                        }
+                        className="text-sm font-medium text-gray-500 hover:underline"
+                      >
+                        💬 Comments
+                      </button>
+                    </div>
 
-                        {openCommentsFor === review.id && (
-                          <CommentSection reviewId={review.id} />
-                        )}
-
-                        <div className="mt-4 flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() => startEditing(review)}
-                            className="rounded-lg border px-4 py-2 text-sm"
-                          >
-                            Edit
-                          </button>
-
-                          <button
-                            type="button"
-                            disabled={isLoading}
-                            onClick={() => handleDelete(review.id)}
-                            className="rounded-lg border border-red-300 px-4 py-2 text-sm text-red-600 disabled:opacity-50"
-                          >
-                            {isLoading ? 'Deleting...' : 'Delete'}
-                          </button>
-                        </div>
-                      </>
+                    {openCommentsFor === review.id && (
+                      <CommentSection reviewId={review.id} />
                     )}
-                    
+
+                    {isOwner && (
+                      <div className="mt-4 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => startEditing(review)}
+                          className="rounded-lg border px-4 py-2 text-sm"
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={isLoading}
+                          onClick={() => handleDelete(review.id)}
+                          className="rounded-lg border border-red-300 px-4 py-2 text-sm text-red-600 disabled:opacity-50"
+                        >
+                          {isLoading ? 'Deleting...' : 'Delete'}
+                        </button>
+                      </div>
+                    )}
                   </>
                 )}
               </article>
