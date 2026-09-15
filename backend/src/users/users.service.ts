@@ -580,6 +580,10 @@ async getUserProfile(userId: string) {
           rating: true,
           content: true,
           createdAt: true,
+          media: {
+            select: { id: true, url: true },
+            orderBy: { createdAt: 'asc' },
+          },
           entity: {
             select: {
               id: true,

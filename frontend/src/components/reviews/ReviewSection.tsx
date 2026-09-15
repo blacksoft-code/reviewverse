@@ -289,7 +289,7 @@ async function handleUpdate(reviewId: string) {
                             }
                             className="text-sm font-medium text-gray-500 hover:underline"
                           >
-                            💬 Comments
+                            💬 Comments 
                           </button>
                         </div>
 
