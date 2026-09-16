@@ -214,8 +214,10 @@ async update(
   }
 
   async findOne(slug: string) {
-    return this.prisma.entity.findUnique({
-      where: { slug },
+    return this.prisma.entity.findFirst({
+      where: { 
+        OR: [{ slug }, { id: slug }], 
+      },
       include: {
         category: true,
         media: {

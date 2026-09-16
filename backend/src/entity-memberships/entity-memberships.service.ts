@@ -6,10 +6,14 @@ import {
 } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class EntityMembershipsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+  ) {}
 
   // ─────────────────────────────
   // USER FLOW: claim a business
@@ -171,6 +175,14 @@ export class EntityMembershipsService {
       data: { status: 'REJECTED' },
     });
 
+    await this.notificationsService.notify({
+      recipientId: claim.userId,
+      type: 'CLAIM_APPROVED',
+      message: 'your business claim was approved.',
+      link: `/entities/${claim.entityId}`,
+      entityId: claim.entityId,
+    });
+
     return { claim: updatedClaim, membership };
   }
 
@@ -189,10 +201,20 @@ export class EntityMembershipsService {
       );
     }
 
-    return this.prisma.entityClaim.update({
+    const updatedClaim = await this.prisma.entityClaim.update({
       where: { id: claimId },
       data: { status: 'REJECTED' },
     });
+
+    await this.notificationsService.notify({
+      recipientId: claim.userId,
+      type: 'CLAIM_REJECTED',
+      message: 'your business claim was rejected.',
+      link: `/entities/${claim.entityId}`,
+      entityId: claim.entityId,
+    });
+
+    return updatedClaim;
   }
 
   // ─────────────────────────────

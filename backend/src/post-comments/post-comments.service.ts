@@ -6,12 +6,16 @@ import {
 } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 const MAX_REPLIES_PER_COMMENT = 20;
 
 @Injectable()
 export class PostCommentsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+  ) {}
 
   async create(
     postId: string,
@@ -27,11 +31,15 @@ export class PostCommentsService {
       throw new NotFoundException('Post not found.');
     }
 
+    let parentComment: { userId: string; parentId: string | null } | null = null;
+
     if (parentId) {
       const parent =
         await this.prisma.postComment.findUnique({
           where: { id: parentId },
         });
+
+      parentComment = parent;
 
       if (!parent || parent.postId !== postId) {
         throw new NotFoundException(
@@ -57,7 +65,7 @@ export class PostCommentsService {
       }
     }
 
-    return this.prisma.postComment.create({
+    const comment = await this.prisma.postComment.create({
       data: {
         content,
         userId,
@@ -70,6 +78,32 @@ export class PostCommentsService {
         },
       },
     });
+
+    const link = `/entities/${post.entityId}`;
+
+    if (parentComment) {
+      await this.notificationsService.notify({
+        recipientId: parentComment.userId,
+        actorId: userId,
+        type: 'POST_REPLY',
+        message: 'replied to your comment.',
+        link,
+        entityId: post.entityId,
+        postId: post.id,
+      });
+    } else {
+      await this.notificationsService.notify({
+        recipientId: post.authorId,
+        actorId: userId,
+        type: 'POST_COMMENT',
+        message: 'commented on your post.',
+        link,
+        entityId: post.entityId,
+        postId: post.id,
+      });
+    }
+
+    return comment;
   }
 
   async findByPost(postId: string) {

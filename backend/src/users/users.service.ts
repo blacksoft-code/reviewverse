@@ -7,10 +7,14 @@ import {
 
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateUserInfoDto } from './dto/update-user-info.dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+  ) {}
 
  async followUser(
   currentUserId: string,
@@ -71,6 +75,14 @@ export class UsersService {
     });
 
     console.log('FOLLOW CREATED:', follow);
+
+    await this.notificationsService.notify({
+      recipientId: targetUserId,
+      actorId: currentUserId,
+      type: 'NEW_FOLLOWER',
+      message: 'started following you.',
+      link: `/profile/${currentUserId}`,
+    });
 
     return follow;
   } catch (error) {
@@ -157,12 +169,22 @@ export class UsersService {
     );
   }
 
-  return this.prisma.friendRequest.create({
+  const request = await this.prisma.friendRequest.create({
     data: {
       senderId: currentUserId,
       receiverId: targetUserId,
     },
   });
+
+  await this.notificationsService.notify({
+    recipientId: targetUserId,
+    actorId: currentUserId,
+    type: 'FRIEND_REQUEST',
+    message: 'sent you a friend request.',
+    link: `/profile/${currentUserId}`,
+  });
+
+  return request;
 }
 
 async acceptFriendRequest(
@@ -225,6 +247,14 @@ async acceptFriendRequest(
     };
   });
 //
+  await this.notificationsService.notify({
+    recipientId: request.senderId,
+    actorId: currentUserId,
+    type: 'FRIEND_REQUEST_ACCEPTED',
+    message: 'accepted your friend request.',
+    link: `/profile/${currentUserId}`,
+  });
+
   return result;
 }
 
@@ -836,6 +866,22 @@ async followEntity(
         entityId,
       },
     });
+
+  const owners = await this.prisma.entityMembership.findMany({
+    where: { entityId },
+    select: { userId: true },
+  });
+
+  await this.notificationsService.notifyMany(
+    owners.map((o) => o.userId),
+    {
+      actorId: userId,
+      type: 'NEW_ENTITY_FOLLOWER',
+      message: 'started following your business.',
+      link: `/entities/${entityId}`,
+      entityId,
+    },
+  );
 
   return follow;
 }

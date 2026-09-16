@@ -6,12 +6,16 @@ import {
 } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 const MAX_REPLIES_PER_COMMENT = 20;
 
 @Injectable()
 export class ReviewCommentsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+  ) {}
 
   async create(
     reviewId: string,
@@ -27,11 +31,15 @@ export class ReviewCommentsService {
       throw new NotFoundException('Review not found.');
     }
 
+    let parentComment: { userId: string; parentId: string | null } | null = null;
+
     if (parentId) {
       const parent =
         await this.prisma.reviewComment.findUnique({
           where: { id: parentId },
         });
+
+      parentComment = parent;
 
       if (!parent || parent.reviewId !== reviewId) {
         throw new NotFoundException(
@@ -59,7 +67,7 @@ export class ReviewCommentsService {
       }
     }
 
-    return this.prisma.reviewComment.create({
+    const comment = await this.prisma.reviewComment.create({
       data: {
         content,
         userId,
@@ -72,6 +80,34 @@ export class ReviewCommentsService {
         },
       },
     });
+
+    const link = `/entities/${review.entityId}/reviews`;
+
+    if (parentComment) {
+      // reply হলে সরাসরি parent comment-এর মালিককে notify
+      await this.notificationsService.notify({
+        recipientId: parentComment.userId,
+        actorId: userId,
+        type: 'REVIEW_REPLY',
+        message: 'replied to your comment.',
+        link,
+        entityId: review.entityId,
+        reviewId: review.id,
+      });
+    } else {
+      // top-level comment হলে review-এর মালিককে notify
+      await this.notificationsService.notify({
+        recipientId: review.userId,
+        actorId: userId,
+        type: 'REVIEW_COMMENT',
+        message: 'commented on your review.',
+        link,
+        entityId: review.entityId,
+        reviewId: review.id,
+      });
+    }
+
+    return comment;
   }
 
   // Top-level comment গুলো + প্রতিটার reply (max 20, createdAt asc)

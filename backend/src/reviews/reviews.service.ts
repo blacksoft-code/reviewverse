@@ -6,10 +6,14 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class ReviewsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+  ) {}
 
   async create(
     userId: string,
@@ -65,6 +69,24 @@ export class ReviewsService {
     console.log(
       'ENTITY UPDATED:',
       updatedEntity,
+    );
+
+    // entity-র owner/admin/editor সবাইকে নতুন review-এর notification
+    const owners = await this.prisma.entityMembership.findMany({
+      where: { entityId: createReviewDto.entityId },
+      select: { userId: true },
+    });
+
+    await this.notificationsService.notifyMany(
+      owners.map((o) => o.userId),
+      {
+        actorId: userId,
+        type: 'NEW_REVIEW',
+        message: 'somebody left a new review on your business.',
+        link: `/entities/${createReviewDto.entityId}/reviews?reviewId=${review.id}`,
+        entityId: createReviewDto.entityId,
+        reviewId: review.id,
+      },
     );
 
     return review;

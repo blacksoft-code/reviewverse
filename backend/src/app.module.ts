@@ -23,10 +23,11 @@ import { ReviewReactionsModule } from './review-reactions/review-reactions.modul
 import { ReviewCommentsModule } from './review-comments/review-comments.module';
 import { PostReactionsModule } from './post-reactions/post-reaction.module';
 import { PostCommentsModule } from './post-comments/post-comments.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
-  imports: [
-
+  imports: 
+  [
     ConfigModule.forRoot({
       isGlobal: true,
 
@@ -47,15 +48,23 @@ import { PostCommentsModule } from './post-comments/post-comments.module';
         limit: 100,
       },
     ]),
-
-
-    PrismaModule, UsersModule, AuthModule, CategoriesModule, EntitiesModule, ReviewsModule, FeedModule, 
-    SearchModule, EntityMembershipsModule, EntityPostsModule, 
+    PrismaModule, 
+    UsersModule, 
+    AuthModule, 
+    CategoriesModule, 
+    EntitiesModule, 
+    ReviewsModule, 
+    FeedModule, 
+    SearchModule, 
+    EntityMembershipsModule, 
+    EntityPostsModule, 
     MediaModule, 
     ReviewReactionsModule, 
     ReviewCommentsModule, 
     PostReactionsModule, 
-    PostCommentsModule ],
+    PostCommentsModule,
+    NotificationsModule 
+  ],
   controllers: [AppController],
   providers: [
     AppService,

@@ -8,6 +8,7 @@ import {
 
 import BusinessSwitcher from '@/components/BusinessSwitcher';
 import SearchBox from '@/components/search/SearchBox';
+import NotificationBell from '@/components/NotificationBell';
 
 
 
@@ -82,10 +83,20 @@ export default function Navbar() {
             Categories
           </Link>
         )}
+                   {/* Notifications */}
+                  <NotificationBell />
+
                   {/* Logged-in user */}
                   <BusinessSwitcher />
 
-                  
+                  {/* Logout */}
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="rounded-lg border bg-black px-4 py-2 text-sm hover:bg-gray-50"
+                  >
+                    Logout
+                  </button>                 
                 </>
               ) : (
                 <>

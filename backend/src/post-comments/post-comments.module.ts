@@ -2,8 +2,11 @@ import { Module } from '@nestjs/common';
 
 import { PostCommentsController } from './post-comments.controller';
 import { PostCommentsService } from './post-comments.service';
+import { NotificationsModule } from '../notifications/notifications.module';
+
 
 @Module({
+  imports: [NotificationsModule],
   controllers: [PostCommentsController],
   providers: [PostCommentsService],
 })

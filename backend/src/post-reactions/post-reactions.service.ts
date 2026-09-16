@@ -5,10 +5,14 @@ import {
 
 import { PrismaService } from '../prisma/prisma.service';
 import { ReactionType } from '@prisma/client';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class PostReactionsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+  ) {}
 
   async react(
     postId: string,
@@ -23,13 +27,25 @@ export class PostReactionsService {
       throw new NotFoundException('Post not found.');
     }
 
-    return this.prisma.postReaction.upsert({
+    const reaction = await this.prisma.postReaction.upsert({
       where: {
         userId_postId: { userId, postId },
       },
       update: { type },
       create: { userId, postId, type },
     });
+
+    await this.notificationsService.notify({
+      recipientId: post.authorId,
+      actorId: userId,
+      type: 'POST_REACTION',
+      message: 'reacted to your post.',
+      link: `/entities/${post.entityId}`,
+      entityId: post.entityId,
+      postId: post.id,
+    });
+
+    return reaction;
   }
 
   async unreact(postId: string, userId: string) {

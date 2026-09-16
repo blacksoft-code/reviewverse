@@ -5,10 +5,14 @@ import {
 
 import { PrismaService } from '../prisma/prisma.service';
 import { ReactionType } from '@prisma/client';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class ReviewReactionsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+  ) {}
 
   // একই user আগেও react করে থাকলে টাইপ বদলে যাবে (upsert) —
   // নতুন করে react করলে বা টাইপ বদলালে দুটোই এখান থেকে হয়
@@ -25,13 +29,25 @@ export class ReviewReactionsService {
       throw new NotFoundException('Review not found.');
     }
 
-    return this.prisma.reviewReaction.upsert({
+    const reaction = await this.prisma.reviewReaction.upsert({
       where: {
         userId_reviewId: { userId, reviewId },
       },
       update: { type },
       create: { userId, reviewId, type },
     });
+
+    await this.notificationsService.notify({
+      recipientId: review.userId,
+      actorId: userId,
+      type: 'REVIEW_REACTION',
+      message: 'reacted to your review.',
+       link: `/entities/${review.entityId}/reviews?reviewId=${review.id}`,
+      entityId: review.entityId,
+      reviewId: review.id,
+    });
+
+    return reaction;
   }
 
   async unreact(reviewId: string, userId: string) {
