@@ -20,6 +20,7 @@ export interface AppNotification {
   type: NotificationType;
   message: string;
   link: string | null;
+  entityId: string | null;
   isRead: boolean;
   createdAt: string;
   actor: { id: string; name: string } | null;

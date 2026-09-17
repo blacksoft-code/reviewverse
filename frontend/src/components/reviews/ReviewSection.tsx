@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import ReviewForm from './ReviewForm';
 import { getProfile } from '@/services/auth.service';
 import {
@@ -51,7 +52,30 @@ export default function ReviewSection({
   const [loadingReviewId, setLoadingReviewId] =
     useState<string | null>(null);
 
-    const [openCommentsFor, setOpenCommentsFor] = useState<string | null>(null);
+  const [openCommentsFor, setOpenCommentsFor] = useState<string | null>(null);
+  
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const targetReviewId = searchParams.get('reviewId');
+
+    if (!targetReviewId) return;
+    if (!reviews.some((r) => r.id === targetReviewId)) return;
+
+    // Facebook-এর মতো — notification থেকে এলে সরাসরি ঐ review-তে স্ক্রল
+    // করে তার comment section খুলে দেওয়া হচ্ছে
+    setOpenCommentsFor(targetReviewId);
+
+    const el = document.getElementById(`review-${targetReviewId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('ring-2', 'ring-blue-400');
+      setTimeout(() => {
+        el.classList.remove('ring-2', 'ring-blue-400');
+      }, 2000);
+    }
+  }, [searchParams, reviews]);
+  
   useEffect(() => {
     async function loadProfile() {
       try {
@@ -187,7 +211,8 @@ async function handleUpdate(reviewId: string) {
             return (
               <article
                 key={review.id}
-                className="rounded-lg border p-5"
+                id={`review-${review.id}`}
+                className="rounded-lg border p-5 transition-shadow"
               >
                 {isEditing ? (
                   <>

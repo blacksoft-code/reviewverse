@@ -81,7 +81,7 @@ export class ReviewCommentsService {
       },
     });
 
-    const link = `/entities/${review.entityId}/reviews`;
+    const link = `/entities/${review.entityId}/reviews?reviewId=${review.id}`;
 
     if (parentComment) {
       // reply হলে সরাসরি parent comment-এর মালিককে notify

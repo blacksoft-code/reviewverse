@@ -42,7 +42,7 @@ export class ReviewReactionsService {
       actorId: userId,
       type: 'REVIEW_REACTION',
       message: 'reacted to your review.',
-       link: `/entities/${review.entityId}/reviews?reviewId=${review.id}`,
+      link: `/entities/${review.entityId}/reviews?reviewId=${review.id}`,
       entityId: review.entityId,
       reviewId: review.id,
     });
