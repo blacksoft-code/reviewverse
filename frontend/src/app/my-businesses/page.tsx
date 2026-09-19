@@ -140,12 +140,20 @@ export default function MyBusinessesPage() {
                     </p>
                   </Link>
 
+                <div className="flex gap-2">
                   <Link
                     href={`/my-businesses/${membership.entityId}/posts`}
                     className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-gray-50"
                   >
                     Manage Posts
                   </Link>
+                  <Link
+                      href={`/my-businesses/${membership.entityId}/offerings`}
+                      className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-gray-50"
+                    >
+                      Manage Offerings
+                    </Link>
+                  </div>  
                 </div>
               ))}
             </div>

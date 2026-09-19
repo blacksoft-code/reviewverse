@@ -36,8 +36,16 @@ import { uploadImages } from '@/services/media.service';
 import PostReactionButton from '@/components/entities/posts/PostReactionButton';
 import PostCommentSection from '@/components/entities/posts/PostCommentSection';
 
+import {
+  Offering,
+  createOffering,
+  deleteOffering,
+  getOfferingsByEntity,
+  updateOffering,
+} from '@/services/offering.service';
 
-type Tab = 'posts' | 'info';
+
+type Tab = 'posts' | 'offerings' | 'info';
 
 export default function BusinessHomePage() {
   const params = useParams();
@@ -82,6 +90,37 @@ export default function BusinessHomePage() {
   const [actingOn, setActingOn] = useState<
     string | null
   >(null);
+
+  // ───────── Offerings state ─────────
+
+  const [offerings, setOfferings] = useState<Offering[]>(
+    [],
+  );
+
+  const [offeringName, setOfferingName] = useState('');
+  const [offeringType, setOfferingType] = useState('');
+  const [offeringPrice, setOfferingPrice] = useState('');
+  const [offeringDescription, setOfferingDescription] =
+    useState('');
+  const [submittingOffering, setSubmittingOffering] =
+    useState(false);
+  const isSubmittingOfferingRef = useRef(false);
+
+  const [editingOfferingId, setEditingOfferingId] =
+    useState<string | null>(null);
+  const [editingOfferingName, setEditingOfferingName] =
+    useState('');
+  const [editingOfferingType, setEditingOfferingType] =
+    useState('');
+  const [editingOfferingPrice, setEditingOfferingPrice] =
+    useState('');
+  const [
+    editingOfferingDescription,
+    setEditingOfferingDescription,
+  ] = useState('');
+
+  const [actingOnOffering, setActingOnOffering] =
+    useState<string | null>(null);
 
   // ───────── Edit Info state ─────────
 
@@ -134,10 +173,11 @@ export default function BusinessHomePage() {
     try {
       setLoading(true);
 
-      const [entityRes, postsRes] =
+      const [entityRes, postsRes, offeringsRes] =
         await Promise.all([
           getEntityById(entityId),
           getManageFeed(entityId),
+          getOfferingsByEntity(entityId),
         ]);
 
       setEntity(entityRes.data);
@@ -151,6 +191,7 @@ export default function BusinessHomePage() {
       });
 
       setPosts(postsRes.data);
+      setOfferings(offeringsRes.data);
 
       setError('');
     } catch (err) {
@@ -300,6 +341,128 @@ export default function BusinessHomePage() {
       );
     } finally {
       setActingOn(null);
+    }
+  }
+
+  // ─────────────────────────────
+  // Create Offering
+  // ─────────────────────────────
+
+  async function handleCreateOffering(e: FormEvent) {
+    e.preventDefault();
+
+    if (isSubmittingOfferingRef.current) {
+      return;
+    }
+
+    isSubmittingOfferingRef.current = true;
+    setError('');
+    setSubmittingOffering(true);
+
+    try {
+      const response = await createOffering(entityId, {
+        name: offeringName,
+        type: offeringType,
+        price: Number(offeringPrice),
+        description: offeringDescription || undefined,
+      });
+
+      setOfferings((prev) => [response.data, ...prev]);
+      setOfferingName('');
+      setOfferingType('');
+      setOfferingPrice('');
+      setOfferingDescription('');
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to add offering',
+      );
+    } finally {
+      setSubmittingOffering(false);
+      isSubmittingOfferingRef.current = false;
+    }
+  }
+
+  // ─────────────────────────────
+  // Edit Offering
+  // ─────────────────────────────
+
+  function startEditingOffering(offering: Offering) {
+    setEditingOfferingId(offering.id);
+    setEditingOfferingName(offering.name);
+    setEditingOfferingType(offering.type);
+    setEditingOfferingPrice(String(offering.price));
+    setEditingOfferingDescription(
+      offering.description ?? '',
+    );
+  }
+
+  function cancelEditingOffering() {
+    setEditingOfferingId(null);
+    setEditingOfferingName('');
+    setEditingOfferingType('');
+    setEditingOfferingPrice('');
+    setEditingOfferingDescription('');
+  }
+
+  async function handleUpdateOffering(
+    offeringId: string,
+  ) {
+    setActingOnOffering(offeringId);
+    setError('');
+
+    try {
+      const response = await updateOffering(offeringId, {
+        name: editingOfferingName,
+        type: editingOfferingType,
+        price: Number(editingOfferingPrice),
+        description:
+          editingOfferingDescription || undefined,
+      });
+
+      setOfferings((prev) =>
+        prev.map((o) =>
+          o.id === offeringId ? response.data : o,
+        ),
+      );
+
+      cancelEditingOffering();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to update offering',
+      );
+    } finally {
+      setActingOnOffering(null);
+    }
+  }
+
+  // ─────────────────────────────
+  // Delete Offering
+  // ─────────────────────────────
+
+  async function handleDeleteOffering(
+    offeringId: string,
+  ) {
+    setActingOnOffering(offeringId);
+    setError('');
+
+    try {
+      await deleteOffering(offeringId);
+
+      setOfferings((prev) =>
+        prev.filter((o) => o.id !== offeringId),
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to delete offering',
+      );
+    } finally {
+      setActingOnOffering(null);
     }
   }
 
@@ -491,6 +654,18 @@ export default function BusinessHomePage() {
               }`}
             >
               Posts
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setTab('offerings')}
+              className={`border-b-2 px-4 py-2 text-sm font-medium ${
+                tab === 'offerings'
+                  ? 'border-black text-black'
+                  : 'border-transparent text-gray-500 hover:text-black'
+              }`}
+            >
+              Offerings
             </button>
 
             <button
@@ -700,6 +875,238 @@ export default function BusinessHomePage() {
                 )
               )}
 
+            </div>
+          </div>
+        )}
+
+        {/* ================================================= */}
+        {/* OFFERINGS TAB */}
+        {/* ================================================= */}
+
+        {tab === 'offerings' && (
+          <div className="mt-6">
+
+            {/* ───────────────────────────── */}
+            {/* Create Offering */}
+            {/* ───────────────────────────── */}
+
+            <form
+              onSubmit={handleCreateOffering}
+              className="space-y-3 rounded-xl border bg-black p-5"
+            >
+              <input
+                type="text"
+                value={offeringName}
+                onChange={(e) =>
+                  setOfferingName(e.target.value)
+                }
+                placeholder="Offering name (e.g. Mutton Kacchi Biriyani)"
+                required
+                className="w-full rounded-lg border p-2.5 text-sm"
+              />
+
+              <input
+                type="text"
+                value={offeringType}
+                onChange={(e) =>
+                  setOfferingType(e.target.value)
+                }
+                placeholder="Offering type (e.g. Biriyani)"
+                required
+                className="w-full rounded-lg border p-2.5 text-sm"
+              />
+
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={offeringPrice}
+                onChange={(e) =>
+                  setOfferingPrice(e.target.value)
+                }
+                placeholder="Price"
+                required
+                className="w-full rounded-lg border p-2.5 text-sm"
+              />
+
+              <textarea
+                value={offeringDescription}
+                onChange={(e) =>
+                  setOfferingDescription(
+                    e.target.value,
+                  )
+                }
+                placeholder="Description (optional)"
+                rows={3}
+                className="w-full resize-none rounded-lg border p-3 text-sm"
+              />
+
+              <button
+                type="submit"
+                disabled={submittingOffering}
+                className="rounded-lg bg-white px-5 py-2.5 text-sm font-medium text-black hover:bg-gray-200 disabled:opacity-50"
+              >
+                {submittingOffering
+                  ? 'Adding...'
+                  : 'Add Offering'}
+              </button>
+            </form>
+
+            {/* ───────────────────────────── */}
+            {/* Offerings List */}
+            {/* ───────────────────────────── */}
+
+            <div className="mt-6 space-y-4">
+              {offerings.length === 0 ? (
+                <p className="text-sm text-gray-500">
+                  No offerings yet — add your first one
+                  above.
+                </p>
+              ) : (
+                offerings.map((offering) =>
+                  editingOfferingId === offering.id ? (
+                    <div
+                      key={offering.id}
+                      className="space-y-3 rounded-xl border bg-black p-5"
+                    >
+                      <input
+                        type="text"
+                        value={editingOfferingName}
+                        onChange={(e) =>
+                          setEditingOfferingName(
+                            e.target.value,
+                          )
+                        }
+                        className="w-full rounded-lg border p-2.5 text-sm"
+                      />
+
+                      <input
+                        type="text"
+                        value={editingOfferingType}
+                        onChange={(e) =>
+                          setEditingOfferingType(
+                            e.target.value,
+                          )
+                        }
+                        className="w-full rounded-lg border p-2.5 text-sm"
+                      />
+
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={editingOfferingPrice}
+                        onChange={(e) =>
+                          setEditingOfferingPrice(
+                            e.target.value,
+                          )
+                        }
+                        className="w-full rounded-lg border p-2.5 text-sm"
+                      />
+
+                      <textarea
+                        value={
+                          editingOfferingDescription
+                        }
+                        onChange={(e) =>
+                          setEditingOfferingDescription(
+                            e.target.value,
+                          )
+                        }
+                        rows={3}
+                        className="w-full resize-none rounded-lg border p-3 text-sm"
+                      />
+
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleUpdateOffering(
+                              offering.id,
+                            )
+                          }
+                          disabled={
+                            actingOnOffering ===
+                            offering.id
+                          }
+                          className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black hover:bg-gray-200 disabled:opacity-50"
+                        >
+                          Save
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={
+                            cancelEditingOffering
+                          }
+                          className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-gray-800"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      key={offering.id}
+                      className="rounded-xl border bg-black p-5"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <h3 className="font-semibold">
+                            {offering.name}
+                          </h3>
+                          <span className="text-xs text-gray-400">
+                            {offering.type}
+                          </span>
+                        </div>
+
+                        <span className="whitespace-nowrap font-semibold">
+                          ৳{offering.price}
+                        </span>
+                      </div>
+
+                      {offering.description && (
+                        <p className="mt-3 whitespace-pre-line text-sm text-gray-400">
+                          {offering.description}
+                        </p>
+                      )}
+
+                      <div className="mt-4 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            startEditingOffering(
+                              offering,
+                            )
+                          }
+                          className="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-800"
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleDeleteOffering(
+                              offering.id,
+                            )
+                          }
+                          disabled={
+                            actingOnOffering ===
+                            offering.id
+                          }
+                          className="rounded-lg border px-3 py-1.5 text-xs font-medium text-red-500 hover:bg-red-950 disabled:opacity-50"
+                        >
+                          {actingOnOffering ===
+                          offering.id
+                            ? '...'
+                            : 'Delete'}
+                        </button>
+                      </div>
+                    </div>
+                  ),
+                )
+              )}
             </div>
           </div>
         )}

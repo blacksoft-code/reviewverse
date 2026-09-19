@@ -24,6 +24,7 @@ import { ReviewCommentsModule } from './review-comments/review-comments.module';
 import { PostReactionsModule } from './post-reactions/post-reaction.module';
 import { PostCommentsModule } from './post-comments/post-comments.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { OfferingsModule } from './offerings/offerings.module';
 
 @Module({
   imports: 
@@ -63,7 +64,8 @@ import { NotificationsModule } from './notifications/notifications.module';
     ReviewCommentsModule, 
     PostReactionsModule, 
     PostCommentsModule,
-    NotificationsModule 
+    NotificationsModule,
+    OfferingsModule, 
   ],
   controllers: [AppController],
   providers: [

@@ -180,12 +180,30 @@ model Entity {
   memberships EntityMembership[]
   claims      EntityClaim[]
   posts       EntityPost[]
+  offerings   Offering[]
 
   reviews Review[]
   media   Media[]
 
   followers      EntityFollow[]
   blockedByUsers EntityBlock[]
+}
+
+model Offering {
+  id String @id @default(uuid())
+
+  entityId String
+  entity   Entity @relation(fields: [entityId], references: [id], onDelete: Cascade)
+
+  name        String
+  type        String
+  price       Float
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([entityId])
 }
 
 model Review {
