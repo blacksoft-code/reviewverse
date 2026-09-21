@@ -17,6 +17,14 @@ import {
   updateCategory,
 } from '@/services/category.service';
 
+import {
+  SubCategory,
+  createSubCategory,
+  deleteSubCategory,
+  getSubCategories,
+  updateSubCategory,
+} from '@/services/subcategory.service';
+
 function slugify(text: string) {
   return text
     .toLowerCase()
@@ -24,6 +32,22 @@ function slugify(text: string) {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)+/g, '');
 }
+
+// Apple-স্টাইলের shared class name-গুলো এক জায়গায়
+const FIELD =
+  'w-full rounded-xl border border-[#d2d2d7] bg-white px-3.5 py-2.5 text-[15px] text-[#1d1d1f] placeholder:text-[#86868b] outline-none transition focus:border-[#0071e3] focus:ring-4 focus:ring-[#0071e3]/10 disabled:bg-[#f5f5f7] disabled:text-[#86868b]';
+
+const BTN_PRIMARY =
+  'rounded-full bg-[#0071e3] px-5 py-2.5 text-[14px] font-medium text-white transition hover:bg-[#0077ed] disabled:cursor-not-allowed disabled:bg-[#0071e3]/40';
+
+const BTN_GHOST =
+  'rounded-full border border-[#d2d2d7] px-5 py-2.5 text-[14px] font-medium text-[#1d1d1f] transition hover:bg-[#f5f5f7]';
+
+const LINK_ACTION =
+  'text-[13px] font-medium text-[#0071e3] transition hover:text-[#0077ed]';
+
+const LINK_DANGER =
+  'text-[13px] font-medium text-[#ff3b30] transition hover:text-[#ff453a] disabled:opacity-40';
 
 export default function AdminCategoriesPage() {
   const router = useRouter();
@@ -35,14 +59,14 @@ export default function AdminCategoriesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // ───── Create form ─────
+  // ───── Create category form ─────
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [slugTouched, setSlugTouched] =
     useState(false);
   const [creating, setCreating] = useState(false);
 
-  // ───── Inline edit ─────
+  // ───── Inline edit category ─────
   const [editingId, setEditingId] = useState<
     string | null
   >(null);
@@ -51,15 +75,40 @@ export default function AdminCategoriesPage() {
   const [savingId, setSavingId] = useState<
     string | null
   >(null);
-
   const [deletingId, setDeletingId] = useState<
     string | null
   >(null);
 
+  // ───── Subcategory state (per category) ─────
+  const [expandedCategoryId, setExpandedCategoryId] =
+    useState<string | null>(null);
+  const [subCategories, setSubCategories] = useState<
+    Record<string, SubCategory[]>
+  >({});
+  const [loadingSubs, setLoadingSubs] = useState<
+    string | null
+  >(null);
+
+  const [newSubName, setNewSubName] = useState('');
+  const [newSubSlug, setNewSubSlug] = useState('');
+  const [newSubSlugTouched, setNewSubSlugTouched] =
+    useState(false);
+  const [creatingSub, setCreatingSub] = useState(false);
+
+  const [editingSubId, setEditingSubId] = useState<
+    string | null
+  >(null);
+  const [editSubName, setEditSubName] = useState('');
+  const [editSubSlug, setEditSubSlug] = useState('');
+  const [savingSubId, setSavingSubId] = useState<
+    string | null
+  >(null);
+  const [deletingSubId, setDeletingSubId] = useState<
+    string | null
+  >(null);
+
   useEffect(() => {
-    if (authLoading) {
-      return;
-    }
+    if (authLoading) return;
 
     if (!user) {
       router.push('/login');
@@ -94,9 +143,7 @@ export default function AdminCategoriesPage() {
 
   function handleNameChange(value: string) {
     setName(value);
-    if (!slugTouched) {
-      setSlug(slugify(value));
-    }
+    if (!slugTouched) setSlug(slugify(value));
   }
 
   async function handleCreate(e: FormEvent) {
@@ -148,7 +195,6 @@ export default function AdminCategoriesPage() {
         name: editName,
         slug: editSlug,
       });
-
       setCategories((prev) =>
         prev.map((c) =>
           c.id === id ? response.data : c,
@@ -173,7 +219,6 @@ export default function AdminCategoriesPage() {
     const confirmed = window.confirm(
       `Delete category "${name}"? This cannot be undone.`,
     );
-
     if (!confirmed) return;
 
     setDeletingId(id);
@@ -195,47 +240,211 @@ export default function AdminCategoriesPage() {
     }
   }
 
+  // ───── Subcategory handlers ─────
+
+  async function toggleExpand(categoryId: string) {
+    if (expandedCategoryId === categoryId) {
+      setExpandedCategoryId(null);
+      return;
+    }
+
+    setExpandedCategoryId(categoryId);
+    setNewSubName('');
+    setNewSubSlug('');
+    setNewSubSlugTouched(false);
+
+    if (!subCategories[categoryId]) {
+      try {
+        setLoadingSubs(categoryId);
+        const response = await getSubCategories(
+          categoryId,
+        );
+        setSubCategories((prev) => ({
+          ...prev,
+          [categoryId]: response.data,
+        }));
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Failed to load subcategories.',
+        );
+      } finally {
+        setLoadingSubs(null);
+      }
+    }
+  }
+
+  function handleNewSubNameChange(value: string) {
+    setNewSubName(value);
+    if (!newSubSlugTouched) {
+      setNewSubSlug(slugify(value));
+    }
+  }
+
+  async function handleCreateSub(
+    categoryId: string,
+    e: FormEvent,
+  ) {
+    e.preventDefault();
+    setCreatingSub(true);
+    setError('');
+
+    try {
+      const response = await createSubCategory({
+        name: newSubName,
+        slug: newSubSlug,
+        categoryId,
+      });
+      setSubCategories((prev) => ({
+        ...prev,
+        [categoryId]: [
+          ...(prev[categoryId] ?? []),
+          response.data,
+        ],
+      }));
+      setNewSubName('');
+      setNewSubSlug('');
+      setNewSubSlugTouched(false);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to create subcategory.',
+      );
+    } finally {
+      setCreatingSub(false);
+    }
+  }
+
+  function startEditingSub(sub: SubCategory) {
+    setEditingSubId(sub.id);
+    setEditSubName(sub.name);
+    setEditSubSlug(sub.slug);
+  }
+
+  function cancelEditingSub() {
+    setEditingSubId(null);
+    setEditSubName('');
+    setEditSubSlug('');
+  }
+
+  async function handleUpdateSub(
+    categoryId: string,
+    subId: string,
+  ) {
+    setSavingSubId(subId);
+    setError('');
+
+    try {
+      const response = await updateSubCategory(
+        subId,
+        { name: editSubName, slug: editSubSlug },
+      );
+      setSubCategories((prev) => ({
+        ...prev,
+        [categoryId]: (prev[categoryId] ?? []).map(
+          (s) => (s.id === subId ? response.data : s),
+        ),
+      }));
+      cancelEditingSub();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to update subcategory.',
+      );
+    } finally {
+      setSavingSubId(null);
+    }
+  }
+
+  async function handleDeleteSub(
+    categoryId: string,
+    subId: string,
+    subName: string,
+  ) {
+    const confirmed = window.confirm(
+      `Delete subcategory "${subName}"?`,
+    );
+    if (!confirmed) return;
+
+    setDeletingSubId(subId);
+    setError('');
+
+    try {
+      await deleteSubCategory(subId);
+      setSubCategories((prev) => ({
+        ...prev,
+        [categoryId]: (prev[categoryId] ?? []).filter(
+          (s) => s.id !== subId,
+        ),
+      }));
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to delete subcategory.',
+      );
+    } finally {
+      setDeletingSubId(null);
+    }
+  }
+
   if (authLoading || loading) {
     return (
-      <main className="min-h-screen p-8">
-        <p className="text-gray-500">Loading...</p>
+      <main className="flex min-h-screen items-center justify-center bg-[#fbfbfd]">
+        <p className="text-[15px] text-[#86868b]">
+          Loading…
+        </p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 p-8">
-      <div className="mx-auto max-w-3xl">
-        <h1 className="text-3xl font-bold">
-          Manage Categories
-        </h1>
+    <main
+      className="min-h-screen bg-[#fbfbfd] pb-32"
+      style={{
+        fontFamily:
+          '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif',
+      }}
+    >
+      {/* ───────── Header ───────── */}
+      <div className="border-b border-[#d2d2d7]/60 bg-white/80 backdrop-blur-xl">
+        <div className="mx-auto max-w-[720px] px-6 py-14">
+          <p className="text-[13px] font-medium tracking-wide text-[#86868b]">
+            Admin
+          </p>
+          <h1 className="mt-1 text-[40px] font-semibold leading-tight tracking-tight text-[#1d1d1f]">
+            Categories
+          </h1>
+          <p className="mt-2 max-w-[480px] text-[17px] leading-relaxed text-[#86868b]">
+            Organize every business into a category
+            and, where useful, a more specific
+            subcategory.
+          </p>
+        </div>
+      </div>
 
-        <p className="mt-2 text-gray-600">
-          Create, edit, or delete business
-          categories.
-        </p>
-
+      <div className="mx-auto max-w-[720px] px-6">
         {error && (
-          <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">
+          <p className="mt-8 rounded-xl bg-[#ff3b30]/8 px-4 py-3 text-[14px] text-[#ff3b30]">
             {error}
           </p>
         )}
 
-        {/* ================================= */}
-        {/* CREATE FORM */}
-        {/* ================================= */}
-
-        <form
-          onSubmit={handleCreate}
-          className="mt-6 rounded-xl border bg-black p-5"
-        >
-          <h2 className="text-lg font-semibold">
-            Add new category
+        {/* ───────── Add category ───────── */}
+        <section className="mt-10 rounded-2xl border border-[#d2d2d7]/70 bg-white p-6">
+          <h2 className="text-[17px] font-semibold text-[#1d1d1f]">
+            Add a category
           </h2>
 
-          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <label className="text-xs font-medium text-gray-500">
+          <form
+            onSubmit={handleCreate}
+            className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end"
+          >
+            <div className="flex-1">
+              <label className="text-[13px] text-[#86868b]">
                 Name
               </label>
               <input
@@ -245,12 +454,12 @@ export default function AdminCategoriesPage() {
                 }
                 required
                 placeholder="Restaurant"
-                className="mt-1 w-full rounded-lg border p-2.5 text-sm"
+                className={`mt-1.5 ${FIELD}`}
               />
             </div>
 
-            <div>
-              <label className="text-xs font-medium text-gray-500">
+            <div className="flex-1">
+              <label className="text-[13px] text-[#86868b]">
                 Slug
               </label>
               <input
@@ -261,123 +470,340 @@ export default function AdminCategoriesPage() {
                 }}
                 required
                 placeholder="restaurant"
-                className="mt-1 w-full rounded-lg border p-2.5 text-sm"
+                className={`mt-1.5 ${FIELD}`}
               />
             </div>
-          </div>
 
-          <button
-            type="submit"
-            disabled={creating}
-            className="mt-4 rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
-          >
-            {creating ? 'Adding...' : 'Add category'}
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={creating}
+              className={BTN_PRIMARY}
+            >
+              {creating ? 'Adding…' : 'Add'}
+            </button>
+          </form>
+        </section>
 
-        {/* ================================= */}
-        {/* LIST */}
-        {/* ================================= */}
+        {/* ───────── List ───────── */}
+        <section className="mt-10">
+          <h2 className="px-1 text-[13px] font-medium uppercase tracking-wide text-[#86868b]">
+            All categories · {categories.length}
+          </h2>
 
-        <div className="mt-8 space-y-3">
           {categories.length === 0 ? (
-            <p className="text-sm text-gray-500">
+            <p className="mt-4 rounded-2xl border border-dashed border-[#d2d2d7] px-6 py-10 text-center text-[15px] text-[#86868b]">
               No categories yet.
             </p>
           ) : (
-            categories.map((category) =>
-              editingId === category.id ? (
-                <div
-                  key={category.id}
-                  className="rounded-lg border bg-black p-4"
-                >
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <input
-                      value={editName}
-                      onChange={(e) =>
-                        setEditName(e.target.value)
-                      }
-                      className="rounded-lg border p-2.5 text-sm"
-                    />
-                    <input
-                      value={editSlug}
-                      onChange={(e) =>
-                        setEditSlug(e.target.value)
-                      }
-                      className="rounded-lg border p-2.5 text-sm"
-                    />
-                  </div>
+            <div className="mt-4 divide-y divide-[#d2d2d7]/60 overflow-hidden rounded-2xl border border-[#d2d2d7]/70 bg-white">
+              {categories.map((category) => {
+                const isExpanded =
+                  expandedCategoryId === category.id;
 
-                  <div className="mt-3 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleUpdate(category.id)
-                      }
-                      disabled={
-                        savingId === category.id
-                      }
-                      className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
-                    >
-                      Save
-                    </button>
-                    <button
-                      type="button"
-                      onClick={cancelEditing}
-                      className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-grey-50"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div
-                  key={category.id}
-                  className="flex items-center justify-between rounded-lg border bg-white p-4"
-                >
-                  <div>
-                    <p className="font-medium">
-                      {category.name}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      /{category.slug}
-                    </p>
-                  </div>
+                return (
+                  <div key={category.id}>
+                    {editingId === category.id ? (
+                      <div className="p-5">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          <input
+                            value={editName}
+                            onChange={(e) =>
+                              setEditName(
+                                e.target.value,
+                              )
+                            }
+                            className={FIELD}
+                          />
+                          <input
+                            value={editSlug}
+                            onChange={(e) =>
+                              setEditSlug(
+                                e.target.value,
+                              )
+                            }
+                            className={FIELD}
+                          />
+                        </div>
 
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        startEditing(category)
-                      }
-                      className="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50"
-                    >
-                      Edit
-                    </button>
+                        <div className="mt-4 flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleUpdate(
+                                category.id,
+                              )
+                            }
+                            disabled={
+                              savingId === category.id
+                            }
+                            className={BTN_PRIMARY}
+                          >
+                            Save
+                          </button>
+                          <button
+                            type="button"
+                            onClick={cancelEditing}
+                            className={BTN_GHOST}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3 px-5 py-4 transition hover:bg-[#f5f5f7]/60">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            toggleExpand(category.id)
+                          }
+                          className="flex flex-1 items-center gap-3 text-left"
+                        >
+                          <span
+                            className={`flex h-5 w-5 shrink-0 items-center justify-center text-[#86868b] transition-transform duration-200 ${
+                              isExpanded
+                                ? 'rotate-90'
+                                : ''
+                            }`}
+                          >
+                            ›
+                          </span>
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleDelete(
-                          category.id,
-                          category.name,
-                        )
-                      }
-                      disabled={
-                        deletingId === category.id
-                      }
-                      className="rounded-lg border px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
-                    >
-                      {deletingId === category.id
-                        ? '...'
-                        : 'Delete'}
-                    </button>
+                          <span>
+                            <span className="block text-[16px] font-medium text-[#1d1d1f]">
+                              {category.name}
+                            </span>
+                            <span className="block text-[13px] text-[#86868b]">
+                              /{category.slug}
+                            </span>
+                          </span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            startEditing(category)
+                          }
+                          className={LINK_ACTION}
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleDelete(
+                              category.id,
+                              category.name,
+                            )
+                          }
+                          disabled={
+                            deletingId === category.id
+                          }
+                          className={LINK_DANGER}
+                        >
+                          {deletingId === category.id
+                            ? '…'
+                            : 'Delete'}
+                        </button>
+                      </div>
+                    )}
+
+                    {/* ───── Subcategories ───── */}
+                    {isExpanded && (
+                      <div className="border-t border-[#d2d2d7]/60 bg-[#f5f5f7]/50 px-5 py-5">
+                        <p className="text-[12px] font-medium uppercase tracking-wide text-[#86868b]">
+                          Subcategories
+                        </p>
+
+                        {loadingSubs === category.id ? (
+                          <p className="mt-3 text-[14px] text-[#86868b]">
+                            Loading…
+                          </p>
+                        ) : (
+                          <div className="mt-3 space-y-2">
+                            {(
+                              subCategories[
+                                category.id
+                              ] ?? []
+                            ).length === 0 && (
+                              <p className="text-[14px] text-[#86868b]">
+                                None yet — add the
+                                first one below.
+                              </p>
+                            )}
+
+                            {(
+                              subCategories[
+                                category.id
+                              ] ?? []
+                            ).map((sub) =>
+                              editingSubId ===
+                              sub.id ? (
+                                <div
+                                  key={sub.id}
+                                  className="rounded-xl border border-[#d2d2d7] bg-white p-3"
+                                >
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <input
+                                      value={
+                                        editSubName
+                                      }
+                                      onChange={(e) =>
+                                        setEditSubName(
+                                          e.target
+                                            .value,
+                                        )
+                                      }
+                                      className={`${FIELD} py-2 text-[14px]`}
+                                    />
+                                    <input
+                                      value={
+                                        editSubSlug
+                                      }
+                                      onChange={(e) =>
+                                        setEditSubSlug(
+                                          e.target
+                                            .value,
+                                        )
+                                      }
+                                      className={`${FIELD} py-2 text-[14px]`}
+                                    />
+                                  </div>
+                                  <div className="mt-3 flex gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handleUpdateSub(
+                                          category.id,
+                                          sub.id,
+                                        )
+                                      }
+                                      disabled={
+                                        savingSubId ===
+                                        sub.id
+                                      }
+                                      className={`${BTN_PRIMARY} px-4 py-1.5 text-[13px]`}
+                                    >
+                                      Save
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={
+                                        cancelEditingSub
+                                      }
+                                      className={`${BTN_GHOST} px-4 py-1.5 text-[13px]`}
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div
+                                  key={sub.id}
+                                  className="flex items-center justify-between rounded-xl border border-[#d2d2d7]/70 bg-white px-4 py-2.5"
+                                >
+                                  <div>
+                                    <p className="text-[14px] text-[#1d1d1f]">
+                                      {sub.name}
+                                    </p>
+                                    <p className="text-[12px] text-[#86868b]">
+                                      /{sub.slug}
+                                    </p>
+                                  </div>
+                                  <div className="flex gap-4">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        startEditingSub(
+                                          sub,
+                                        )
+                                      }
+                                      className={
+                                        LINK_ACTION
+                                      }
+                                    >
+                                      Edit
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handleDeleteSub(
+                                          category.id,
+                                          sub.id,
+                                          sub.name,
+                                        )
+                                      }
+                                      disabled={
+                                        deletingSubId ===
+                                        sub.id
+                                      }
+                                      className={
+                                        LINK_DANGER
+                                      }
+                                    >
+                                      {deletingSubId ===
+                                      sub.id
+                                        ? '…'
+                                        : 'Delete'}
+                                    </button>
+                                  </div>
+                                </div>
+                              ),
+                            )}
+                          </div>
+                        )}
+
+                        {/* Add subcategory */}
+                        <form
+                          onSubmit={(e) =>
+                            handleCreateSub(
+                              category.id,
+                              e,
+                            )
+                          }
+                          className="mt-4 flex flex-col gap-2 sm:flex-row"
+                        >
+                          <input
+                            value={newSubName}
+                            onChange={(e) =>
+                              handleNewSubNameChange(
+                                e.target.value,
+                              )
+                            }
+                            placeholder="Subcategory name"
+                            required
+                            className={`${FIELD} flex-1 py-2 text-[14px]`}
+                          />
+                          <input
+                            value={newSubSlug}
+                            onChange={(e) => {
+                              setNewSubSlug(
+                                e.target.value,
+                              );
+                              setNewSubSlugTouched(
+                                true,
+                              );
+                            }}
+                            placeholder="slug"
+                            required
+                            className={`${FIELD} w-full py-2 text-[14px] sm:w-32`}
+                          />
+                          <button
+                            type="submit"
+                            disabled={creatingSub}
+                            className={`${BTN_PRIMARY} py-2 text-[13px]`}
+                          >
+                            Add
+                          </button>
+                        </form>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ),
-            )
+                );
+              })}
+            </div>
           )}
-        </div>
+        </section>
       </div>
     </main>
   );

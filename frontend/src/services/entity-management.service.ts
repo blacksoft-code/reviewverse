@@ -72,3 +72,17 @@ export async function updateEntity(
     },
   );
 }
+
+export async function reassignEntityCategory(
+  entityId: string,
+  categoryId: string,
+  subCategoryId: string | null,
+) {
+  return apiFetch<ApiEnvelope<EntityDetail>>(
+    `/entities/${entityId}/category`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ categoryId, subCategoryId }),
+    },
+  );
+}

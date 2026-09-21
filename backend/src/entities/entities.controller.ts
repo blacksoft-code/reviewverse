@@ -10,6 +10,9 @@ import {
   UseGuards,
 } from '@nestjs/common';
 
+import { Roles } from '../auth/decorators/roles.decorator';
+import { RolesGuard } from '../auth/guards/roles.guard';
+
 import { EntitiesService } from './entities.service';
 import { CreateEntityDto } from './dto/create-entity.dto';
 import { UpdateEntityDto } from './dto/update-entity.dto';
@@ -196,4 +199,26 @@ update(
   ) {
     return this.entitiesService.findOne(slug);
   }
+
+  @Patch(':id/category')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: '[Admin] Reassign a business\'s category/subcategory',
+  })
+  reassignCategory(
+    @Param('id') id: string,
+    @Body('categoryId') categoryId: string,
+    @Body('subCategoryId') subCategoryId: string | null,
+  ) {
+    return this.entitiesService.adminReassignCategory(
+      id,
+      categoryId,
+      subCategoryId,
+    );
+  }
 }
+
+
+

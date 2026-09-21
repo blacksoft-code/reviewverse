@@ -42,6 +42,13 @@ export class CreateEntityDto {
   @IsString()
   location: string;
 
+@ApiPropertyOptional({
+  example: '9f1c...-subcategory-id',
+  description: 'Optional subcategory under the selected category',
+})
+@IsOptional()
+@IsString()
+subCategoryId?: string;
   // NEW:
   // এগুলো এখন optional।
   // পরে Owner flow-তে এগুলোর ব্যবহার আরও বাড়বে।

@@ -30,6 +30,7 @@ async create(
         mode: 'insensitive',
       },
       categoryId: createEntityDto.categoryId,
+      subCategoryId: createEntityDto.subCategoryId,
       ...(createEntityDto.location && {
         location: {
           equals: createEntityDto.location,
@@ -289,6 +290,50 @@ async getFollowersCount(entityId: string) {
   return this.prisma.entityFollow.count({
     where: {
       entityId,
+    },
+  });
+}
+
+// [Admin] যেকোনো business-এর category/subcategory বদলানো —
+// membership লাগে না, শুধু ADMIN role
+async adminReassignCategory(
+  id: string,
+  categoryId: string,
+  subCategoryId?: string | null,
+) {
+  const entity = await this.prisma.entity.findUnique({
+    where: { id },
+  });
+
+  if (!entity) {
+    throw new NotFoundException('Business not found.');
+  }
+
+  const category = await this.prisma.category.findUnique({
+    where: { id: categoryId },
+  });
+
+  if (!category) {
+    throw new NotFoundException('Category not found.');
+  }
+
+  if (subCategoryId) {
+    const subCategory = await this.prisma.subCategory.findUnique({
+      where: { id: subCategoryId },
+    });
+
+    if (!subCategory || subCategory.categoryId !== categoryId) {
+      throw new NotFoundException(
+        'Subcategory not found under this category.',
+      );
+    }
+  }
+
+  return this.prisma.entity.update({
+    where: { id },
+    data: {
+      categoryId,
+      subCategoryId: subCategoryId ?? null,
     },
   });
 }

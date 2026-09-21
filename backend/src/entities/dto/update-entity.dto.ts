@@ -103,4 +103,8 @@ logo?: string;
   @IsOptional()
   @IsUrl()
   menu?: string;
+@ApiPropertyOptional()
+@IsOptional()
+@IsString()
+subCategoryId?: string;
 }

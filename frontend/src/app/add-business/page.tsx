@@ -5,6 +5,10 @@ import { useRouter } from 'next/navigation';
 
 import { getCategories } from '@/services/category.service';
 import { createEntity } from '@/services/entity.service';
+import {
+  getSubCategories,
+  SubCategory,
+} from '@/services/subcategory.service';
 
 type Category = {
   id: string;
@@ -96,6 +100,10 @@ export default function AddBusinessPage() {
   const [loadingCategories, setLoadingCategories] =
     useState(true);
 
+  const [subCategoryId, setSubCategoryId] = useState('');
+  const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
+  const [loadingSubCategories, setLoadingSubCategories] = useState(false);
+
   // =========================
   // Flow / UI states
   // =========================
@@ -110,6 +118,29 @@ export default function AddBusinessPage() {
   // =========================
   // Load Categories
   // =========================
+  useEffect(() => {
+    if (!categoryId) {
+      setSubCategories([]);
+      setSubCategoryId('');
+      return;
+    }
+
+    async function loadSubCategories() {
+      setLoadingSubCategories(true);
+      try {
+        const response = await getSubCategories(categoryId);
+        setSubCategories(response.data);
+      } catch {
+        setSubCategories([]);
+      } finally {
+        setLoadingSubCategories(false);
+      }
+    }
+
+    setSubCategoryId(''); // category বদলালে আগের subcategory selection রিসেট
+    loadSubCategories();
+  }, [categoryId]);
+
 
   useEffect(() => {
     async function loadCategories() {
@@ -356,6 +387,29 @@ export default function AddBusinessPage() {
                     value={category.id}
                   >
                     {category.name}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={subCategoryId}
+                onChange={(e) => setSubCategoryId(e.target.value)}
+                disabled={!categoryId || loadingSubCategories}
+                className="mt-1 w-full rounded-lg border p-2.5 text-sm disabled:bg-gray-100"
+              >
+                <option value="">
+                  {!categoryId
+                    ? 'Select a category first'
+                    : loadingSubCategories
+                      ? 'Loading subcategories...'
+                      : subCategories.length === 0
+                        ? 'No subcategories'
+                        : 'Select a subcategory (optional)'}
+                </option>
+
+                {subCategories.map((sub) => (
+                  <option key={sub.id} value={sub.id}>
+                    {sub.name}
                   </option>
                 ))}
               </select>
