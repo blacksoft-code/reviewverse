@@ -33,6 +33,7 @@ import SingleImageUploader from '@/components/media/SingleImageUploader';
 
 // Media service
 import { uploadImages } from '@/services/media.service';
+import { uploadImage } from '@/services/media.service';
 import PostReactionButton from '@/components/entities/posts/PostReactionButton';
 import PostCommentSection from '@/components/entities/posts/PostCommentSection';
 
@@ -102,6 +103,8 @@ export default function BusinessHomePage() {
   const [offeringPrice, setOfferingPrice] = useState('');
   const [offeringDescription, setOfferingDescription] =
     useState('');
+  const [offeringImage, setOfferingImage] =
+    useState<File | null>(null);
   const [submittingOffering, setSubmittingOffering] =
     useState(false);
   const isSubmittingOfferingRef = useRef(false);
@@ -367,11 +370,23 @@ export default function BusinessHomePage() {
         description: offeringDescription || undefined,
       });
 
-      setOfferings((prev) => [response.data, ...prev]);
+      let offering = response.data;
+
+      if (offeringImage) {
+        const media = await uploadImage(
+          offeringImage,
+          'OFFERING',
+          offering.id,
+        );
+        offering = { ...offering, media: [media] };
+      }
+
+      setOfferings((prev) => [offering, ...prev]);
       setOfferingName('');
       setOfferingType('');
       setOfferingPrice('');
       setOfferingDescription('');
+      setOfferingImage(null);
     } catch (err) {
       setError(
         err instanceof Error
@@ -941,6 +956,22 @@ export default function BusinessHomePage() {
                 className="w-full resize-none rounded-lg border p-3 text-sm"
               />
 
+              <div>
+                <label className="text-sm font-medium">
+                  Photo (optional)
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) =>
+                    setOfferingImage(
+                      e.target.files?.[0] ?? null,
+                    )
+                  }
+                  className="mt-1 block w-full text-sm"
+                />
+              </div>
+
               <button
                 type="submit"
                 disabled={submittingOffering}
@@ -969,6 +1000,32 @@ export default function BusinessHomePage() {
                       key={offering.id}
                       className="space-y-3 rounded-xl border bg-black p-5"
                     >
+                      <SingleImageUploader
+                        type="OFFERING"
+                        targetId={offering.id}
+                        currentUrl={
+                          offering.media[0]?.url ?? null
+                        }
+                        shape="rectangle"
+                        onUploaded={(url) =>
+                          setOfferings((prev) =>
+                            prev.map((o) =>
+                              o.id === offering.id
+                                ? {
+                                    ...o,
+                                    media: [
+                                      {
+                                        id: 'temp',
+                                        url,
+                                      },
+                                    ],
+                                  }
+                                : o,
+                            ),
+                          )
+                        }
+                      />
+
                       <input
                         type="text"
                         value={editingOfferingName}
@@ -1050,26 +1107,38 @@ export default function BusinessHomePage() {
                       key={offering.id}
                       className="rounded-xl border bg-black p-5"
                     >
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <h3 className="font-semibold">
-                            {offering.name}
-                          </h3>
-                          <span className="text-xs text-gray-400">
-                            {offering.type}
-                          </span>
+                      <div className="flex items-start gap-4">
+                        {offering.media[0]?.url && (
+                          <img
+                            src={offering.media[0].url}
+                            alt={offering.name}
+                            className="h-20 w-20 flex-shrink-0 rounded-lg object-cover"
+                          />
+                        )}
+
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between gap-4">
+                            <div>
+                              <h3 className="font-semibold">
+                                {offering.name}
+                              </h3>
+                              <span className="text-xs text-gray-400">
+                                {offering.type}
+                              </span>
+                            </div>
+
+                            <span className="whitespace-nowrap font-semibold">
+                              ৳{offering.price}
+                            </span>
+                          </div>
+
+                          {offering.description && (
+                            <p className="mt-3 whitespace-pre-line text-sm text-gray-400">
+                              {offering.description}
+                            </p>
+                          )}
                         </div>
-
-                        <span className="whitespace-nowrap font-semibold">
-                          ৳{offering.price}
-                        </span>
                       </div>
-
-                      {offering.description && (
-                        <p className="mt-3 whitespace-pre-line text-sm text-gray-400">
-                          {offering.description}
-                        </p>
-                      )}
 
                       <div className="mt-4 flex gap-2">
                         <button

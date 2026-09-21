@@ -6,7 +6,8 @@ export type MediaType =
   | 'ENTITY_LOGO'
   | 'ENTITY_COVER'
   | 'REVIEW'
-  | 'ENTITY_POST';
+  | 'ENTITY_POST'
+  | 'OFFERING';
 
 export type Media = {
   id: string;

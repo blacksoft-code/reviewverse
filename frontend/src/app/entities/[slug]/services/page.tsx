@@ -44,26 +44,38 @@ export default async function ServicesPage({
                 key={offering.id}
                 className="rounded-lg border bg-gray-50 p-5"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h3 className="font-semibold">
-                      {offering.name}
-                    </h3>
-                    <span className="text-xs text-gray-500">
-                      {offering.type}
-                    </span>
+                <div className="flex items-start gap-4">
+                  {offering.media[0]?.url && (
+                    <img
+                      src={offering.media[0].url}
+                      alt={offering.name}
+                      className="h-20 w-20 flex-shrink-0 rounded-lg object-cover"
+                    />
+                  )}
+
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h3 className="font-semibold">
+                          {offering.name}
+                        </h3>
+                        <span className="text-xs text-gray-500">
+                          {offering.type}
+                        </span>
+                      </div>
+
+                      <span className="whitespace-nowrap font-semibold">
+                        ৳{offering.price}
+                      </span>
+                    </div>
+
+                    {offering.description && (
+                      <p className="mt-3 whitespace-pre-line leading-7 text-gray-600">
+                        {offering.description}
+                      </p>
+                    )}
                   </div>
-
-                  <span className="whitespace-nowrap font-semibold">
-                    ৳{offering.price}
-                  </span>
                 </div>
-
-                {offering.description && (
-                  <p className="mt-3 whitespace-pre-line leading-7 text-gray-600">
-                    {offering.description}
-                  </p>
-                )}
               </div>
             ))
           )}

@@ -7,6 +7,7 @@ export type Offering = {
   type: string;
   price: number;
   description: string | null;
+  media: { id: string; url: string }[];
   createdAt: string;
   updatedAt: string;
 };

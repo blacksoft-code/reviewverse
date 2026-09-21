@@ -200,6 +200,8 @@ model Offering {
   price       Float
   description String?
 
+  media Media[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -235,6 +237,7 @@ enum MediaType {
   ENTITY_COVER
   REVIEW
   ENTITY_POST
+  OFFERING
 }
 
 model Media {
@@ -247,11 +250,13 @@ model Media {
   entityId     String?
   reviewId     String?
   entityPostId String?
+  offeringId   String?
 
   user       User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
   entity     Entity?     @relation(fields: [entityId], references: [id], onDelete: Cascade)
   review     Review?     @relation(fields: [reviewId], references: [id], onDelete: Cascade)
   entityPost EntityPost? @relation(fields: [entityPostId], references: [id], onDelete: Cascade)
+  offering   Offering?   @relation(fields: [offeringId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 
@@ -260,6 +265,7 @@ model Media {
   @@index([reviewId])
   @@index([type])
   @@index([entityPostId])
+  @@index([offeringId])
 }
 
 model UserFollow {

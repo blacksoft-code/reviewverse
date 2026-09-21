@@ -21,16 +21,18 @@ const FOLDER_MAP: Record<MediaType, string> = {
   ENTITY_COVER: 'entities',
   REVIEW: 'reviews',
   ENTITY_POST: 'entity-posts',
+  OFFERING: 'offerings',
 };
 
-// এই টাইপগুলো "singular" — মানে একজন user/entity-র একটাই
-// active profile/cover/logo photo থাকবে, নতুনটা এলে পুরনোটা মুছে যাবে।
+// এই টাইপগুলো "singular" — মানে একজন user/entity/offering-এর একটাই
+// active profile/cover/logo/offering photo থাকবে, নতুনটা এলে পুরনোটা মুছে যাবে।
 // REVIEW আর ENTITY_POST-এ এটা প্রযোজ্য না (multiple photo চলবে)
 const SINGULAR_TYPES: MediaType[] = [
   'USER_PROFILE',
   'USER_COVER',
   'ENTITY_LOGO',
   'ENTITY_COVER',
+  'OFFERING',
 ];
 
 export type MediaRefs = {
@@ -38,6 +40,7 @@ export type MediaRefs = {
   entityId?: string;
   reviewId?: string;
   entityPostId?: string;
+  offeringId?: string;
 };
 
 @Injectable()
@@ -126,6 +129,9 @@ const url = `${baseUrl}/uploads/${folder}/${filename}`;
         ...(refs.entityId && {
           entityId: refs.entityId,
         }),
+        ...(refs.offeringId && {
+          offeringId: refs.offeringId,
+        }),
       },
     });
 
@@ -142,6 +148,7 @@ const url = `${baseUrl}/uploads/${folder}/${filename}`;
       entityId: refs.entityId,
       reviewId: refs.reviewId,
       entityPostId: refs.entityPostId,
+      offeringId: refs.offeringId,
     },
   });
 }
@@ -177,6 +184,9 @@ const url = `${baseUrl}/uploads/${folder}/${filename}`;
         }),
         ...(refs.entityPostId && {
           entityPostId: refs.entityPostId,
+        }),
+        ...(refs.offeringId && {
+          offeringId: refs.offeringId,
         }),
       },
       orderBy: { createdAt: 'asc' },

@@ -64,6 +64,7 @@ export class MediaController {
           'ENTITY_COVER',
           'REVIEW',
           'ENTITY_POST',
+          'OFFERING',
         ],
       },
       targetId: { type: 'string' },
@@ -136,6 +137,7 @@ export class MediaController {
           'ENTITY_COVER',
           'REVIEW',
           'ENTITY_POST',
+          'OFFERING',
         ],
       },
       targetId: { type: 'string' },
@@ -270,6 +272,32 @@ export class MediaController {
           );
         }
         return { entityPostId: targetId };
+      }
+
+      case 'OFFERING': {
+        const offering =
+          await this.prisma.offering.findUnique({
+            where: { id: targetId },
+          });
+
+        if (!offering) {
+          throw new NotFoundException(
+            'Offering not found.',
+          );
+        }
+
+        const hasAccess =
+          await this.entityMemberships.hasAccess(
+            offering.entityId,
+            userId,
+          );
+
+        if (!hasAccess) {
+          throw new ForbiddenException(
+            'Only the business owner, manager, or employee can attach a photo to this offering.',
+          );
+        }
+        return { offeringId: targetId };
       }
 
       default:

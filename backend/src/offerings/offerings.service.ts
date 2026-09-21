@@ -23,6 +23,11 @@ export class OfferingsService {
   async findByEntity(entityId: string) {
     return this.prisma.offering.findMany({
       where: { entityId },
+      include: {
+        media: {
+          orderBy: { createdAt: 'asc' },
+        },
+      },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -62,6 +67,11 @@ export class OfferingsService {
         price: dto.price,
         description: dto.description,
       },
+      include: {
+        media: {
+          orderBy: { createdAt: 'asc' },
+        },
+      },
     });
   }
 
@@ -99,6 +109,11 @@ export class OfferingsService {
         type: dto.type,
         price: dto.price,
         description: dto.description,
+      },
+      include: {
+        media: {
+          orderBy: { createdAt: 'asc' },
+        },
       },
     });
   }
