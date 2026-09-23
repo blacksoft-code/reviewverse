@@ -126,6 +126,52 @@ create(
     return this.entitiesService.getTopRated();
   }
 
+  @Get('by-location/:locationId')
+  @ApiOperation({
+    summary:
+      'একটা location আর তার সব descendant location-এর ভেতরের business — category/offering filter ও rating/price ranking সহ',
+  })
+  @ApiQuery({
+    name: 'categoryId',
+    required: false,
+    description: 'Optional — শুধু এই category-র business',
+  })
+  @ApiQuery({
+    name: 'offeringType',
+    required: false,
+    example: 'Biriyani',
+    description:
+      'Optional — শুধু যেসব business-এ এই ধরনের offering আছে (যেমন: "Top biriyani in Mirpur")',
+  })
+  @ApiQuery({
+    name: 'sort',
+    required: false,
+    enum: [
+      'rating_desc',
+      'rating_asc',
+      'price_asc',
+      'price_desc',
+    ],
+    description:
+      'rating_desc (default/Best), rating_asc (Worst), price_asc (Budget/Cheapest — offeringType লাগবে), price_desc',
+  })
+  getByLocation(
+    @Param('locationId') locationId: string,
+    @Query('categoryId') categoryId?: string,
+    @Query('offeringType') offeringType?: string,
+    @Query('sort')
+    sort?:
+      | 'rating_desc'
+      | 'rating_asc'
+      | 'price_asc'
+      | 'price_desc',
+  ) {
+    return this.entitiesService.findByLocation(
+      locationId,
+      { categoryId, offeringType, sort },
+    );
+  }
+
 @Get(':id/followers')
 @ApiOperation({
   summary: 'Get entity followers',
@@ -219,6 +265,3 @@ update(
     );
   }
 }
-
-
-

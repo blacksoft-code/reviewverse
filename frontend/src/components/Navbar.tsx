@@ -48,12 +48,20 @@ export default function Navbar() {
 
         <div className="flex items-center gap-5">
 
-          {/* Home */}
+{/* Home 
           <Link
             href="/"
             className="rounded-lg border bg-black px-4 py-2 text-sm hover:bg-gray-50"
           >
             Home
+          </Link>
+*/}
+            {/* Explore (location-based search) */}
+          <Link
+            href="/explore"
+            className="rounded-lg border bg-black px-4 py-2 text-sm hover:bg-gray-50"
+          >
+            Explore
           </Link>
 
           {/* Authentication state */}

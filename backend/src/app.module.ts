@@ -26,6 +26,8 @@ import { PostCommentsModule } from './post-comments/post-comments.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { OfferingsModule } from './offerings/offerings.module';
 import { SubCategoriesModule } from './sub-categories/subcategories.module';
+import { LocationsModule } from './locations/locations.module';
+
 @Module({
   imports: 
   [
@@ -67,6 +69,7 @@ import { SubCategoriesModule } from './sub-categories/subcategories.module';
     NotificationsModule,
     OfferingsModule, 
     SubCategoriesModule,
+    LocationsModule,
   ],
   controllers: [AppController],
   providers: [

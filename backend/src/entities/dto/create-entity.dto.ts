@@ -42,6 +42,15 @@ export class CreateEntityDto {
   @IsString()
   location: string;
 
+   @ApiPropertyOptional({
+    example: 'c1d2e3f4-...',
+    description:
+      'Structured Location node-এর id (Location tree থেকে predictive search করে বাছাই করা)',
+  })
+  @IsOptional()
+  @IsString()
+  locationId?: string;
+
 @ApiPropertyOptional({
   example: '9f1c...-subcategory-id',
   description: 'Optional subcategory under the selected category',

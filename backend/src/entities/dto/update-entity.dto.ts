@@ -24,6 +24,14 @@ export class UpdateEntityDto {
   @IsString()
   location?: string;
 
+  @ApiPropertyOptional({
+    example: 'c1d2e3f4-...',
+    description: 'Structured Location node-এর id',
+  })
+  @IsOptional()
+  @IsString()
+  locationId?: string;
+
   @ApiPropertyOptional({ example: '+8801712345678' })
   @IsOptional()
   @IsString()

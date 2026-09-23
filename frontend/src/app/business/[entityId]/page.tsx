@@ -36,7 +36,7 @@ import { uploadImages } from '@/services/media.service';
 import { uploadImage } from '@/services/media.service';
 import PostReactionButton from '@/components/entities/posts/PostReactionButton';
 import PostCommentSection from '@/components/entities/posts/PostCommentSection';
-
+import LocationPicker from '@/components/locations/LocationPicker';
 import {
   Offering,
   createOffering,
@@ -135,6 +135,10 @@ export default function BusinessHomePage() {
   const [infoSaved, setInfoSaved] = useState(false);
 
   const { setActiveBusiness } = useBusinessContext();
+  const [locationId, setLocationId] = useState<
+    string | null
+  >(null);
+
 
   // ─────────────────────────────
   // Auth + initial loading
@@ -487,7 +491,7 @@ export default function BusinessHomePage() {
 
   function handleFormChange(
     field: keyof EntityDetail,
-    value: string,
+    value: string | null,
   ) {
     setForm((prev) => ({
       ...prev,
@@ -519,6 +523,9 @@ export default function BusinessHomePage() {
           location:
             form.location ?? undefined,
 
+          locationId:
+            form.locationId ?? undefined,
+  
           phone:
             form.phone ?? undefined,
 
@@ -1263,6 +1270,16 @@ export default function BusinessHomePage() {
                   className="mt-1 w-full rounded-lg border p-2.5 text-sm"
                 />
               </div>
+
+              {/* Structured Location (Phase 6) */}
+                 <div className="mt-3">
+                  <LocationPicker
+                    initialLocationId={form.locationId}
+                    onChange={(id) =>
+                      handleFormChange('locationId', id)
+                    }
+                  />
+                </div>
 
               {/* Phone */}
               <div>

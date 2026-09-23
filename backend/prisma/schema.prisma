@@ -120,6 +120,45 @@ model Notification {
   @@index([recipientId, isRead])
 }
 
+model Location {
+  id String @id @default(uuid())
+
+  name String
+  tier Int
+  type String?
+
+  parentId String?
+  parent   Location?  @relation("LocationChildren", fields: [parentId], references: [id])
+  children Location[] @relation("LocationChildren")
+
+  entities Entity[]
+
+  ancestorOf   LocationClosure[] @relation("Ancestor")
+  descendantOf LocationClosure[] @relation("Descendant")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([parentId, name])
+  @@index([parentId])
+}
+
+// Closure Table — প্রতিটা location-এর সব ancestor/descendant pair এখানে
+// আলাদাভাবে সংরক্ষিত থাকে, তাই "এর নিচে সব location কী কী" জানতে
+// recursive query লাগে না, শুধু একটা সরল WHERE ancestorId = X query লাগে।
+model LocationClosure {
+  ancestorId   String
+  descendantId String
+  depth        Int
+
+  ancestor   Location @relation("Ancestor", fields: [ancestorId], references: [id], onDelete: Cascade)
+  descendant Location @relation("Descendant", fields: [descendantId], references: [id], onDelete: Cascade)
+
+  @@id([ancestorId, descendantId])
+  @@index([ancestorId])
+  @@index([descendantId])
+}
+
 model Category {
   id   String @id @default(uuid())
   name String @unique
@@ -161,10 +200,12 @@ model Entity {
 
   description String?
 
-  location String?
-  phone    String?
-  website  String?
-  email    String?
+  location     String?
+  locationId   String?
+  locationNode Location? @relation(fields: [locationId], references: [id])
+  phone        String?
+  website      String?
+  email        String?
 
   businessHours  String?
   priceRange     String?
@@ -207,6 +248,8 @@ model Entity {
 
   followers      EntityFollow[]
   blockedByUsers EntityBlock[]
+
+  @@index([locationId])
 }
 
 model Offering {

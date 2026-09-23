@@ -2,9 +2,9 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-
 import { getCategories } from '@/services/category.service';
 import { createEntity } from '@/services/entity.service';
+import LocationPicker from '@/components/locations/LocationPicker';
 import {
   getSubCategories,
   SubCategory,
@@ -33,6 +33,9 @@ export default function AddBusinessPage() {
   const [name, setName] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [location, setLocation] = useState('');
+  const [locationId, setLocationId] = useState<
+    string | null
+  >(null);
 
   // =========================
   // Reviewer / Common Details
@@ -205,6 +208,7 @@ export default function AddBusinessPage() {
         slug,
         categoryId,
         location: location.trim(),
+        locationId: locationId ?? undefined,
 
         phone: phone.trim() || undefined,
         website: website.trim() || undefined,
@@ -246,6 +250,7 @@ export default function AddBusinessPage() {
         slug,
         categoryId,
         location: location.trim(),
+        locationId: locationId ?? undefined,
 
         // Common information
         phone: phone.trim() || undefined,
@@ -431,6 +436,18 @@ export default function AddBusinessPage() {
                 required
                 placeholder="e.g. Dhanmondi, Dhaka"
                 className="mt-1 w-full rounded-lg border p-3"
+              />
+            </div>
+
+            {/* Structured Location (Phase 6) */}
+            <div>
+              <LocationPicker
+                onChange={setLocationId}
+                onPathChange={(path) =>
+                  setLocation(
+                    path.map((l) => l.name).join(', '),
+                  )
+                }
               />
             </div>
 

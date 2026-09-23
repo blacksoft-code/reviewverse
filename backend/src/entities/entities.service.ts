@@ -7,15 +7,16 @@ import {
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateEntityDto } from './dto/create-entity.dto';
-
 import { EntityMembershipsService } from '../entity-memberships/entity-memberships.service';
 import { UpdateEntityDto } from './dto/update-entity.dto';
+import { LocationsService } from '../locations/locations.service';
 
 @Injectable()
 export class EntitiesService {
   constructor(
     private prisma: PrismaService,
     private entityMemberships: EntityMembershipsService,
+    private locationsService: LocationsService,
   ) {}
 
 async create(
@@ -59,6 +60,7 @@ async create(
           createdById: userId,
 
           location: createEntityDto.location,
+          locationId: createEntityDto.locationId,
           phone: createEntityDto.phone,
           website: createEntityDto.website,
           email: createEntityDto.email,
@@ -232,9 +234,9 @@ async update(
                 name: true,
               },
             },
-             media: {              // ← user-এর সাথে একই লেভেলে, include-এর ভেতরে
-            orderBy: {
-              createdAt: 'asc',
+            media: { 
+              orderBy: {
+                createdAt: 'asc',
             },
           },
           },
@@ -266,6 +268,99 @@ async update(
       include: { category: true },
     });
   }
+
+  // Phase 3+4 — Location-scoped listing + ranking
+  async findByLocation(
+    locationId: string,
+    options?: {
+      categoryId?: string;
+      offeringType?: string;
+      sort?:
+        | 'rating_desc'
+        | 'rating_asc'
+        | 'price_asc'
+        | 'price_desc';
+    },
+  ) {
+    const locationIds =
+      await this.locationsService.getDescendantIds(
+        locationId,
+      );
+
+    const offeringFilter = options?.offeringType
+      ? {
+          equals: options.offeringType,
+          mode: 'insensitive' as const,
+        }
+      : undefined;
+
+    const entities = await this.prisma.entity.findMany({
+      where: {
+        locationId: { in: locationIds },
+        ...(options?.categoryId && {
+          categoryId: options.categoryId,
+        }),
+        ...(offeringFilter && {
+          offerings: { some: { type: offeringFilter } },
+        }),
+      },
+      include: {
+        category: true,
+        // offering filter থাকলে শুধু matching offering-গুলোই আনা হচ্ছে,
+        // এটার price দিয়েই budget/cheapest ranking হবে
+        ...(offeringFilter && {
+          offerings: { where: { type: offeringFilter } },
+        }),
+      },
+    });
+
+    const sort = options?.sort ?? 'rating_desc';
+
+    // প্রতিটা entity-র জন্য ranking-এর ভিত্তি (rating + matching
+    // offering-এর মধ্যে সবচেয়ে কম দাম) বের করা হচ্ছে
+    const ranked = entities.map((entity: any) => {
+      const matchingOfferings = entity.offerings as
+        | { price: number }[]
+        | undefined;
+
+      const minOfferingPrice = matchingOfferings?.length
+        ? Math.min(
+            ...matchingOfferings.map((o) => o.price),
+          )
+        : null;
+
+      return { entity, minOfferingPrice };
+    });
+
+    ranked.sort((a, b) => {
+      switch (sort) {
+        case 'rating_asc':
+          return (
+            a.entity.averageRating -
+            b.entity.averageRating
+          );
+        case 'price_asc':
+          return (
+            (a.minOfferingPrice ?? Infinity) -
+            (b.minOfferingPrice ?? Infinity)
+          );
+        case 'price_desc':
+          return (
+            (b.minOfferingPrice ?? -Infinity) -
+            (a.minOfferingPrice ?? -Infinity)
+          );
+        case 'rating_desc':
+        default:
+          return (
+            b.entity.averageRating -
+            a.entity.averageRating
+          );
+      }
+    });
+
+    return ranked.map((r) => r.entity);
+  }
+
 async getFollowers(entityId: string) {
   return this.prisma.entityFollow.findMany({
     where: {

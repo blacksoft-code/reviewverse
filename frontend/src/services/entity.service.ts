@@ -64,7 +64,6 @@ export async function searchEntities(
   );
 }
 
-// NEW:
 // Backend-এর Top Rated API থেকে সর্বোচ্চ rating পাওয়া
 // entities নিয়ে আসবে।
 export async function getTopRated() {
@@ -74,6 +73,40 @@ export async function getTopRated() {
     data: Entity[];
     timestamp: string;
   }>('/entities/top-rated');
+}
+
+// Phase 4 — Location-aware search (category + offering filter + ranking)
+export type LocationSort =
+  | 'rating_desc'
+  | 'rating_asc'
+  | 'price_asc'
+  | 'price_desc';
+
+export async function getEntitiesByLocation(
+  locationId: string,
+  options?: {
+    categoryId?: string;
+    offeringType?: string;
+    sort?: LocationSort;
+  },
+) {
+  const params = new URLSearchParams();
+  if (options?.categoryId)
+    params.set('categoryId', options.categoryId);
+  if (options?.offeringType)
+    params.set('offeringType', options.offeringType);
+  if (options?.sort) params.set('sort', options.sort);
+
+  const qs = params.toString();
+
+  return apiFetch<{
+    success: boolean;
+    statusCode: number;
+    data: Entity[];
+    timestamp: string;
+  }>(
+    `/entities/by-location/${locationId}${qs ? `?${qs}` : ''}`,
+  );
 }
 
 export type CreateEntityPayload = {

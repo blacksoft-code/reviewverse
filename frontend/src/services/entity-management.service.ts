@@ -9,6 +9,7 @@ export type EntityDetail = {
   description: string | null;
 
   location: string | null;
+  locationId: string | null;
   phone: string | null;
   website: string | null;
   email: string | null;
