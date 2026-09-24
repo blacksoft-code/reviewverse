@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -30,9 +31,7 @@ export class OfferingsController {
     private readonly offeringsService: OfferingsService,
   ) {}
 
-  // ─────────────────────────────
   // PUBLIC — সবাই দেখতে পাবে
-  // ─────────────────────────────
 
   @Get('entity/:entityId')
   @ApiOperation({ summary: 'Public offering list for a business' })
@@ -40,9 +39,16 @@ export class OfferingsController {
     return this.offeringsService.findByEntity(entityId);
   }
 
-  // ─────────────────────────────
+    @Get('types/search')
+  @ApiOperation({
+    summary:
+      'Distinct offering type suggestion (search box autocomplete-এর জন্য)',
+  })
+  searchTypes(@Query('q') q: string) {
+    return this.offeringsService.searchTypes(q ?? '');
+  }
+
   // MANAGEMENT — শুধু owner/manager/employee
-  // ─────────────────────────────
 
   @Post('entity/:entityId')
   @UseGuards(JwtAuthGuard)

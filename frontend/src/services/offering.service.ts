@@ -76,3 +76,11 @@ export async function deleteOffering(offeringId: string) {
     { method: 'DELETE' },
   );
 }
+
+// Search box autocomplete — distinct offering type suggestion
+export async function searchOfferingTypes(q: string) {
+  return apiFetch<ApiEnvelope<string[]>>(
+    `/offerings/types/search?q=${encodeURIComponent(q)}`,
+  );
+}
+

@@ -1,29 +1,36 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
 import LocationPicker from '@/components/locations/LocationPicker';
 import { getCategories, Category } from '@/services/category.service';
+import { searchLocations } from '@/services/location.service';
+import {
+  parseExploreQuery,
+} from '@/lib/parseExploreQuery';
 import {
   Entity,
   LocationSort,
   getEntitiesByLocation,
 } from '@/services/entity.service';
 
-const FIELD =
-  'w-full rounded-xl border border-[#d2d2d7] bg-white px-3.5 py-2.5 text-[15px] text-[#1d1d1f] placeholder:text-[#86868b] outline-none transition focus:border-[#0071e3] focus:ring-4 focus:ring-[#0071e3]/10';
-
-const BTN_PRIMARY =
-  'rounded-full bg-[#0071e3] px-6 py-2.5 text-[14px] font-medium text-white transition hover:bg-[#0077ed] disabled:cursor-not-allowed disabled:bg-[#0071e3]/40';
-
-const LABEL =
-  'text-[13px] font-medium text-[#86868b]';
-
 export default function ExplorePage() {
+  return (
+    <Suspense fallback={null}>
+      <ExplorePageContent />
+    </Suspense>
+  );
+}
+
+function ExplorePageContent() {
+  const searchParams = useSearchParams();
+
   const [locationId, setLocationId] = useState<
     string | null
   >(null);
+  const [nlQuery, setNlQuery] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [offeringType, setOfferingType] = useState('');
   const [sort, setSort] =
@@ -37,29 +44,41 @@ export default function ExplorePage() {
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState('');
 
+  // Navbar-এর main search box থেকে ?q=... নিয়ে এলে সেটা দিয়ে
+  // সরাসরি smart search চালানো হচ্ছে (categories লোড হওয়ার পরে,
+  // নাহলে category matching ঠিকভাবে কাজ করবে না)
   useEffect(() => {
     getCategories()
-      .then((res) => setCategories(res.data))
+      .then((res) => {
+        setCategories(res.data);
+
+        const q = searchParams.get('q');
+        if (q) {
+          setNlQuery(q);
+          handleSmartSearch(q, res.data);
+        }
+      })
       .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function handleSearch() {
-    if (!locationId) {
-      setError('আগে একটা location বাছাই করো।');
-      return;
-    }
-
+  async function runSearch(params: {
+    locId: string;
+    catId?: string;
+    offType?: string;
+    sortBy: LocationSort;
+  }) {
     setError('');
     setLoading(true);
     setSearched(true);
 
     try {
       const response = await getEntitiesByLocation(
-        locationId,
+        params.locId,
         {
-          categoryId: categoryId || undefined,
-          offeringType: offeringType.trim() || undefined,
-          sort,
+          categoryId: params.catId || undefined,
+          offeringType: params.offType || undefined,
+          sort: params.sortBy,
         },
       );
       setResults(response.data);
@@ -74,50 +93,179 @@ export default function ExplorePage() {
     }
   }
 
+  async function handleSearch() {
+    if (!locationId) {
+      setError('আগে একটা location বাছাই করো।');
+      return;
+    }
+
+    await runSearch({
+      locId: locationId,
+      catId: categoryId,
+      offType: offeringType.trim(),
+      sortBy: sort,
+    });
+  }
+
+  // "Best biriyani in Mirpur 1"-এর মতো স্বাভাবিক বাক্য থেকে
+  // sort + offering type + location বের করে সরাসরি search চালানো হয়
+  // বাকি শব্দটা (যেমন "hospital", "biriyani") আগে category-র নামের
+  // সাথে মিলিয়ে দেখা হয় — মিললে categoryId ব্যবহার হবে, নাহলে সেটা
+  // offering type (যেমন "biriyani") হিসেবে ধরা হবে
+  function matchCategory(
+    term: string,
+    categoryList: Category[],
+  ) {
+    const t = term.trim().toLowerCase();
+    if (!t) return null;
+
+    return (
+      categoryList.find(
+        (c) => c.name.toLowerCase() === t,
+      ) ||
+      categoryList.find(
+        (c) =>
+          c.name.toLowerCase() === `${t}s` ||
+          `${c.name.toLowerCase()}s` === t,
+      ) ||
+      null
+    );
+  }
+
+  async function handleSmartSearch(
+    queryOverride?: string,
+    categoriesOverride?: Category[],
+  ) {
+    const rawQuery = queryOverride ?? nlQuery;
+    if (!rawQuery.trim()) return;
+
+    const activeCategories =
+      categoriesOverride ?? categories;
+
+    setError('');
+
+    const parsed = parseExploreQuery(rawQuery);
+
+    if (!parsed.locationText) {
+      setError(
+        'একটা এলাকার নাম দাও, যেমন: "Best biriyani in Mirpur 1"',
+      );
+      return;
+    }
+
+    setLoading(true);
+    setSearched(true);
+
+    try {
+      const locRes = await searchLocations(
+        parsed.locationText,
+      );
+      const match = locRes.data[0];
+
+      if (!match) {
+        setError(
+          `"${parsed.locationText}" নামে কোনো location খুঁজে পাওয়া যায়নি।`,
+        );
+        setLoading(false);
+        return;
+      }
+
+      const categoryMatch = matchCategory(
+        parsed.offeringType,
+        activeCategories,
+      );
+
+      const resolvedCategoryId =
+        categoryMatch?.id ?? '';
+      const resolvedOfferingType = categoryMatch
+        ? ''
+        : parsed.offeringType;
+
+      // নিচের manual controls-গুলোও sync করে দেওয়া হচ্ছে, যাতে দরকার হলে
+      // user সেখান থেকে refine করতে পারে
+      setLocationId(match.id);
+      setCategoryId(resolvedCategoryId);
+      setOfferingType(resolvedOfferingType);
+      setSort(parsed.sort);
+
+      await runSearch({
+        locId: match.id,
+        catId: resolvedCategoryId,
+        offType: resolvedOfferingType,
+        sortBy: parsed.sort,
+      });
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Search failed',
+      );
+      setLoading(false);
+    }
+  }
+
   return (
-    <main
-      className="min-h-screen bg-[#fbfbfd] pb-32"
-      style={{
-        fontFamily:
-          '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif',
-      }}
-    >
-      {/* ───────── Header ───────── */}
-      <div className="border-b border-[#d2d2d7]/60 bg-white/80 backdrop-blur-xl">
-        <div className="mx-auto max-w-[720px] px-6 py-14">
-          <p className="text-[13px] font-medium tracking-wide text-[#86868b]">
-            Discover
-          </p>
-          <h1 className="mt-1 text-[40px] font-semibold leading-tight tracking-tight text-[#1d1d1f]">
-            Explore by location
-          </h1>
-          <p className="mt-2 max-w-[480px] text-[17px] leading-relaxed text-[#86868b]">
-            Choose an area — we&apos;ll search that
-            area and everywhere within it.
+    <main className="min-h-screen bg-gray-50 p-8">
+      <div className="mx-auto max-w-3xl">
+        <h1 className="text-2xl font-bold">
+          Explore by Location
+        </h1>
+        <p className="mt-1 text-sm text-gray-500">
+          একটা এলাকা বেছে নাও — সেই এলাকা আর তার সব
+          sub-area-র ভেতরের business খুঁজে দেবে।
+        </p>
+
+        {/* Smart natural-language search box */}
+        <div className="mt-6 rounded-xl border bg-white p-5">
+          <label className="block text-sm font-medium">
+            Search
+          </label>
+          <div className="mt-1 flex gap-2">
+            <input
+              type="text"
+              value={nlQuery}
+              onChange={(e) => setNlQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleSmartSearch();
+                }
+              }}
+              placeholder='e.g. "Best biriyani in Mirpur 1" or "Budget restaurants in Gulshan"'
+              className="w-full rounded-lg border p-3 text-sm"
+            />
+            <button
+              type="button"
+              onClick={() => handleSmartSearch()}
+              disabled={loading}
+              className="whitespace-nowrap rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+            >
+              {loading ? 'Searching...' : 'Search'}
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-gray-400">
+            "best/top/highest rated", "worst/lowest rated", "cheapest/budget/affordable",
+            "most expensive/premium" — এই ধরনের শব্দ আর "in &lt;area&gt;" বুঝে নেবে।
           </p>
         </div>
-      </div>
 
-      <div className="mx-auto max-w-[720px] px-6">
-        {/* ───────── Search card ───────── */}
-        <section className="mt-10 space-y-5 rounded-2xl border border-[#d2d2d7]/70 bg-white p-6">
-          <div>
-            <LocationPicker onChange={setLocationId} />
-          </div>
+        {/* Manual controls — smart search-এর ফলাফল refine করতে বা সরাসরি ব্যবহার করতে */}
+        <div className="mt-4 space-y-4 rounded-xl border bg-white p-5">
+          <LocationPicker
+            initialLocationId={locationId}
+            onChange={setLocationId}
+          />
 
           <div>
-            <label className={LABEL}>
-              Category
-              <span className="ml-1.5 text-[#c4c4c9]">
-                optional
-              </span>
+            <label className="block text-sm font-medium">
+              Category (optional)
             </label>
             <select
               value={categoryId}
               onChange={(e) =>
                 setCategoryId(e.target.value)
               }
-              className={`mt-1.5 ${FIELD}`}
+              className="mt-1 w-full rounded-lg border p-2.5 text-sm"
             >
               <option value="">All categories</option>
               {categories.map((c) => (
@@ -129,11 +277,8 @@ export default function ExplorePage() {
           </div>
 
           <div>
-            <label className={LABEL}>
-              Offering type
-              <span className="ml-1.5 text-[#c4c4c9]">
-                optional
-              </span>
+            <label className="block text-sm font-medium">
+              Offering type (optional)
             </label>
             <input
               type="text"
@@ -142,18 +287,20 @@ export default function ExplorePage() {
                 setOfferingType(e.target.value)
               }
               placeholder="e.g. Biriyani"
-              className={`mt-1.5 ${FIELD}`}
+              className="mt-1 w-full rounded-lg border p-2.5 text-sm"
             />
           </div>
 
           <div>
-            <label className={LABEL}>Sort by</label>
+            <label className="block text-sm font-medium">
+              Sort by
+            </label>
             <select
               value={sort}
               onChange={(e) =>
                 setSort(e.target.value as LocationSort)
               }
-              className={`mt-1.5 ${FIELD}`}
+              className="mt-1 w-full rounded-lg border p-2.5 text-sm"
             >
               <option value="rating_desc">
                 Best rated
@@ -162,8 +309,7 @@ export default function ExplorePage() {
                 Worst rated
               </option>
               <option value="price_asc">
-                Cheapest — works best with an offering
-                type
+                Cheapest (offering type দিলে ভালো কাজ করে)
               </option>
               <option value="price_desc">
                 Most expensive
@@ -172,7 +318,7 @@ export default function ExplorePage() {
           </div>
 
           {error && (
-            <p className="rounded-xl bg-[#ff3b30]/8 px-4 py-3 text-[14px] text-[#ff3b30]">
+            <p className="text-sm text-red-600">
               {error}
             </p>
           )}
@@ -181,51 +327,44 @@ export default function ExplorePage() {
             type="button"
             onClick={handleSearch}
             disabled={loading}
-            className={BTN_PRIMARY}
+            className="rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
           >
-            {loading ? 'Searching…' : 'Search'}
+            {loading ? 'Searching...' : 'Search'}
           </button>
-        </section>
+        </div>
 
-        {/* ───────── Results ───────── */}
+        {/* Results */}
+
         {searched && !loading && (
-          <section className="mt-10">
-            <h2 className="px-1 text-[13px] font-medium uppercase tracking-wide text-[#86868b]">
-              Results
-              {results.length > 0 && (
-                <> · {results.length}</>
-              )}
-            </h2>
-
+          <div className="mt-6 space-y-3">
             {results.length === 0 ? (
-              <p className="mt-4 rounded-2xl border border-dashed border-[#d2d2d7] px-6 py-10 text-center text-[15px] text-[#86868b]">
+              <p className="text-sm text-gray-500">
                 কোনো business পাওয়া যায়নি।
               </p>
             ) : (
-              <div className="mt-4 divide-y divide-[#d2d2d7]/60 overflow-hidden rounded-2xl border border-[#d2d2d7]/70 bg-white">
-                {results.map((entity) => (
-                  <Link
-                    key={entity.id}
-                    href={`/entities/${entity.slug}`}
-                    className="flex items-center justify-between px-5 py-4 transition hover:bg-[#f5f5f7]/60"
-                  >
+              results.map((entity) => (
+                <Link
+                  key={entity.id}
+                  href={`/entities/${entity.slug}`}
+                  className="block rounded-lg border bg-white p-4 hover:bg-gray-50"
+                >
+                  <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-[16px] font-medium text-[#1d1d1f]">
+                      <h3 className="font-semibold">
                         {entity.name}
-                      </p>
-                      <p className="text-[13px] text-[#86868b]">
+                      </h3>
+                      <span className="text-xs text-gray-500">
                         {entity.category?.name}
-                      </p>
+                      </span>
                     </div>
-
-                    <span className="text-[15px] font-medium text-[#1d1d1f]">
-                      ★ {entity.averageRating.toFixed(1)}
+                    <span className="text-sm font-medium">
+                      ⭐ {entity.averageRating.toFixed(1)}
                     </span>
-                  </Link>
-                ))}
-              </div>
+                  </div>
+                </Link>
+              ))
             )}
-          </section>
+          </div>
         )}
       </div>
     </main>

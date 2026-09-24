@@ -6,7 +6,6 @@ import {
 
 import { PrismaService } from '../prisma/prisma.service';
 import { EntityMembershipsService } from '../entity-memberships/entity-memberships.service';
-
 import { CreateOfferingDto } from './dto/create-offering.dto';
 import { UpdateOfferingDto } from './dto/update-offering.dto';
 
@@ -32,6 +31,24 @@ export class OfferingsService {
     });
   }
 
+  // ─────────────────────────────
+  // PUBLIC — search box predictive suggestion-এর জন্য distinct
+  // offering type (যেমন "Biriyani", "Burger") খুঁজে বের করে
+  // ─────────────────────────────
+  async searchTypes(query: string) {
+    const offerings = await this.prisma.offering.findMany({
+      where: {
+        type: { contains: query, mode: 'insensitive' },
+      },
+      select: { type: true },
+      distinct: ['type'],
+      take: 10,
+      orderBy: { type: 'asc' },
+    });
+
+    return offerings.map((o) => o.type);
+  }
+  
   // ─────────────────────────────
   // CREATE — owner/manager/employee যেকোনো membership role
   // ─────────────────────────────

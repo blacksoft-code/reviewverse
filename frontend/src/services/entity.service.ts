@@ -17,6 +17,13 @@ export type Entity = {
   createdAt: string;
   updatedAt: string;
   category: Category;
+  location?: string | null;
+  offerings?: {
+    id: string;
+    name: string;
+    type: string;
+    price: number;
+  }[];
 };
 
 export type EntitiesResponse = {
@@ -114,6 +121,8 @@ export type CreateEntityPayload = {
   slug: string;
   categoryId: string;
   location: string;
+  locationId?: string;
+  [key: string]: unknown;
 };
 
 export async function createEntity(
