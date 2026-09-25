@@ -4,6 +4,7 @@ export type CreateReviewPayload = {
   rating: number;
   content: string;
   entityId: string;
+  offeringId?: string;
 };
 
 export type ReviewMedia = {
@@ -17,6 +18,12 @@ export type Review = {
   content: string;
   userId: string;
   entityId: string;
+  offeringId: string | null;
+  offering?: {
+    id: string;
+    name: string;
+  } | null;
+  isLatest: boolean;
   createdAt: string;
   user?: {
     id: string;
@@ -61,9 +68,14 @@ export async function updateReview(
   });
 }
 
+export type DeleteReviewResponse = {
+  message: string;
+  promotedReview: Review | null;
+};
+
 export async function deleteReview(
   reviewId: string,
-) {
+): Promise<DeleteReviewResponse> {
   return apiFetch(`/reviews/${reviewId}`, {
     method: 'DELETE',
   });

@@ -12,6 +12,10 @@ import {
 } from '@/services/review.service';
 import { getProfile } from '@/services/auth.service';
 import { uploadImages } from '@/services/media.service';
+import {
+  getOfferingsByEntity,
+  Offering,
+} from '@/services/offering.service';
 
 import MultiImageUploader from '@/components/media/MultiImageUploader';
 
@@ -27,6 +31,8 @@ export default function ReviewForm({
   const [rating, setRating] = useState(5);
   const [content, setContent] = useState('');
   const [photos, setPhotos] = useState<File[]>([]);
+  const [offeringId, setOfferingId] = useState('');
+  const [offerings, setOfferings] = useState<Offering[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [uploadingPhotos, setUploadingPhotos] =
@@ -53,6 +59,21 @@ export default function ReviewForm({
     checkAuth();
   }, []);
 
+  useEffect(() => {
+    async function loadOfferings() {
+      try {
+        const response = await getOfferingsByEntity(entityId);
+        setOfferings(response.data);
+      } catch {
+        // offering list load না হলেও review দেওয়া আটকাবে না —
+        // dropdown-টা শুধু খালি/optional থেকে যাবে
+        setOfferings([]);
+      }
+    }
+
+    loadOfferings();
+  }, [entityId]);
+
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>,
   ) {
@@ -68,6 +89,7 @@ export default function ReviewForm({
         rating,
         content,
         entityId,
+        offeringId: offeringId || undefined,
       });
 
       let review = response.data;
@@ -105,6 +127,7 @@ export default function ReviewForm({
       setContent('');
       setRating(5);
       setPhotos([]);
+      setOfferingId('');
 
       if (!error) {
         setSuccess(
@@ -192,6 +215,31 @@ export default function ReviewForm({
             </option>
           </select>
         </div>
+
+        {offerings.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium">
+              কোন item try করেছো? (ঐচ্ছিক)
+            </label>
+
+            <select
+              value={offeringId}
+              onChange={(event) =>
+                setOfferingId(event.target.value)
+              }
+              className="mt-1 rounded-lg border p-3"
+            >
+              <option value="">
+                — নির্দিষ্ট item বলছি না —
+              </option>
+              {offerings.map((offering) => (
+                <option key={offering.id} value={offering.id}>
+                  {offering.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div>
           <label className="block text-sm font-medium">

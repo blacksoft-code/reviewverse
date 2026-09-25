@@ -7,6 +7,7 @@ export type Offering = {
   type: string;
   price: number;
   description: string | null;
+  averageRating: number;
   media: { id: string; url: string }[];
   createdAt: string;
   updatedAt: string;
@@ -83,4 +84,3 @@ export async function searchOfferingTypes(q: string) {
     `/offerings/types/search?q=${encodeURIComponent(q)}`,
   );
 }
-

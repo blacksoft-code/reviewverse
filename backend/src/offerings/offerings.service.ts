@@ -27,7 +27,10 @@ export class OfferingsService {
           orderBy: { createdAt: 'asc' },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [
+        { averageRating: 'desc' },
+        { createdAt: 'desc' },
+      ],
     });
   }
 

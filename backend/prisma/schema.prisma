@@ -263,7 +263,10 @@ model Offering {
   price       Float
   description String?
 
-  media Media[]
+  averageRating Float @default(0)
+
+  media   Media[]
+  reviews Review[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -277,11 +280,14 @@ model Review {
   rating  Int
   content String
 
-  userId   String
-  entityId String
+  userId     String
+  entityId   String
+  offeringId String?
+  isLatest   Boolean @default(true)
 
-  user   User   @relation(fields: [userId], references: [id])
-  entity Entity @relation(fields: [entityId], references: [id])
+  user     User      @relation(fields: [userId], references: [id])
+  entity   Entity    @relation(fields: [entityId], references: [id])
+  offering Offering? @relation(fields: [offeringId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -290,7 +296,12 @@ model Review {
   reviewReactions ReviewReaction[]
   reviewComments  ReviewComment[]
 
-  @@unique([userId, entityId])
+  // এক user এক (entity, offering) কম্বিনেশনে একাধিক review row রাখতে পারবে
+  // (taste-change history), তাই hard unique constraint নেই। isLatest lookup
+  // দ্রুত করার জন্য index।
+  @@index([userId, entityId, offeringId])
+  @@index([entityId, isLatest])
+  @@index([offeringId, isLatest])
 }
 
 enum MediaType {

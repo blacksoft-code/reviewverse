@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import ReviewForm from './ReviewForm';
 import { getProfile } from '@/services/auth.service';
 import {
@@ -27,13 +27,43 @@ export default function ReviewSection({
   const [reviews, setReviews] =
     useState<Review[]>(initialReviews);
 
-  const averageRating =
-  reviews.length > 0
-    ? reviews.reduce(
-        (sum, review) => sum + review.rating,
-        0,
-      ) / reviews.length
-    : 0;
+  // ⚠️ static prop না রেখে reviews state থেকেই derive করা হচ্ছে (backend-এর
+  // same logic: প্রতি user-এর personal average, তারপর সব user মিলিয়ে গড়) —
+  // তাই create/update/delete যেকোনো কিছুর পরেই এটা automatically
+  // recalculate হবে, আলাদা করে fetch বা manual update লাগবে না।
+  const averageRating = useMemo(() => {
+    const latestReviews = reviews.filter(
+      (review) => review.isLatest,
+    );
+
+    const perUserTotals = new Map<
+      string,
+      { sum: number; count: number }
+    >();
+
+    for (const review of latestReviews) {
+      const existing = perUserTotals.get(review.userId) ?? {
+        sum: 0,
+        count: 0,
+      };
+      existing.sum += review.rating;
+      existing.count += 1;
+      perUserTotals.set(review.userId, existing);
+    }
+
+    const personalAverages = Array.from(
+      perUserTotals.values(),
+    ).map(({ sum, count }) => sum / count);
+
+    if (personalAverages.length === 0) {
+      return 0;
+    }
+
+    return (
+      personalAverages.reduce((sum, avg) => sum + avg, 0) /
+      personalAverages.length
+    );
+  }, [reviews]);
 
   const [currentUser, setCurrentUser] = useState<{
     id: string;
@@ -53,7 +83,30 @@ export default function ReviewSection({
     useState<string | null>(null);
 
   const [openCommentsFor, setOpenCommentsFor] = useState<string | null>(null);
+
+  // কোন (userId + offeringId) group-এর পুরনো review গুলো "more..." দিয়ে
+  // খোলা আছে, সেটা track করার জন্য
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
+    new Set(),
+  );
+
+  function groupKey(userId: string, offeringId: string | null) {
+    return `${userId}::${offeringId ?? 'general'}`;
+  }
+
+  function toggleGroup(key: string) {
+    setExpandedGroups((current) => {
+      const next = new Set(current);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  }
   
+  const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -106,8 +159,23 @@ export default function ReviewSection({
 
   setReviews((currentReviews) => [
     reviewWithUser,
-    ...currentReviews,
+    // একই group (user + offering)-এর আগের latest review-কে এখানেও
+    // false করে দিচ্ছি, যাতে backend-এর isLatest flip-টা page refresh
+    // ছাড়াই local state-এ reflect হয় (নাহলে দুইটা "latest" card দেখাবে)
+    ...currentReviews.map((review) =>
+      review.userId === newReview.userId &&
+      review.offeringId === newReview.offeringId &&
+      review.isLatest
+        ? { ...review, isLatest: false }
+        : review,
+    ),
   ]);
+
+  // profile header (layout.tsx) আর "Overall Rating" ব্লক (page.tsx) —
+  // এই দুইটা Server Component, ReviewSection-এর local state থেকে আলাদা।
+  // router.refresh() করলে ওরা server থেকে fresh entity data নিয়ে
+  // re-render হবে, page reload ছাড়াই।
+  router.refresh();
 }
 
   function startEditing(review: Review) {
@@ -146,6 +214,7 @@ async function handleUpdate(reviewId: string) {
     );
 
     cancelEditing();
+    router.refresh();
   } catch (error) {
     console.error(error);
   } finally {
@@ -166,13 +235,29 @@ async function handleUpdate(reviewId: string) {
   setLoadingReviewId(reviewId);
 
   try {
-    await deleteReview(reviewId);
+    const response = await deleteReview(reviewId);
 
-    setReviews((currentReviews) =>
-      currentReviews.filter(
+    setReviews((currentReviews) => {
+      const withoutDeleted = currentReviews.filter(
         (review) => review.id !== reviewId,
-      ),
-    );
+      );
+
+      // Backend delete হওয়া review-টাই "latest" ছিলো এবং এই user-এর
+      // এই item-এ আরও পুরনো review ছিলো — সেটাকে আবার isLatest=true
+      // করে দিয়েছে। local state-এও সেটা reflect করছি, নাহলে সেই
+      // group পুরো list থেকে refresh না করা পর্যন্ত উধাও থাকতো।
+      if (response.promotedReview) {
+        return withoutDeleted.map((review) =>
+          review.id === response.promotedReview.id
+            ? { ...review, isLatest: true }
+            : review,
+        );
+      }
+
+      return withoutDeleted;
+    });
+
+    router.refresh();
   } catch (error) {
     console.error(error);
   } finally {
@@ -198,7 +283,12 @@ async function handleUpdate(reviewId: string) {
             No reviews yet.
           </p>
         ) : (
-          reviews.map((review) => {
+          reviews
+            // এই section-এ প্রতি (user, offering) group-এর শুধু latest
+            // review-টাই একটা top-level card হিসেবে দেখানো হয়; পুরনোগুলো
+            // ঐ card-এর ভেতরেই "more..."-এর নিচে যায় (নিচে দেখুন)।
+            .filter((review) => review.isLatest)
+            .map((review) => {
             const isOwner =
               currentUser?.id === review.userId;
 
@@ -207,6 +297,26 @@ async function handleUpdate(reviewId: string) {
 
             const isLoading =
               loadingReviewId === review.id;
+
+            const key = groupKey(
+              review.userId,
+              review.offeringId,
+            );
+
+            const olderReviews = reviews
+              .filter(
+                (r) =>
+                  !r.isLatest &&
+                  r.userId === review.userId &&
+                  r.offeringId === review.offeringId,
+              )
+              .sort(
+                (a, b) =>
+                  new Date(b.createdAt).getTime() -
+                  new Date(a.createdAt).getTime(),
+              );
+
+            const isExpanded = expandedGroups.has(key);
 
             return (
               <article
@@ -293,6 +403,12 @@ async function handleUpdate(reviewId: string) {
                       </span>
                     </div>
 
+                    {review.offering && (
+                      <span className="mt-1 inline-block rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
+                        {review.offering.name}
+                      </span>
+                    )}
+
                     <p className="mt-3">
                       {review.content}
                     </p>
@@ -314,10 +430,53 @@ async function handleUpdate(reviewId: string) {
                       >
                         💬 Comments
                       </button>
+
+                      {olderReviews.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => toggleGroup(key)}
+                          className="text-sm font-medium text-gray-500 hover:underline"
+                        >
+                          {isExpanded
+                            ? 'Hide older reviews'
+                            : `more... (${olderReviews.length})`}
+                        </button>
+                      )}
                     </div>
 
                     {openCommentsFor === review.id && (
                       <CommentSection reviewId={review.id} />
+                    )}
+
+                    {isExpanded && olderReviews.length > 0 && (
+                      <div className="mt-4 space-y-3 border-t pt-3">
+                        {olderReviews.map((old) => (
+                          <div
+                            key={old.id}
+                            className="rounded-lg bg-gray-50 p-3"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-medium text-gray-400">
+                                পুরনো — এখন গণনায় নেই
+                              </span>
+
+                              <span className="text-sm">
+                                ⭐ {old.rating}
+                              </span>
+                            </div>
+
+                            <p className="mt-2 text-sm text-gray-600">
+                              {old.content}
+                            </p>
+
+                            <p className="mt-1 text-xs text-gray-400">
+                              {new Date(
+                                old.createdAt,
+                              ).toLocaleDateString()}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
                     )}
 
                     {isOwner && (

@@ -56,9 +56,17 @@ export default async function ServicesPage({
                   <div className="flex-1">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <h3 className="font-semibold">
-                          {offering.name}
-                        </h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold">
+                            {offering.name}
+                          </h3>
+
+                          {offering.averageRating > 0 && (
+                            <span className="flex items-center gap-1 text-sm text-gray-600">
+                              ⭐ {offering.averageRating.toFixed(1)}
+                            </span>
+                          )}
+                        </div>
                         <span className="text-xs text-gray-500">
                           {offering.type}
                         </span>

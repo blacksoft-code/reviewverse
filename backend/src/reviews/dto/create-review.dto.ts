@@ -1,11 +1,13 @@
 import {
   IsInt,
   IsNotEmpty,
+  IsOptional,
+  IsUUID,
   Max,
   Min,
 } from 'class-validator';
 
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateReviewDto {
   @ApiProperty({
@@ -32,4 +34,13 @@ export class CreateReviewDto {
   })
   @IsNotEmpty()
   entityId: string;
+
+  @ApiPropertyOptional({
+    example: 'a1b2c3d4-1234-4c87-bfe0-d7b03d1f296c',
+    description:
+      'Optional — কোন specific item/offering নিয়ে এই review (না দিলে entity-level general review হিসেবে গণ্য হবে)',
+  })
+  @IsOptional()
+  @IsUUID()
+  offeringId?: string;
 }
