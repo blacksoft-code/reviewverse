@@ -33,13 +33,13 @@ import SingleImageUploader from '@/components/media/SingleImageUploader';
 
 // Media service
 import { uploadImages } from '@/services/media.service';
-import { uploadImage } from '@/services/media.service';
 import PostReactionButton from '@/components/entities/posts/PostReactionButton';
 import PostCommentSection from '@/components/entities/posts/PostCommentSection';
 import LocationPicker from '@/components/locations/LocationPicker';
+import OfferingTypeInput from '@/components/offerings/OfferingTypeInput';
+import OfferingForm from '@/components/offerings/OfferingForm';
 import {
   Offering,
-  createOffering,
   deleteOffering,
   getOfferingsByEntity,
   updateOffering,
@@ -97,17 +97,6 @@ export default function BusinessHomePage() {
   const [offerings, setOfferings] = useState<Offering[]>(
     [],
   );
-
-  const [offeringName, setOfferingName] = useState('');
-  const [offeringType, setOfferingType] = useState('');
-  const [offeringPrice, setOfferingPrice] = useState('');
-  const [offeringDescription, setOfferingDescription] =
-    useState('');
-  const [offeringImage, setOfferingImage] =
-    useState<File | null>(null);
-  const [submittingOffering, setSubmittingOffering] =
-    useState(false);
-  const isSubmittingOfferingRef = useRef(false);
 
   const [editingOfferingId, setEditingOfferingId] =
     useState<string | null>(null);
@@ -348,58 +337,6 @@ export default function BusinessHomePage() {
       );
     } finally {
       setActingOn(null);
-    }
-  }
-
-  // ─────────────────────────────
-  // Create Offering
-  // ─────────────────────────────
-
-  async function handleCreateOffering(e: FormEvent) {
-    e.preventDefault();
-
-    if (isSubmittingOfferingRef.current) {
-      return;
-    }
-
-    isSubmittingOfferingRef.current = true;
-    setError('');
-    setSubmittingOffering(true);
-
-    try {
-      const response = await createOffering(entityId, {
-        name: offeringName,
-        type: offeringType,
-        price: Number(offeringPrice),
-        description: offeringDescription || undefined,
-      });
-
-      let offering = response.data;
-
-      if (offeringImage) {
-        const media = await uploadImage(
-          offeringImage,
-          'OFFERING',
-          offering.id,
-        );
-        offering = { ...offering, media: [media] };
-      }
-
-      setOfferings((prev) => [offering, ...prev]);
-      setOfferingName('');
-      setOfferingType('');
-      setOfferingPrice('');
-      setOfferingDescription('');
-      setOfferingImage(null);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to add offering',
-      );
-    } finally {
-      setSubmittingOffering(false);
-      isSubmittingOfferingRef.current = false;
     }
   }
 
@@ -912,83 +849,13 @@ export default function BusinessHomePage() {
             {/* Create Offering */}
             {/* ───────────────────────────── */}
 
-            <form
-              onSubmit={handleCreateOffering}
-              className="space-y-3 rounded-xl border bg-black p-5"
-            >
-              <input
-                type="text"
-                value={offeringName}
-                onChange={(e) =>
-                  setOfferingName(e.target.value)
-                }
-                placeholder="Offering name (e.g. Mutton Kacchi Biriyani)"
-                required
-                className="w-full rounded-lg border p-2.5 text-sm"
-              />
-
-              <input
-                type="text"
-                value={offeringType}
-                onChange={(e) =>
-                  setOfferingType(e.target.value)
-                }
-                placeholder="Offering type (e.g. Biriyani)"
-                required
-                className="w-full rounded-lg border p-2.5 text-sm"
-              />
-
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={offeringPrice}
-                onChange={(e) =>
-                  setOfferingPrice(e.target.value)
-                }
-                placeholder="Price"
-                required
-                className="w-full rounded-lg border p-2.5 text-sm"
-              />
-
-              <textarea
-                value={offeringDescription}
-                onChange={(e) =>
-                  setOfferingDescription(
-                    e.target.value,
-                  )
-                }
-                placeholder="Description (optional)"
-                rows={3}
-                className="w-full resize-none rounded-lg border p-3 text-sm"
-              />
-
-              <div>
-                <label className="text-sm font-medium">
-                  Photo (optional)
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) =>
-                    setOfferingImage(
-                      e.target.files?.[0] ?? null,
-                    )
-                  }
-                  className="mt-1 block w-full text-sm"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={submittingOffering}
-                className="rounded-lg bg-white px-5 py-2.5 text-sm font-medium text-black hover:bg-gray-200 disabled:opacity-50"
-              >
-                {submittingOffering
-                  ? 'Adding...'
-                  : 'Add Offering'}
-              </button>
-            </form>
+            <OfferingForm
+              entityId={entityId}
+              onCreated={(offering) =>
+                setOfferings((prev) => [offering, ...prev])
+              }
+              wrapperClassName="mt-6 space-y-3 rounded-xl border bg-white p-5"
+            />
 
             {/* ───────────────────────────── */}
             {/* Offerings List */}
@@ -1044,15 +911,9 @@ export default function BusinessHomePage() {
                         className="w-full rounded-lg border p-2.5 text-sm"
                       />
 
-                      <input
-                        type="text"
+                      <OfferingTypeInput
                         value={editingOfferingType}
-                        onChange={(e) =>
-                          setEditingOfferingType(
-                            e.target.value,
-                          )
-                        }
-                        className="w-full rounded-lg border p-2.5 text-sm"
+                        onChange={setEditingOfferingType}
                       />
 
                       <input

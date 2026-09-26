@@ -1,16 +1,16 @@
 'use client';
 
-import { FormEvent, useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 
 import { useAuth } from '@/context/AuthContext';
 import SingleImageUploader from '@/components/media/SingleImageUploader';
-import { uploadImage } from '@/services/media.service';
+import OfferingTypeInput from '@/components/offerings/OfferingTypeInput';
+import OfferingForm from '@/components/offerings/OfferingForm';
 
 import {
   Offering,
-  createOffering,
   deleteOffering,
   getOfferingsByEntity,
   updateOffering,
@@ -30,15 +30,6 @@ export default function ManageOfferingsPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
-  // নতুন offering ফর্ম
-  const [name, setName] = useState('');
-  const [type, setType] = useState('');
-  const [price, setPrice] = useState('');
-  const [description, setDescription] = useState('');
-  const [image, setImage] = useState<File | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const isSubmittingRef = useRef(false);
 
   // edit করার state
   const [editingOfferingId, setEditingOfferingId] =
@@ -83,55 +74,6 @@ export default function ManageOfferingsPage() {
       );
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function handleCreate(e: FormEvent) {
-    e.preventDefault();
-
-    if (isSubmittingRef.current) {
-      return;
-    }
-
-    isSubmittingRef.current = true;
-    setError('');
-    setSubmitting(true);
-
-    try {
-      const response = await createOffering(entityId, {
-        name,
-        type,
-        price: Number(price),
-        description: description || undefined,
-      });
-
-      let offering = response.data;
-
-      // Offering তৈরি হওয়ার পর তার id দিয়ে ছবি upload হচ্ছে
-      if (image) {
-        const media = await uploadImage(
-          image,
-          'OFFERING',
-          offering.id,
-        );
-        offering = { ...offering, media: [media] };
-      }
-
-      setOfferings((prev) => [offering, ...prev]);
-      setName('');
-      setType('');
-      setPrice('');
-      setDescription('');
-      setImage(null);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to add offering',
-      );
-    } finally {
-      setSubmitting(false);
-      isSubmittingRef.current = false;
     }
   }
 
@@ -238,71 +180,13 @@ export default function ManageOfferingsPage() {
         {/* CREATE FORM */}
         {/* ================================= */}
 
-        <form
-          onSubmit={handleCreate}
-          className="mt-6 space-y-3 rounded-xl border bg-white p-5"
-        >
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Offering name (e.g. Mutton Kacchi Biriyani)"
-            required
-            className="w-full rounded-lg border p-2.5 text-sm"
-          />
-
-          <input
-            type="text"
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-            placeholder="Offering type (e.g. Biriyani)"
-            required
-            className="w-full rounded-lg border p-2.5 text-sm"
-          />
-
-          <input
-            type="number"
-            step="0.01"
-            min="0"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            placeholder="Price"
-            required
-            className="w-full rounded-lg border p-2.5 text-sm"
-          />
-
-          <textarea
-            value={description}
-            onChange={(e) =>
-              setDescription(e.target.value)
-            }
-            placeholder="Description (optional)"
-            rows={3}
-            className="w-full resize-none rounded-lg border p-3 text-sm"
-          />
-
-          <div>
-            <label className="text-sm font-medium">
-              Photo (optional)
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) =>
-                setImage(e.target.files?.[0] ?? null)
-              }
-              className="mt-1 block w-full text-sm"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
-          >
-            {submitting ? 'Adding...' : 'Add Offering'}
-          </button>
-        </form>
+        <OfferingForm
+          entityId={entityId}
+          onCreated={(offering) =>
+            setOfferings((prev) => [offering, ...prev])
+          }
+          wrapperClassName="mt-6 space-y-3 rounded-xl border bg-white p-5"
+        />
 
         {/* ================================= */}
         {/* OFFERINGS LIST */}
@@ -352,13 +236,9 @@ export default function ManageOfferingsPage() {
                     className="w-full rounded-lg border p-2.5 text-sm"
                   />
 
-                  <input
-                    type="text"
+                  <OfferingTypeInput
                     value={editingType}
-                    onChange={(e) =>
-                      setEditingType(e.target.value)
-                    }
-                    className="w-full rounded-lg border p-2.5 text-sm"
+                    onChange={setEditingType}
                   />
 
                   <input
