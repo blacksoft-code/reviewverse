@@ -1,8 +1,6 @@
 import { Module } from '@nestjs/common';
-
 import { OfferingsController } from './offerings.controller';
 import { OfferingsService } from './offerings.service';
-
 import { PrismaModule } from '../prisma/prisma.module';
 import { EntityMembershipsModule } from '../entity-memberships/entity-memberships.module';
 
@@ -10,5 +8,6 @@ import { EntityMembershipsModule } from '../entity-memberships/entity-membership
   imports: [PrismaModule, EntityMembershipsModule],
   controllers: [OfferingsController],
   providers: [OfferingsService],
+  exports: [OfferingsService],
 })
 export class OfferingsModule {}

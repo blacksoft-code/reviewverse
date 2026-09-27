@@ -10,6 +10,7 @@ import { CreateEntityDto } from './dto/create-entity.dto';
 import { EntityMembershipsService } from '../entity-memberships/entity-memberships.service';
 import { UpdateEntityDto } from './dto/update-entity.dto';
 import { LocationsService } from '../locations/locations.service';
+import { OfferingsService } from '../offerings/offerings.service';
 
 @Injectable()
 export class EntitiesService {
@@ -17,6 +18,7 @@ export class EntitiesService {
     private prisma: PrismaService,
     private entityMemberships: EntityMembershipsService,
     private locationsService: LocationsService,
+    private offeringsService: OfferingsService,
   ) {}
 
 async create(
@@ -294,43 +296,47 @@ async update(
         }
       : undefined;
 
+    const sort = options?.sort ?? 'rating_desc';
+
+    // ───────────────────────────────────────────────
+    // Offering-type search (যেমন "Best juice in Dhaka") —
+    // এখানে ফলাফল entity-ভিত্তিক না দিয়ে, প্রতিটা matching
+    // offering-কে নিজের card হিসেবে (flatten করে) রিটার্ন
+    // করা হচ্ছে। এই logic-টা OfferingsService-এ থাকে, কারণ
+    // এটা offering-সম্পর্কিত query — Category-ভিত্তিক search
+    // (নিচে) অপরিবর্তিত।
+    // ───────────────────────────────────────────────
+    if (offeringFilter && options?.offeringType) {
+      return this.offeringsService.searchByLocation(
+        locationIds,
+        options.offeringType,
+        {
+          categoryId: options.categoryId,
+          sort,
+        },
+      );
+    }
+
+    // ───────────────────────────────────────────────
+    // Category-ভিত্তিক search (যেমন "Best hospital in Dhaka") —
+    // আগের মতোই entity-ভিত্তিক card, কোনো পরিবর্তন নেই।
+    // ───────────────────────────────────────────────
     const entities = await this.prisma.entity.findMany({
       where: {
         locationId: { in: locationIds },
         ...(options?.categoryId && {
           categoryId: options.categoryId,
         }),
-        ...(offeringFilter && {
-          offerings: { some: { type: offeringFilter } },
-        }),
       },
       include: {
         category: true,
-        // offering filter থাকলে শুধু matching offering-গুলোই আনা হচ্ছে,
-        // এটার price দিয়েই budget/cheapest ranking হবে
-        ...(offeringFilter && {
-          offerings: { where: { type: offeringFilter } },
-        }),
       },
     });
 
-    const sort = options?.sort ?? 'rating_desc';
-
-    // প্রতিটা entity-র জন্য ranking-এর ভিত্তি (rating + matching
-    // offering-এর মধ্যে সবচেয়ে কম দাম) বের করা হচ্ছে
-    const ranked = entities.map((entity: any) => {
-      const matchingOfferings = entity.offerings as
-        | { price: number }[]
-        | undefined;
-
-      const minOfferingPrice = matchingOfferings?.length
-        ? Math.min(
-            ...matchingOfferings.map((o) => o.price),
-          )
-        : null;
-
-      return { entity, minOfferingPrice };
-    });
+    const ranked = entities.map((entity) => ({
+      entity,
+      minOfferingPrice: null as number | null,
+    }));
 
     ranked.sort((a, b) => {
       switch (sort) {

@@ -1,10 +1,10 @@
-
 import Link from 'next/link';
 
 import { search } from '@/services/search.service';
 import { parseExploreQuery } from '@/lib/parseExploreQuery';
 import { searchLocations } from '@/services/location.service';
 import { getCategories } from '@/services/category.service';
+import OfferingCard from '@/components/offerings/OfferingCard';
 import {
   Entity,
   LocationSort,
@@ -85,13 +85,70 @@ export default async function SearchPage({
         )
       : null;
 
+    // Category মিলে গেলে (যেমন "hospital") — আগের মতোই entity-ভিত্তিক
+    // card। না মিললে, offering type থাকলে (যেমন "juice") — সেটা
+    // offering-ভিত্তিক search, প্রতিটা matching offering আলাদা card
+    // হিসেবে দেখানো হবে।
+    const isOfferingSearch =
+      !categoryMatch && Boolean(parsed.offeringType);
+
+    if (isOfferingSearch) {
+      const resultsRes = await getEntitiesByLocation(
+        matchedLocation.id,
+        {
+          offeringType: parsed.offeringType,
+          sort: parsed.sort,
+        },
+      );
+
+      const offeringResults = resultsRes.data;
+
+      return (
+        <main className="min-h-screen bg-gray-50 p-8">
+          <div className="mx-auto max-w-6xl">
+            <h1 className="text-3xl font-bold text-black">
+              {SORT_LABEL[parsed.sort]}{' '}
+              {parsed.offeringType} in{' '}
+              {matchedLocation.name}
+            </h1>
+
+            <p className="mt-2 text-gray-500">
+              Results for{' '}
+              <span className="font-medium text-black">
+                "{query}"
+              </span>
+            </p>
+
+            {offeringResults.length === 0 ? (
+              <div className="mt-10 rounded-xl border bg-white px-6 py-12 text-center">
+                <div className="text-4xl">🔍</div>
+                <h2 className="mt-4 text-lg font-semibold text-black">
+                  No results found
+                </h2>
+                <p className="mt-2 text-sm text-gray-500">
+                  {matchedLocation.name}-এ কোনো ম্যাচিং
+                  offering পাওয়া যায়নি।
+                </p>
+              </div>
+            ) : (
+              <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {offeringResults.map((offering) => (
+                  <OfferingCard
+                    key={offering.id}
+                    offering={offering}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </main>
+      );
+    }
+
     const resultsRes = await getEntitiesByLocation(
       matchedLocation.id,
       {
         categoryId: categoryMatch?.id,
-        offeringType: categoryMatch
-          ? undefined
-          : parsed.offeringType || undefined,
         sort: parsed.sort,
       },
     );

@@ -89,6 +89,54 @@ export type LocationSort =
   | 'price_asc'
   | 'price_desc';
 
+// offeringType দিয়ে search করলে backend আর entity-ভিত্তিক না দিয়ে,
+// প্রতিটা matching offering-কে আলাদা row হিসেবে ফেরত দেয়
+export type OfferingSearchResult = {
+  id: string;
+  name: string;
+  type: string;
+  price: number;
+  averageRating: number;
+  image: string | null;
+  reviewCount: number;
+  entity: {
+    id: string;
+    name: string;
+    slug: string;
+    location: string | null;
+    category: { id: string; name: string } | null;
+  };
+};
+
+// categoryId দিয়ে search করলে (offeringType ছাড়া) আগের মতোই entity-ভিত্তিক
+// array পাওয়া যায় — এই overload দুইটা call-site-এ সঠিক return type
+// narrow করে দেয় (offeringType দিলে OfferingSearchResult[], না দিলে Entity[])
+export async function getEntitiesByLocation(
+  locationId: string,
+  options: {
+    categoryId?: string;
+    offeringType: string;
+    sort?: LocationSort;
+  },
+): Promise<{
+  success: boolean;
+  statusCode: number;
+  data: OfferingSearchResult[];
+  timestamp: string;
+}>;
+export async function getEntitiesByLocation(
+  locationId: string,
+  options?: {
+    categoryId?: string;
+    offeringType?: undefined;
+    sort?: LocationSort;
+  },
+): Promise<{
+  success: boolean;
+  statusCode: number;
+  data: Entity[];
+  timestamp: string;
+}>;
 export async function getEntitiesByLocation(
   locationId: string,
   options?: {
@@ -109,7 +157,7 @@ export async function getEntitiesByLocation(
   return apiFetch<{
     success: boolean;
     statusCode: number;
-    data: Entity[];
+    data: (Entity | OfferingSearchResult)[];
     timestamp: string;
   }>(
     `/entities/by-location/${locationId}${qs ? `?${qs}` : ''}`,
