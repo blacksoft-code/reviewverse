@@ -57,3 +57,34 @@ export async function createLocation(input: {
     body: JSON.stringify(input),
   });
 }
+
+
+export async function updateLocation(
+  id: string,
+  input: { name?: string; type?: string },
+) {
+  return apiFetch<ApiEnvelope<Location>>(`/locations/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}
+
+export async function moveLocation(
+  id: string,
+  newParentId: string | null,
+) {
+  return apiFetch<ApiEnvelope<Location>>(
+    `/locations/${id}/move`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ newParentId }),
+    },
+  );
+}
+
+export async function deleteLocation(id: string) {
+  return apiFetch<ApiEnvelope<{ message: string }>>(
+    `/locations/${id}`,
+    { method: 'DELETE' },
+  );
+}

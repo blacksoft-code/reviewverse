@@ -6,6 +6,7 @@ import {
 
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateLocationDto } from './dto/create-location.dto';
+import { UpdateLocationDto } from './dto/update-location.dto';
 
 @Injectable()
 export class LocationsService {
@@ -202,6 +203,22 @@ export class LocationsService {
       }
     }
 
+    // নতুন parent-এর নিচে একই নামের location আগে থেকে থাকলে move করা যাবে না
+    // (schema-তে @@unique([parentId, name]) আছে)
+    const nameConflict = await this.prisma.location.findFirst({
+      where: {
+        parentId: newParentId,
+        id: { not: locationId },
+        name: { equals: location.name, mode: 'insensitive' },
+      },
+    });
+
+    if (nameConflict) {
+      throw new BadRequestException(
+        'The new parent already has a location with this name.',
+      );
+    }
+
     // subtrees all member (নিজেসহ) — সাথে locationId থেকে তাদের distance
     const subtree = await this.prisma.locationClosure.findMany(
       {
@@ -273,6 +290,76 @@ export class LocationsService {
     );
 
     return this.findOne(locationId);
+  }
+
+  // ─────────────────────────────
+  // [Admin] Rename / type পরিবর্তন
+  // ─────────────────────────────
+  async update(id: string, dto: UpdateLocationDto) {
+    const location = await this.prisma.location.findUnique({
+      where: { id },
+    });
+
+    if (!location) {
+      throw new NotFoundException('Location not found.');
+    }
+
+    if (dto.name && dto.name !== location.name) {
+      const duplicate = await this.prisma.location.findFirst({
+        where: {
+          parentId: location.parentId,
+          id: { not: id },
+          name: { equals: dto.name, mode: 'insensitive' },
+        },
+      });
+
+      if (duplicate) {
+        throw new BadRequestException(
+          'Another location with this name already exists under the same parent.',
+        );
+      }
+    }
+
+    return this.prisma.location.update({
+      where: { id },
+      data: {
+        ...(dto.name !== undefined && { name: dto.name }),
+        ...(dto.type !== undefined && { type: dto.type }),
+      },
+    });
+  }
+
+  // ─────────────────────────────
+  // [Admin] Delete — শুধু তখনই যখন কোনো child location বা business নেই
+  // ─────────────────────────────
+  async remove(id: string) {
+    const location = await this.prisma.location.findUnique({
+      where: { id },
+      include: {
+        _count: { select: { children: true, entities: true } },
+      },
+    });
+
+    if (!location) {
+      throw new NotFoundException('Location not found.');
+    }
+
+    if (location._count.children > 0) {
+      throw new BadRequestException(
+        'This location has child locations. Move or delete them first.',
+      );
+    }
+
+    if (location._count.entities > 0) {
+      throw new BadRequestException(
+        'Businesses are linked to this location. Move them first.',
+      );
+    }
+
+    // LocationClosure row-গুলো onDelete: Cascade-এ নিজে থেকেই মুছে যাবে
+    await this.prisma.location.delete({ where: { id } });
+
+    return { message: 'Location deleted successfully' };
   }
 //last brac  
 }

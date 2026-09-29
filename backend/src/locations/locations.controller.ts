@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -18,6 +19,7 @@ import {
 import { LocationsService } from './locations.service';
 import { CreateLocationDto } from './dto/create-location.dto';
 import { MoveLocationDto } from './dto/move-location.dto';
+import { UpdateLocationDto } from './dto/update-location.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -101,5 +103,30 @@ export class LocationsController {
       dto.newParentId ?? null,
     );
   }
-}
 
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: '[Admin] Location-এর নাম / type পরিবর্তন',
+  })
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateLocationDto,
+  ) {
+    return this.locationsService.update(id, dto);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary:
+      '[Admin] Location মুছে ফেলা (child বা business থাকলে হবে না)',
+  })
+  remove(@Param('id') id: string) {
+    return this.locationsService.remove(id);
+  }
+}
