@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCategories } from '@/services/category.service';
+import AmenitySelector from '@/components/amenities/AmenitySelector';
 import { createEntity } from '@/services/entity.service';
 import LocationPicker from '@/components/locations/LocationPicker';
 import {
@@ -65,8 +66,8 @@ export default function AddBusinessPage() {
   const [logo, setLogo] =
     useState('');
 
-  const [amenities, setAmenities] =
-    useState('');
+  const [amenityIds, setAmenityIds] =
+    useState<string[]>([]);
 
   const [paymentMethods, setPaymentMethods] =
     useState('');
@@ -277,8 +278,8 @@ export default function AddBusinessPage() {
           logo.trim() || undefined,
 
         // Additional
-        amenities:
-          amenities.trim() || undefined,
+        amenityIds:
+          amenityIds.length > 0 ? amenityIds : undefined,
 
         paymentMethods:
           paymentMethods.trim() || undefined,
@@ -906,16 +907,9 @@ export default function AddBusinessPage() {
                     Amenities
                   </label>
 
-                  <input
-                    type="text"
-                    value={amenities}
-                    onChange={(event) =>
-                      setAmenities(
-                        event.target.value,
-                      )
-                    }
-                    placeholder="WiFi, Parking, Wheelchair Accessible"
-                    className="mt-1 w-full rounded-lg border p-3"
+                  <AmenitySelector
+                    selectedIds={amenityIds}
+                    onChange={setAmenityIds}
                   />
                 </div>
 

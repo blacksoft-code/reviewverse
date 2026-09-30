@@ -5,6 +5,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { CategoriesModule } from './categories/categories.module';
+import { AmenitiesModule } from './amenities/amenities.module';
 import { EntitiesModule } from './entities/entities.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { FeedModule } from './feed/feed.module';
@@ -55,6 +56,7 @@ import { LocationsModule } from './locations/locations.module';
     UsersModule, 
     AuthModule, 
     CategoriesModule, 
+    AmenitiesModule,
     EntitiesModule, 
     ReviewsModule, 
     FeedModule, 

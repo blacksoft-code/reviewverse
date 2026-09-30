@@ -21,7 +21,7 @@ export type EntityDetail = {
   coverPhoto: string | null;
   logo: string | null;
 
-  amenities: string | null;
+  amenities: { id: string; name: string }[];
   paymentMethods: string | null;
 
   socialLinks: string | null;
@@ -58,8 +58,13 @@ export type UpdateEntityInput = Partial<
     | 'category'
     | 'createdAt'
     | 'updatedAt'
+    | 'amenities'
   >
->;
+> & {
+  // amenities read করার সময় {id, name}[] আসে, কিন্তু update পাঠানোর
+  // সময় শুধু id-গুলোর array পাঠাতে হয়
+  amenityIds?: string[];
+};
 
 export async function updateEntity(
   id: string,

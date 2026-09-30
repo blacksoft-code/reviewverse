@@ -18,6 +18,10 @@ export type Entity = {
   updatedAt: string;
   category: Category;
   location?: string | null;
+  amenities?: {
+    id: string;
+    name: string;
+  }[];
   offerings?: {
     id: string;
     name: string;

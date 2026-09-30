@@ -36,6 +36,7 @@ import { uploadImages } from '@/services/media.service';
 import PostReactionButton from '@/components/entities/posts/PostReactionButton';
 import PostCommentSection from '@/components/entities/posts/PostCommentSection';
 import LocationPicker from '@/components/locations/LocationPicker';
+import AmenitySelector from '@/components/amenities/AmenitySelector';
 import OfferingTypeInput from '@/components/offerings/OfferingTypeInput';
 import OfferingForm from '@/components/offerings/OfferingForm';
 import {
@@ -120,6 +121,10 @@ export default function BusinessHomePage() {
     Partial<EntityDetail>
   >({});
 
+  const [amenityIds, setAmenityIds] = useState<string[]>(
+    [],
+  );
+
   const [savingInfo, setSavingInfo] = useState(false);
   const [infoSaved, setInfoSaved] = useState(false);
 
@@ -178,6 +183,9 @@ export default function BusinessHomePage() {
 
       setEntity(entityRes.data);
       setForm(entityRes.data);
+      setAmenityIds(
+        entityRes.data.amenities?.map((a) => a.id) ?? [],
+      );
 
       // Navbar-কে জানাচ্ছি কোন business active
       setActiveBusiness({
@@ -487,8 +495,7 @@ export default function BusinessHomePage() {
           logo:
             form.logo || undefined,
 
-          amenities:
-            form.amenities ?? undefined,
+          amenityIds,
 
           paymentMethods:
             form.paymentMethods ?? undefined,
@@ -503,17 +510,20 @@ export default function BusinessHomePage() {
 
       setEntity(response.data);
       setForm(response.data);
-      setInfoSaved(true);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to update business info',
+      setAmenityIds(
+        response.data.amenities?.map((a) => a.id) ?? [],
       );
-    } finally {
-      setSavingInfo(false);
+      setInfoSaved(true);
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Failed to update business info',
+        );
+      } finally {
+        setSavingInfo(false);
+      }
     }
-  }
 
   // ─────────────────────────────
   // Loading
@@ -1284,26 +1294,17 @@ export default function BusinessHomePage() {
                 />
               </div>
             </div>
-
-            {/* ───────────────────────────── */}
+     
             {/* Amenities */}
-            {/* ───────────────────────────── */}
 
             <div>
               <label className="text-sm font-medium">
                 Amenities
               </label>
 
-              <input
-                value={form.amenities ?? ''}
-                onChange={(e) =>
-                  handleFormChange(
-                    'amenities',
-                    e.target.value,
-                  )
-                }
-                placeholder="Wi-Fi, Parking, Wheelchair accessible"
-                className="mt-1 w-full rounded-lg border p-2.5 text-sm"
+              <AmenitySelector
+                selectedIds={amenityIds}
+                onChange={setAmenityIds}
               />
             </div>
 

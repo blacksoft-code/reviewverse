@@ -1,4 +1,5 @@
 import {
+  IsArray,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -135,12 +136,16 @@ subCategoryId?: string;
   @IsUrl({ require_tld: false })
   logo?: string;
 
-  @ApiPropertyOptional({
-    example: 'Wi-Fi, Parking, Wheelchair accessible',
+   @ApiPropertyOptional({
+    example: ['a1b2c3d4-amenity-1', 'a1b2c3d4-amenity-2'],
+    description:
+      'Master Amenity list থেকে বাছাই করা amenity id-গুলো',
+    type: [String],
   })
   @IsOptional()
-  @IsString()
-  amenities?: string;
+  @IsArray()
+  @IsString({ each: true })
+  amenityIds?: string[];
 
   @ApiPropertyOptional({
     example: 'Cash, Visa, Mastercard, bKash',

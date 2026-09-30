@@ -111,7 +111,15 @@ export default function Navbar() {
             Locations
           </Link>
         )}
-                          {/* Notifications */}
+         {user.role === 'ADMIN' && (
+          <Link
+            href="/admin/amenities"
+            className="rounded-lg border bg-black px-4 py-2 text-sm hover:bg-gray-50"
+          >
+            Amenities
+          </Link>
+        )}
+                  {/* Notifications */}
                   <NotificationBell />
 
                   {/* Logged-in user */}

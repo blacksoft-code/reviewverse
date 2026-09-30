@@ -159,6 +159,15 @@ model LocationClosure {
   @@index([descendantId])
 }
 
+model Amenity {
+  id   String @id @default(uuid())
+  name String @unique
+
+  entities Entity[]
+
+  createdAt DateTime @default(now())
+}
+
 model Category {
   id   String @id @default(uuid())
   name String @unique
@@ -214,7 +223,7 @@ model Entity {
   coverPhoto String?
   logo       String?
 
-  amenities      String?
+  amenities      Amenity[]
   paymentMethods String?
 
   socialLinks String?

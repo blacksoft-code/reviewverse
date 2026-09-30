@@ -75,7 +75,11 @@ async create(
           coverPhoto: createEntityDto.coverPhoto,
           logo: createEntityDto.logo,
 
-          amenities: createEntityDto.amenities,
+          amenities: {
+            connect: (createEntityDto.amenityIds ?? []).map(
+              (id) => ({ id }),
+            ),
+          },
           paymentMethods: createEntityDto.paymentMethods,
 
           socialLinks: createEntityDto.socialLinks,
@@ -136,6 +140,7 @@ async findById(id: string) {
     where: { id },
     include: { 
       category: true,
+      amenities: true,
       media: {
         where: { type: { in: ['ENTITY_LOGO', 'ENTITY_COVER'] } },
       },
@@ -174,9 +179,26 @@ async update(
     );
   }
 
+  // amenityIds আলাদা করে নিচ্ছি কারণ এটা সরাসরি Prisma scalar field
+  // না — relation হিসেবে "set" দিয়ে হ্যান্ডেল করতে হবে। বাকি সব
+  // ফিল্ড আগের মতোই সরাসরি dto থেকে যাচ্ছে।
+  const { amenityIds, ...rest } = dto;
+
   return this.prisma.entity.update({
     where: { id },
-    data: dto,
+    data: {
+      ...rest,
+      // amenityIds পাঠানো হলে তবেই amenities বদলাবে — undefined
+      // থাকলে (ফর্মের এই অংশ touch না করলে) পুরনো amenities
+      // অক্ষত থাকবে।
+      ...(amenityIds !== undefined && {
+        amenities: {
+          set: amenityIds.map((amenityId) => ({
+            id: amenityId,
+          })),
+        },
+      }),
+    },
   });
 }  
 
@@ -190,6 +212,7 @@ async update(
         take: limit,
         include: {
           category: true,
+          amenities: true,
         },
         orderBy: {
           createdAt: 'desc',
@@ -214,7 +237,7 @@ async update(
   async findBySlug(slug: string) {
     return this.prisma.entity.findUnique({
       where: { slug },
-      include: { category: true },
+      include: { category: true, amenities: true },
     });
   }
 
@@ -225,6 +248,7 @@ async update(
       },
       include: {
         category: true,
+        amenities: true,
         media: {
           where: { type: { in: ['ENTITY_LOGO', 'ENTITY_COVER'] } },
         },

@@ -1,4 +1,3 @@
-
 import { getEntityBySlug } from '@/services/entity.service';
 
 type AmenitiesPageProps = {
@@ -15,12 +14,9 @@ export default async function AmenitiesPage({
   const response = await getEntityBySlug(slug);
   const entity = response.data;
 
-  const amenities = entity.amenities
-    ? entity.amenities
-        .split(',')
-        .map((item: string) => item.trim())
-        .filter(Boolean)
-    : [];
+  // Amenities এখন relational data — Amenity[] ({id, name}) সরাসরি আসে,
+  // আগের মতো comma-separated string split করার দরকার নেই।
+  const amenities = entity.amenities ?? [];
 
   const paymentMethods = entity.paymentMethods
     ? entity.paymentMethods
@@ -44,9 +40,9 @@ export default async function AmenitiesPage({
         {amenities.length > 0 ? (
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {amenities.map(
-              (amenity: string, index: number) => (
+              (amenity: { id: string; name: string }) => (
                 <div
-                  key={`${amenity}-${index}`}
+                  key={amenity.id}
                   className="flex items-center gap-3 rounded-lg border border-gray-700 p-4"
                 >
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-black">
@@ -54,7 +50,7 @@ export default async function AmenitiesPage({
                   </span>
 
                   <span className="font-medium text-white">
-                    {amenity}
+                    {amenity.name}
                   </span>
                 </div>
               ),
