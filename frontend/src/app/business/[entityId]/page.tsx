@@ -37,6 +37,7 @@ import PostReactionButton from '@/components/entities/posts/PostReactionButton';
 import PostCommentSection from '@/components/entities/posts/PostCommentSection';
 import LocationPicker from '@/components/locations/LocationPicker';
 import AmenitySelector from '@/components/amenities/AmenitySelector';
+import PaymentMethodSelector from '@/components/payment-methods/PaymentMethodSelector';
 import OfferingTypeInput from '@/components/offerings/OfferingTypeInput';
 import OfferingForm from '@/components/offerings/OfferingForm';
 import {
@@ -124,6 +125,9 @@ export default function BusinessHomePage() {
   const [amenityIds, setAmenityIds] = useState<string[]>(
     [],
   );
+  const [paymentMethodIds, setPaymentMethodIds] = useState<
+    string[]
+  >([]);
 
   const [savingInfo, setSavingInfo] = useState(false);
   const [infoSaved, setInfoSaved] = useState(false);
@@ -183,8 +187,13 @@ export default function BusinessHomePage() {
 
       setEntity(entityRes.data);
       setForm(entityRes.data);
+
       setAmenityIds(
         entityRes.data.amenities?.map((a) => a.id) ?? [],
+      );
+      setPaymentMethodIds(
+        entityRes.data.paymentMethods?.map((p) => p.id) ??
+          [],
       );
 
       // Navbar-কে জানাচ্ছি কোন business active
@@ -496,9 +505,7 @@ export default function BusinessHomePage() {
             form.logo || undefined,
 
           amenityIds,
-
-          paymentMethods:
-            form.paymentMethods ?? undefined,
+          paymentMethodIds,
 
           socialLinks:
             form.socialLinks ?? undefined,
@@ -512,6 +519,10 @@ export default function BusinessHomePage() {
       setForm(response.data);
       setAmenityIds(
         response.data.amenities?.map((a) => a.id) ?? [],
+      );
+      setPaymentMethodIds(
+        response.data.paymentMethods?.map((p) => p.id) ??
+          [],
       );
       setInfoSaved(true);
       } catch (err) {
@@ -1308,27 +1319,15 @@ export default function BusinessHomePage() {
               />
             </div>
 
-            {/* ───────────────────────────── */}
             {/* Payment Methods */}
-            {/* ───────────────────────────── */}
-
-            <div>
+             <div>
               <label className="text-sm font-medium">
                 Payment methods
               </label>
 
-              <input
-                value={
-                  form.paymentMethods ?? ''
-                }
-                onChange={(e) =>
-                  handleFormChange(
-                    'paymentMethods',
-                    e.target.value,
-                  )
-                }
-                placeholder="Cash, Visa, Mastercard, bKash"
-                className="mt-1 w-full rounded-lg border p-2.5 text-sm"
+              <PaymentMethodSelector
+                selectedIds={paymentMethodIds}
+                onChange={setPaymentMethodIds}
               />
             </div>
 

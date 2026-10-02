@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCategories } from '@/services/category.service';
 import AmenitySelector from '@/components/amenities/AmenitySelector';
+import PaymentMethodSelector from '@/components/payment-methods/PaymentMethodSelector';
 import { createEntity } from '@/services/entity.service';
 import LocationPicker from '@/components/locations/LocationPicker';
 import {
@@ -69,8 +70,8 @@ export default function AddBusinessPage() {
   const [amenityIds, setAmenityIds] =
     useState<string[]>([]);
 
-  const [paymentMethods, setPaymentMethods] =
-    useState('');
+  const [paymentMethodIds, setPaymentMethodIds] =
+    useState<string[]>([]);
 
   const [socialLinks, setSocialLinks] =
     useState('');
@@ -281,8 +282,10 @@ export default function AddBusinessPage() {
         amenityIds:
           amenityIds.length > 0 ? amenityIds : undefined,
 
-        paymentMethods:
-          paymentMethods.trim() || undefined,
+        paymentMethodIds:
+          paymentMethodIds.length > 0
+            ? paymentMethodIds
+            : undefined,
 
         socialLinks:
           socialLinks.trim() || undefined,
@@ -901,7 +904,6 @@ export default function AddBusinessPage() {
                 </div>
 
                 {/* Amenities */}
-
                 <div>
                   <label className="block text-sm font-medium">
                     Amenities
@@ -914,24 +916,17 @@ export default function AddBusinessPage() {
                 </div>
 
                 {/* Payment Methods */}
-
                 <div>
                   <label className="block text-sm font-medium">
                     Payment Methods
                   </label>
 
-                  <input
-                    type="text"
-                    value={paymentMethods}
-                    onChange={(event) =>
-                      setPaymentMethods(
-                        event.target.value,
-                      )
-                    }
-                    placeholder="Cash, Visa, Mastercard, bKash"
-                    className="mt-1 w-full rounded-lg border p-3"
+                  <PaymentMethodSelector
+                    selectedIds={paymentMethodIds}
+                    onChange={setPaymentMethodIds}
                   />
                 </div>
+
               </div>
             </div>
 

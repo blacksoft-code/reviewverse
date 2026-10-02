@@ -119,6 +119,14 @@ export default function Navbar() {
             Amenities
           </Link>
         )}
+        {user.role === 'ADMIN' && (
+          <Link
+            href="/admin/payment-methods"
+            className="rounded-lg border bg-black px-4 py-2 text-sm hover:bg-gray-50"
+          >
+            Payment Methods
+          </Link>
+        )}
                   {/* Notifications */}
                   <NotificationBell />
 

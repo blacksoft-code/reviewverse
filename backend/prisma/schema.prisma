@@ -168,6 +168,15 @@ model Amenity {
   createdAt DateTime @default(now())
 }
 
+model PaymentMethod {
+  id   String @id @default(uuid())
+  name String @unique
+
+  entities Entity[]
+
+  createdAt DateTime @default(now())
+}
+
 model Category {
   id   String @id @default(uuid())
   name String @unique
@@ -224,7 +233,7 @@ model Entity {
   logo       String?
 
   amenities      Amenity[]
-  paymentMethods String?
+  paymentMethods PaymentMethod[]
 
   socialLinks String?
   menu        String?

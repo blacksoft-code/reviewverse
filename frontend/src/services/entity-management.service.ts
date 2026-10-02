@@ -22,7 +22,7 @@ export type EntityDetail = {
   logo: string | null;
 
   amenities: { id: string; name: string }[];
-  paymentMethods: string | null;
+  paymentMethods: { id: string; name: string }[];
 
   socialLinks: string | null;
   menu: string | null;
@@ -59,11 +59,13 @@ export type UpdateEntityInput = Partial<
     | 'createdAt'
     | 'updatedAt'
     | 'amenities'
+    | 'paymentMethods'
   >
 > & {
   // amenities read করার সময় {id, name}[] আসে, কিন্তু update পাঠানোর
   // সময় শুধু id-গুলোর array পাঠাতে হয়
   amenityIds?: string[];
+  paymentMethodIds?: string[];
 };
 
 export async function updateEntity(

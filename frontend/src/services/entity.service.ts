@@ -22,6 +22,12 @@ export type Entity = {
     id: string;
     name: string;
   }[];
+
+  paymentMethods?: {
+    id: string;
+    name: string;
+  }[];
+  
   offerings?: {
     id: string;
     name: string;

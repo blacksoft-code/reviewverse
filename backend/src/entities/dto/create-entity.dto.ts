@@ -148,11 +148,15 @@ subCategoryId?: string;
   amenityIds?: string[];
 
   @ApiPropertyOptional({
-    example: 'Cash, Visa, Mastercard, bKash',
+    example: ['payment-method-id-1', 'payment-method-id-2'],
+    description:
+      'Master Payment Method list থেকে বাছাই করা id-গুলো',
+    type: [String],
   })
   @IsOptional()
-  @IsString()
-  paymentMethods?: string;
+  @IsArray()
+  @IsString({ each: true })
+  paymentMethodIds?: string[];
 
   @ApiPropertyOptional({
     example: 'Facebook: https://facebook.com/example',
