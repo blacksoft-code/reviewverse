@@ -14,8 +14,6 @@ import NotificationBell from '@/components/NotificationBell';
 
 export default function Navbar() {
 
-  // NEW:
-  // Global authentication state AuthContext থেকে নিচ্ছি।
   const {
     user,
     loading,
@@ -76,58 +74,13 @@ export default function Navbar() {
         {/* NEW: Admin-only Claims link */}
         {user.role === 'ADMIN' && (
           <Link
-            href="/admin/claims"
+            href="/admin"
             className="rounded-lg border bg-black px-4 py-2 text-sm hover:bg-gray-50"
           >
-            Claims
-          </Link>
-          
-        )}
-        {user.role === 'ADMIN' && (
-          <Link
-            href="/admin/categories"
-            className="rounded-lg border bg-black px-4 py-2 text-sm hover:bg-gray-50"
-          >
-            Categories
-          </Link>
-        
-          
-        )}
-
-        {user.role === 'ADMIN' && (
-          <Link
-            href="/admin/businesses"
-            className="rounded-lg border bg-black px-4 py-2 text-sm hover:bg-gray-50"
-          >
-            Businesses
+            Admin
           </Link>
         )}
-        
-         {user.role === 'ADMIN' && (
-          <Link
-            href="/admin/locations"
-            className="rounded-lg border bg-black px-4 py-2 text-sm hover:bg-gray-50"
-          >
-            Locations
-          </Link>
-        )}
-         {user.role === 'ADMIN' && (
-          <Link
-            href="/admin/amenities"
-            className="rounded-lg border bg-black px-4 py-2 text-sm hover:bg-gray-50"
-          >
-            Amenities
-          </Link>
-        )}
-        {user.role === 'ADMIN' && (
-          <Link
-            href="/admin/payment-methods"
-            className="rounded-lg border bg-black px-4 py-2 text-sm hover:bg-gray-50"
-          >
-            Payment Methods
-          </Link>
-        )}
-                  {/* Notifications */}
+                          {/* Notifications */}
                   <NotificationBell />
 
                   {/* Logged-in user */}
