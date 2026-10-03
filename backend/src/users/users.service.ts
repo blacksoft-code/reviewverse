@@ -242,6 +242,38 @@ async acceptFriendRequest(
       },
     });
 
+    // NEW: friend request accept হলে দুইজন দুইজনকেই automatically
+    // follow করে ফেলে। upsert ব্যবহার করছি কারণ কেউ হয়তো আগে থেকেই
+    // একদিক থেকে follow করে রেখেছিল — তখন duplicate/unique-constraint
+    // error এড়াতে হবে।
+    await tx.userFollow.upsert({
+      where: {
+        followerId_followingId: {
+          followerId: request.senderId,
+          followingId: request.receiverId,
+        },
+      },
+      create: {
+        followerId: request.senderId,
+        followingId: request.receiverId,
+      },
+      update: {},
+    });
+
+    await tx.userFollow.upsert({
+      where: {
+        followerId_followingId: {
+          followerId: request.receiverId,
+          followingId: request.senderId,
+        },
+      },
+      create: {
+        followerId: request.receiverId,
+        followingId: request.senderId,
+      },
+      update: {},
+    });
+
     return {
       friendship,
     };
@@ -547,6 +579,17 @@ async blockUser(
           followerId: targetUserId,
           followingId: currentUserId,
         },
+      ],
+    },
+  });
+
+  // NEW: block করলে friendship থাকলে সেটাও ভেঙে যাবে — block মানে
+  // সম্পর্ক সম্পূর্ণ cut, শুধু follow stop করা না
+  await this.prisma.friendship.deleteMany({
+    where: {
+      OR: [
+        { userId1: currentUserId, userId2: targetUserId },
+        { userId1: targetUserId, userId2: currentUserId },
       ],
     },
   });

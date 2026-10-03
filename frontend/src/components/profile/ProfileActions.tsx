@@ -32,11 +32,15 @@ export default function ProfileActions({
   const [friendsMenuOpen, setFriendsMenuOpen] =
     useState(false);
 
+  // NEW: বন্ধু না হলে "•••"/"Following ▾" ড্রপডাউন খোলা/বন্ধ
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+
   // NEW: Unfriend confirmation modal
   const [showUnfriendModal, setShowUnfriendModal] =
     useState(false);
 
   const friendsMenuRef = useRef<HTMLDivElement>(null);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
 
   const [friendRequestId, setFriendRequestId] =
     useState<string | null>(null);
@@ -73,6 +77,13 @@ export default function ProfileActions({
         )
       ) {
         setFriendsMenuOpen(false);
+      }
+
+      if (
+        moreMenuRef.current &&
+        !moreMenuRef.current.contains(e.target as Node)
+      ) {
+        setMoreMenuOpen(false);
       }
     }
 
@@ -169,6 +180,13 @@ export default function ProfileActions({
   const handleFollowFromMenu = async () => {
     await handleFollow();
     setFriendsMenuOpen(false);
+    setMoreMenuOpen(false);
+  };
+
+  // NEW: "•••"/"Following ▾" dropdown-এর ভেতর থেকে Block — action শেষে menu বন্ধ
+  const handleBlockFromMenu = async () => {
+    await handleBlock();
+    setMoreMenuOpen(false);
   };
 
   const handleAcceptFriendRequest = async () => {
@@ -179,6 +197,9 @@ export default function ProfileActions({
       await acceptFriendRequest(friendRequestId);
 
       setIsFriend(true);
+      // NEW: friend request accept হলে backend-এ এখন automatic
+      // দুই-দিকেই follow তৈরি হয়, তাই local state-ও সাথে সাথে আপডেট
+      setIsFollowing(true);
       setFriendRequestStatus(null);
       setFriendRequestDirection(null);
       setFriendRequestId(null);
@@ -312,19 +333,6 @@ export default function ProfileActions({
                 <div className="absolute left-0 z-50 mt-2 w-48 rounded-lg border bg-white py-1 shadow-lg">
                   <button
                     type="button"
-                    onClick={handleFollowFromMenu}
-                    disabled={loading === 'follow'}
-                    className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                  >
-                    {loading === 'follow'
-                      ? 'Loading...'
-                      : isFollowing
-                        ? 'Unfollow'
-                        : 'Follow'}
-                  </button>
-
-                  <button
-                    type="button"
                     onClick={() => {
                       setFriendsMenuOpen(false);
                       setShowUnfriendModal(true);
@@ -338,20 +346,7 @@ export default function ProfileActions({
             </div>
           ) : (
             <>
-              {/* বন্ধু না হলে — আগের মতোই আলাদা Follow/Unfollow বাটন */}
-              <button
-                type="button"
-                onClick={handleFollow}
-                disabled={actionsDisabled || isBlocked}
-                className="rounded-lg bg-black px-5 py-2 text-sm font-medium text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {loading === 'follow'
-                  ? 'Loading...'
-                  : isFollowing
-                    ? 'Unfollow'
-                    : 'Follow'}
-              </button>
-
+              {/* বন্ধু না হলে — "Add Friend" (বা Accept/Cancel Request) */}
               {friendRequestStatus === 'PENDING' &&
               friendRequestDirection === 'RECEIVED' ? (
                 <button
@@ -369,7 +364,7 @@ export default function ProfileActions({
                   type="button"
                   onClick={handleFriendRequest}
                   disabled={actionsDisabled || isBlocked}
-                  className="rounded-lg border border-gray-300 bg-white px-5 py-2 text-sm font-medium text-gray-900 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-lg bg-black px-5 py-2 text-sm font-medium text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {loading === 'friend'
                     ? friendRequestStatus === 'PENDING' &&
@@ -385,18 +380,67 @@ export default function ProfileActions({
             </>
           )}
 
-          <button
-            type="button"
-            onClick={handleBlock}
-            disabled={loading !== null || isBlockedByTarget}
-            className="rounded-lg border border-red-300 bg-white px-5 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {loading === 'block'
-              ? 'Loading...'
-              : isBlocked
-                ? 'Unblock'
-                : 'Block'}
-          </button>
+          {/* ───────────────────────────────
+              দ্বিতীয় slot — friend হোক বা না হোক, সবসময় দেখাবে।
+              তিনটা possible state:
+              1) Blocked        → একটামাত্র "Unblock" বাটন
+              2) Following      → "Following ▾" → dropdown-এ Unfollow + Block
+              3) না-follow      → "•••" → dropdown-এ Follow + Block
+             ─────────────────────────────── */}
+          {isBlocked ? (
+            <button
+              type="button"
+              onClick={handleBlock}
+              disabled={loading !== null}
+              className="rounded-lg border border-red-300 bg-white px-5 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loading === 'block'
+                ? 'Loading...'
+                : 'Unblock'}
+            </button>
+          ) : (
+            <div ref={moreMenuRef} className="relative">
+              <button
+                type="button"
+                onClick={() =>
+                  setMoreMenuOpen((prev) => !prev)
+                }
+                disabled={loading !== null}
+                className="rounded-lg border border-gray-300 bg-white px-5 py-2 text-sm font-medium text-gray-900 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {/* বন্ধু হলে বাটন সবসময় "•••"-ই থাকে (auto-follow হয়েই
+                    থাকে বলে "Following ▾" দেখানো redundant) — শুধু
+                    বন্ধু না হলে Follow/Following টগল হয় */}
+                {loading === 'follow'
+                  ? 'Loading...'
+                  : !isFriend && isFollowing
+                    ? 'Following ▾'
+                    : '•••'}
+              </button>
+
+              {moreMenuOpen && (
+                <div className="absolute left-0 z-50 mt-2 w-40 rounded-lg border bg-white py-1 shadow-lg">
+                  <button
+                    type="button"
+                    onClick={handleFollowFromMenu}
+                    disabled={loading === 'follow'}
+                    className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    {isFollowing ? 'Unfollow' : 'Follow'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleBlockFromMenu}
+                    disabled={loading === 'block'}
+                    className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+                  >
+                    Block
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
