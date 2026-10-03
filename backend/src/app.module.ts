@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { CategoriesModule } from './categories/categories.module';
 import { AmenitiesModule } from './amenities/amenities.module';
 import { PaymentMethodsModule } from './payment-methods/payment-methods.module';
+import { BusinessHoursModule } from './business-hours/business-hours.module';
 import { EntitiesModule } from './entities/entities.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { FeedModule } from './feed/feed.module';
@@ -59,6 +60,7 @@ import { LocationsModule } from './locations/locations.module';
     CategoriesModule, 
     AmenitiesModule,
     PaymentMethodsModule,
+    BusinessHoursModule,
     EntitiesModule, 
     ReviewsModule, 
     FeedModule, 

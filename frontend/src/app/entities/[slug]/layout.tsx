@@ -22,7 +22,6 @@ export default async function EntityLayout({
     logo: string | null;
     isVerified: boolean;
     averageRating: number;
-    businessHours: string | null;
     category: { name: string };
     reviews: unknown[];
   };
@@ -39,7 +38,6 @@ export default async function EntityLayout({
           isVerified: entity.isVerified,
           averageRating: entity.averageRating,
           reviewCount: entity.reviews?.length ?? 0,
-          businessHours: entity.businessHours,
           category: entity.category,
         }}
       />

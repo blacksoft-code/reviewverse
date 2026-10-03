@@ -1,16 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-
 import {
   useAuth,
 } from '@/context/AuthContext';
-
 import BusinessSwitcher from '@/components/BusinessSwitcher';
 import SearchBox from '@/components/search/SearchBox';
 import NotificationBell from '@/components/NotificationBell';
-
-
 
 export default function Navbar() {
 
@@ -25,7 +21,6 @@ export default function Navbar() {
   // দুটোই clear করছি।
   function handleLogout() {
     
-
     // AuthContext-এর user state clear হবে।
     logout();
   }
@@ -46,14 +41,6 @@ export default function Navbar() {
 
         <div className="flex items-center gap-5">
 
-{/* Home 
-          <Link
-            href="/"
-            className="rounded-lg border bg-black px-4 py-2 text-sm hover:bg-gray-50"
-          >
-            Home
-          </Link>
-*/}
             {/* Explore (location-based search) */}
           <Link
             href="/explore"
@@ -80,7 +67,7 @@ export default function Navbar() {
             Admin
           </Link>
         )}
-                          {/* Notifications */}
+                  {/* Notifications */}
                   <NotificationBell />
 
                   {/* Logged-in user */}

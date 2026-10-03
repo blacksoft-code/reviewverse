@@ -39,21 +39,14 @@ export default function AddBusinessPage() {
     string | null
   >(null);
 
-  // =========================
   // Reviewer / Common Details
-  // =========================
 
   const [phone, setPhone] = useState('');
   const [website, setWebsite] = useState('');
   const [email, setEmail] = useState('');
   const [description, setDescription] = useState('');
 
-  // =========================
   // Owner Business Details
-  // =========================
-
-  const [businessHours, setBusinessHours] =
-    useState('');
 
   const [priceRange, setPriceRange] =
     useState('');
@@ -260,10 +253,6 @@ export default function AddBusinessPage() {
         email: email.trim() || undefined,
         description:
           description.trim() || undefined,
-
-        // Business details
-        businessHours:
-          businessHours.trim() || undefined,
 
         priceRange:
           priceRange.trim() || undefined,
@@ -827,26 +816,10 @@ export default function AddBusinessPage() {
 
               <div className="mt-5 space-y-5">
 
-                {/* Business Hours */}
-
-                <div>
-                  <label className="block text-sm font-medium">
-                    Business Hours
-                  </label>
-
-                  <textarea
-                    value={businessHours}
-                    onChange={(event) =>
-                      setBusinessHours(
-                        event.target.value,
-                      )
-                    }
-                    rows={3}
-                    placeholder="Mon-Fri: 10:00 AM - 10:00 PM&#10;Sat-Sun: 11:00 AM - 11:00 PM"
-                    className="mt-1 w-full rounded-lg border p-3"
-                  />
-                </div>
-
+                  <p className="rounded-lg bg-gray-50 p-3 text-sm text-gray-500">
+                  Business শুরু হওয়ার পর "Business Hours" ট্যাব থেকে
+                  user can set opening hours 
+                </p>
                 {/* Price Range */}
 
                 <div>

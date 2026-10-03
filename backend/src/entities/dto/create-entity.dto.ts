@@ -96,17 +96,7 @@ subCategoryId?: string;
   @IsString()
   description?: string;
 
-
-// =========================
   // Owner business details
-  // =========================
-
-  @ApiPropertyOptional({
-    example: 'Mon-Fri: 10:00 AM - 10:00 PM',
-  })
-  @IsOptional()
-  @IsString()
-  businessHours?: string;
 
   @ApiPropertyOptional({
     example: '$$',

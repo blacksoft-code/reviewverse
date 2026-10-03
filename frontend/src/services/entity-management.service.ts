@@ -14,7 +14,6 @@ export type EntityDetail = {
   website: string | null;
   email: string | null;
 
-  businessHours: string | null;
   priceRange: string | null;
   serviceOptions: string | null;
 

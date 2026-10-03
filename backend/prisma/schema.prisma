@@ -168,6 +168,31 @@ model Amenity {
   createdAt DateTime @default(now())
 }
 
+model BusinessHour {
+  id String @id @default(uuid())
+
+  entityId String
+  entity   Entity @relation(fields: [entityId], references: [id], onDelete: Cascade)
+
+  // 0 = Sunday, 1 = Monday, ... 6 = Saturday (JS Date.getDay() convention)
+  dayOfWeek Int
+
+  // true হলে এই day পুরো বন্ধ — openTime/closeTime তখন null থাকে।
+  // false হলে openTime/closeTime দুটোই লাগবে ("HH:mm", 24hr format)।
+  isClosed  Boolean @default(false)
+  openTime  String?
+  closeTime String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // প্রতি entity-তে প্রতি day-র জন্য একটাই row — তাই একই day একসাথে
+  // "open" আর "closed" দুটো হয়ে যাওয়া, বা duplicate row তৈরি হওয়া
+  // schema-লেভেলেই সম্ভব না।
+  @@unique([entityId, dayOfWeek])
+  @@index([entityId])
+}
+
 model PaymentMethod {
   id   String @id @default(uuid())
   name String @unique
@@ -225,7 +250,7 @@ model Entity {
   website      String?
   email        String?
 
-  businessHours  String?
+  businessHours  BusinessHour[]
   priceRange     String?
   serviceOptions String?
 

@@ -1,5 +1,8 @@
-
 import { getEntityBySlug } from '@/services/entity.service';
+import {
+  DAY_LABELS,
+  getBusinessHours,
+} from '@/services/business-hour.service';
 
 type AboutPageProps = {
   params: Promise<{
@@ -14,6 +17,11 @@ export default async function AboutPage({
 
   const response = await getEntityBySlug(slug);
   const entity = response.data;
+
+  const businessHoursResponse = await getBusinessHours(
+    entity.id,
+  ).catch(() => null);
+  const hours = businessHoursResponse?.data.hours ?? [];
 
   return (
     <div className="mt-4 space-y-4">
@@ -117,12 +125,45 @@ export default async function AboutPage({
           Business Hours
         </h2>
 
-        <p className="mt-4 whitespace-pre-line text-gray-400">
-          {entity.businessHours ||
-            'Business hours have not been added yet.'}
-        </p>
+        {hours.length === 0 ? (
+          <p className="mt-4 text-gray-400">
+            Business hours have not been added yet.
+          </p>
+        ) : (
+          <div className="mt-4 divide-y divide-gray-800">
+            {DAY_LABELS.map((label, dayOfWeek) => {
+              const day = hours.find(
+                (h) => h.dayOfWeek === dayOfWeek,
+              );
+
+              return (
+                <div
+                  key={dayOfWeek}
+                  className="flex items-center justify-between py-2 text-sm"
+                >
+                  <span className="text-gray-300">
+                    {label}
+                  </span>
+
+                  {!day ? (
+                    <span className="text-gray-500">
+                      Not set
+                    </span>
+                  ) : day.isClosed ? (
+                    <span className="text-red-400">
+                      Closed
+                    </span>
+                  ) : (
+                    <span className="text-gray-400">
+                      {day.openTime} – {day.closeTime}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
     </div>
   );
 }
-

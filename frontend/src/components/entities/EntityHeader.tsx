@@ -1,11 +1,13 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import EntityActions from '@/components/entities/EntityActions';
 import EntityFollowersLink from '@/components/entities/EntityFollowersLink';
 import ClaimBusinessButton from '@/components/entities/ClaimBusinessButton';
+import { getBusinessHours } from '@/services/business-hour.service';
 
 export type EntityHeaderData = {
   id: string;
@@ -16,7 +18,6 @@ export type EntityHeaderData = {
   isVerified: boolean;
   averageRating: number;
   reviewCount: number;
-  businessHours: string | null;
   category: {
     name: string;
   };
@@ -39,6 +40,34 @@ export default function EntityHeader({
 }) {
   const pathname = usePathname();
   const basePath = `/entities/${entity.slug}`;
+
+  const [isOpenNow, setIsOpenNow] = useState<
+    boolean | null
+  >(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadHours() {
+      try {
+        const response = await getBusinessHours(entity.id);
+        if (!cancelled) {
+          setIsOpenNow(response.data.isOpenNow);
+        }
+      } catch {
+        // business hours সেট করা না থাকলে badge-ই দেখানো হবে না
+        if (!cancelled) {
+          setIsOpenNow(null);
+        }
+      }
+    }
+
+    loadHours();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [entity.id]);
 
   return (
     <>
@@ -103,24 +132,26 @@ export default function EntityHeader({
                 ({entity.reviewCount} reviews)
               </span>
 
-              <span className="text-gray-400">•</span>
-
-              <span className="font-medium text-green-600">
-                Open
-              </span>
-
-              {entity.businessHours && (
+              {isOpenNow !== null && (
                 <>
-                  <span className="text-gray-600">
-                    {entity.businessHours}
+                  <span className="text-gray-400">•</span>
+
+                  <span
+                    className={
+                      isOpenNow
+                        ? 'font-medium text-green-600'
+                        : 'font-medium text-red-600'
+                    }
+                  >
+                    {isOpenNow ? 'Open Now' : 'Closed Now'}
                   </span>
 
-                  <button
-                    type="button"
+                  <Link
+                    href={`${basePath}/about`}
                     className="font-medium underline"
                   >
                     See hours
-                  </button>
+                  </Link>
                 </>
               )}
             </div>

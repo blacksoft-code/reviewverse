@@ -38,6 +38,7 @@ import PostCommentSection from '@/components/entities/posts/PostCommentSection';
 import LocationPicker from '@/components/locations/LocationPicker';
 import AmenitySelector from '@/components/amenities/AmenitySelector';
 import PaymentMethodSelector from '@/components/payment-methods/PaymentMethodSelector';
+import BusinessHoursEditor from '@/components/business-hours/BusinessHoursEditor';
 import OfferingTypeInput from '@/components/offerings/OfferingTypeInput';
 import OfferingForm from '@/components/offerings/OfferingForm';
 import {
@@ -48,7 +49,7 @@ import {
 } from '@/services/offering.service';
 
 
-type Tab = 'posts' | 'offerings' | 'info';
+type Tab = 'posts' | 'offerings' | 'info' | 'hours' ;
 
 export default function BusinessHomePage() {
   const params = useParams();
@@ -489,9 +490,6 @@ export default function BusinessHomePage() {
           email:
             form.email ?? undefined,
 
-          businessHours:
-            form.businessHours ?? undefined,
-
           priceRange:
             form.priceRange ?? undefined,
 
@@ -658,6 +656,18 @@ export default function BusinessHomePage() {
               }`}
             >
               Edit Info
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setTab('hours')}
+              className={`border-b-2 px-4 py-2 text-sm font-medium ${
+                tab === 'hours'
+                  ? 'border-black text-black'
+                  : 'border-transparent text-gray-500 hover:text-black'
+              }`}
+            >
+              Business Hours
             </button>
 
           </div>
@@ -1217,26 +1227,6 @@ export default function BusinessHomePage() {
                 />
               </div>
 
-              {/* Business Hours */}
-              <div>
-                <label className="text-sm font-medium">
-                  Business hours
-                </label>
-
-                <input
-                  value={
-                    form.businessHours ?? ''
-                  }
-                  onChange={(e) =>
-                    handleFormChange(
-                      'businessHours',
-                      e.target.value,
-                    )
-                  }
-                  className="mt-1 w-full rounded-lg border p-2.5 text-sm"
-                />
-              </div>
-
               {/* Price Range */}
               <div>
                 <label className="text-sm font-medium">
@@ -1346,6 +1336,15 @@ export default function BusinessHomePage() {
             </button>
 
           </form>
+        )}
+         {/* ================================================= */}
+        {/* BUSINESS HOURS TAB */}
+        {/* ================================================= */}
+
+        {tab === 'hours' && entityId && (
+          <div className="rounded-xl border bg-white p-6">
+            <BusinessHoursEditor entityId={entityId} />
+          </div>
         )}
 
       </div>

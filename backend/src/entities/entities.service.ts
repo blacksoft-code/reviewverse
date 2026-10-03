@@ -68,7 +68,6 @@ async create(
           email: createEntityDto.email,
           description: createEntityDto.description,
 
-          businessHours: createEntityDto.businessHours,
           priceRange: createEntityDto.priceRange,
           serviceOptions: createEntityDto.serviceOptions,
 
@@ -335,14 +334,12 @@ async update(
 
     const sort = options?.sort ?? 'rating_desc';
 
-    // ───────────────────────────────────────────────
     // Offering-type search (যেমন "Best juice in Dhaka") —
     // এখানে ফলাফল entity-ভিত্তিক না দিয়ে, প্রতিটা matching
     // offering-কে নিজের card হিসেবে (flatten করে) রিটার্ন
     // করা হচ্ছে। এই logic-টা OfferingsService-এ থাকে, কারণ
     // এটা offering-সম্পর্কিত query — Category-ভিত্তিক search
     // (নিচে) অপরিবর্তিত।
-    // ───────────────────────────────────────────────
     if (offeringFilter && options?.offeringType) {
       return this.offeringsService.searchByLocation(
         locationIds,
@@ -354,10 +351,10 @@ async update(
       );
     }
 
-    // ───────────────────────────────────────────────
+
     // Category-ভিত্তিক search (যেমন "Best hospital in Dhaka") —
     // আগের মতোই entity-ভিত্তিক card, কোনো পরিবর্তন নেই।
-    // ───────────────────────────────────────────────
+
     const entities = await this.prisma.entity.findMany({
       where: {
         locationId: { in: locationIds },
