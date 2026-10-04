@@ -111,10 +111,19 @@ export default function ProfileHeader({
             {profile.reviewCount} reviews
           </p>
 
-          <ProfileActions
-            userId={profile.id}
-            userName={profile.name}
-          />
+          {isOwnProfile ? (
+            <Link
+              href={`${basePath}/edit`}
+              className="mt-4 inline-block rounded-lg border border-gray-300 bg-white px-5 py-2 text-sm font-medium text-gray-900 transition hover:bg-gray-50"
+            >
+              Edit Profile
+            </Link>
+          ) : (
+            <ProfileActions
+              userId={profile.id}
+              userName={profile.name}
+            />
+          )}
         </div>
 
         <nav className="mt-8 border-t pt-4">
