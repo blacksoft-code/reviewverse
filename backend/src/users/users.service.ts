@@ -639,7 +639,10 @@ async getUserProfile(userId: string) {
       id: true,
       name: true,
       createdAt: true,
-      worksAt: true,
+      worksAtEntityId: true,
+      worksAtEntity: {
+        select: { id: true, name: true, location: true },
+      },
       studiesAt: true,
       livesInLocationId: true,
       livesInLocation: {
@@ -707,11 +710,20 @@ async getUserProfile(userId: string) {
       )
     : null;
 
+  // "KFC - Dhaka" style display — entity-র নাম + (থাকলে) location
+  const worksAtDisplay = user.worksAtEntity
+    ? user.worksAtEntity.location
+      ? `${user.worksAtEntity.name} - ${user.worksAtEntity.location}`
+      : user.worksAtEntity.name
+    : null;
+
   return {
   id: user.id,
   name: user.name,
   createdAt: user.createdAt,
-  worksAt: user.worksAt,
+  worksAtEntityId: user.worksAtEntityId,
+  worksAtEntity: user.worksAtEntity,
+  worksAtDisplay,
   studiesAt: user.studiesAt,
   livesInLocationId: user.livesInLocationId,
   livesInLocation: user.livesInLocation,
@@ -736,7 +748,7 @@ async updateUserInfo(
   return this.prisma.user.update({
     where: { id: userId },
     data: {
-      worksAt: dto.worksAt,
+      worksAtEntityId: dto.worksAtEntityId,
       studiesAt: dto.studiesAt,
       livesInLocationId: dto.livesInLocationId,
       fromLocationId: dto.fromLocationId,
@@ -749,7 +761,10 @@ async updateUserInfo(
     select: {
       id: true,
       name: true,
-      worksAt: true,
+      worksAtEntityId: true,
+      worksAtEntity: {
+        select: { id: true, name: true, location: true },
+      },
       studiesAt: true,
       livesInLocationId: true,
       livesInLocation: {

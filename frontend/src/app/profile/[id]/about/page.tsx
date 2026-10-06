@@ -12,7 +12,7 @@ type AboutUser = {
   name: string;
   reviewCount: number;
   createdAt: string;
-  worksAt: string | null;
+  worksAtDisplay: string | null;
   studiesAt: string | null;
   livesInDisplay: string | null;
   fromDisplay: string | null;
@@ -119,13 +119,13 @@ export default function AboutPage() {
           </p>
         </div>
 
-        {user.worksAt && (
+        {user.worksAtDisplay && (
           <div>
             <p className="text-sm text-gray-500">
               Works at
             </p>
             <p className="mt-1 font-medium">
-              {user.worksAt}
+              {user.worksAtDisplay}
             </p>
           </div>
         )}

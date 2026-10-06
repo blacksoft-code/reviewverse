@@ -10,11 +10,14 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Gender } from '@prisma/client';
 
 export class UpdateUserInfoDto {
-  @ApiPropertyOptional({ example: 'ReviewVerse Inc.' })
+ @ApiPropertyOptional({
+    example: 'a1b2c3d4-1234-4c87-bfe0-d7b03d1f296c',
+    description:
+      'Registered business (Entity) id — /entities/search দিয়ে predictive search করে বাছাই করা',
+  })
   @IsOptional()
   @IsString()
-  @MaxLength(100)
-  worksAt?: string;
+  worksAtEntityId?: string;
 
   @ApiPropertyOptional({
     example: 'University of Dhaka',

@@ -281,7 +281,7 @@ export type Gender =
   | 'PREFER_NOT_TO_SAY';
 
 export type UpdateUserInfoInput = {
-  worksAt?: string;
+  worksAtEntityId?: string;
   studiesAt?: string;
   livesInLocationId?: string;
   fromLocationId?: string;

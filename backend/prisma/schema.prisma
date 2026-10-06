@@ -32,8 +32,9 @@ model User {
   email    String @unique
   password String
 
-  worksAt   String?
-  studiesAt String?
+  worksAtEntityId String?
+  worksAtEntity   Entity? @relation("UserWorksAt", fields: [worksAtEntityId], references: [id], onDelete: SetNull)
+  studiesAt       String?
 
   livesInLocationId String?
   livesInLocation   Location? @relation("UserLivesIn", fields: [livesInLocationId], references: [id])
@@ -297,6 +298,8 @@ model Entity {
 
   followers      EntityFollow[]
   blockedByUsers EntityBlock[]
+
+  employees User[] @relation("UserWorksAt")
 
   @@index([locationId])
 }

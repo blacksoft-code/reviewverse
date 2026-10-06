@@ -10,11 +10,13 @@ import {
   Gender,
 } from '@/services/user.service';
 import UserLocationPicker from '@/components/locations/UserLocationPicker';
+import WorksAtPicker from '@/components/entities/WorksAtPicker';
 
 type EditableUser = {
   id: string;
   name: string;
-  worksAt: string | null;
+  worksAtEntityId: string | null;
+  worksAtDisplay: string | null;
   studiesAt: string | null;
   livesInLocationId: string | null;
   livesInDisplay: string | null;
@@ -43,7 +45,7 @@ export default function EditProfilePage() {
   const [saved, setSaved] = useState(false);
 
   const [form, setForm] = useState({
-    worksAt: '',
+    worksAtEntityId: '',
     studiesAt: '',
     livesInLocationId: '',
     fromLocationId: '',
@@ -57,6 +59,10 @@ export default function EditProfilePage() {
     useState<string | null>(null);
   const [fromInitialDisplay, setFromInitialDisplay] =
     useState<string | null>(null);
+  const [
+    worksAtInitialDisplay,
+    setWorksAtInitialDisplay,
+  ] = useState<string | null>(null);
 
   // নিজের প্রোফাইল না হলে এই পেজে থাকার দরকার নেই
   useEffect(() => {
@@ -80,7 +86,7 @@ export default function EditProfilePage() {
         const data = response.data as EditableUser;
 
         setForm({
-          worksAt: data.worksAt ?? '',
+          worksAtEntityId: data.worksAtEntityId ?? '',
           studiesAt: data.studiesAt ?? '',
           livesInLocationId: data.livesInLocationId ?? '',
           fromLocationId: data.fromLocationId ?? '',
@@ -95,6 +101,9 @@ export default function EditProfilePage() {
         );
         setFromInitialDisplay(
           data.fromDisplay ?? null,
+        );
+        setWorksAtInitialDisplay(
+          data.worksAtDisplay ?? null,
         );
       } catch (err) {
         setError(
@@ -118,7 +127,8 @@ export default function EditProfilePage() {
 
     try {
       await updateUserInfo({
-        worksAt: form.worksAt,
+        worksAtEntityId:
+          form.worksAtEntityId || undefined,
         studiesAt: form.studiesAt,
         livesInLocationId:
           form.livesInLocationId || undefined,
@@ -175,16 +185,14 @@ export default function EditProfilePage() {
           <label className="text-sm text-gray-500">
             Works at
           </label>
-          <input
-            value={form.worksAt}
-            onChange={(e) =>
+          <WorksAtPicker
+            initialDisplayName={worksAtInitialDisplay}
+            onChange={(entityId) =>
               setForm((f) => ({
                 ...f,
-                worksAt: e.target.value,
+                worksAtEntityId: entityId ?? '',
               }))
             }
-            placeholder="e.g. ReviewVerse Inc."
-            className="mt-1 w-full rounded-lg border p-2.5 text-sm"
           />
         </div>
 
