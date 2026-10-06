@@ -101,7 +101,7 @@ export class LocationsService {
   // এটা existing location suggest করে (duplicate তৈরি এড়াতে)
   // ─────────────────────────────
   async search(query: string, parentId?: string) {
-    return this.prisma.location.findMany({
+    const locations = await this.prisma.location.findMany({
       where: {
         name: { contains: query, mode: 'insensitive' },
         ...(parentId ? { parentId } : {}),
@@ -114,6 +114,60 @@ export class LocationsService {
       orderBy: { name: 'asc' },
       take: 10,
     });
+
+    if (locations.length === 0) {
+      return locations;
+    }
+
+    // প্রতিটা result-এর জন্য leaf → root path বের করে "Mirpur, Dhaka,
+    // Bangladesh" আকারে displayName বানানো হচ্ছে — একটা batch query-তে
+    // (N+1 এড়াতে), closure table থেকে।
+    const closureRows =
+      await this.prisma.locationClosure.findMany({
+        where: {
+          descendantId: { in: locations.map((l) => l.id) },
+        },
+        include: {
+          ancestor: { select: { name: true } },
+        },
+        orderBy: { depth: 'asc' },
+      });
+
+    const namesByLocationId = new Map<string, string[]>();
+    for (const row of closureRows) {
+      const names =
+        namesByLocationId.get(row.descendantId) ?? [];
+      names.push(row.ancestor.name);
+      namesByLocationId.set(row.descendantId, names);
+    }
+
+    return locations.map((location) => ({
+      ...location,
+      displayName: (
+        namesByLocationId.get(location.id) ?? [
+          location.name,
+        ]
+      ).join(', '),
+    }));
+  }
+
+  // একটা single location-এর জন্য "Mirpur, Dhaka, Bangladesh" format —
+  // search()-এর batch version-এরই single-id variant, user profile-এর
+  // "lives in" display করার মতো জায়গায় লাগবে।
+  async getDisplayPath(
+    locationId: string,
+  ): Promise<string | null> {
+    const rows = await this.prisma.locationClosure.findMany({
+      where: { descendantId: locationId },
+      include: { ancestor: { select: { name: true } } },
+      orderBy: { depth: 'asc' },
+    });
+
+    if (rows.length === 0) {
+      return null;
+    }
+
+    return rows.map((r) => r.ancestor.name).join(', ');
   }
 
   async findOne(id: string) {

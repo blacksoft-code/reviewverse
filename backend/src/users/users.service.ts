@@ -8,12 +8,14 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateUserInfoDto } from './dto/update-user-info.dto';
 import { NotificationsService } from '../notifications/notifications.service';
+import { LocationsService } from '../locations/locations.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     private prisma: PrismaService,
     private notificationsService: NotificationsService,
+    private locationsService: LocationsService,
   ) {}
 
  async followUser(
@@ -639,8 +641,14 @@ async getUserProfile(userId: string) {
       createdAt: true,
       worksAt: true,
       studiesAt: true,
-      livesIn: true,
-      from: true,
+      livesInLocationId: true,
+      livesInLocation: {
+        select: { id: true, name: true },
+      },
+      fromLocationId: true,
+      fromLocation: {
+        select: { id: true, name: true },
+      },
       birthday: true,
       gender: true,
       bio: true,
@@ -684,14 +692,33 @@ async getUserProfile(userId: string) {
     throw new NotFoundException('User not found.');
   }
 
+  // "lives in" এখন relation — display-এর জন্য full "Mirpur, Dhaka,
+  // Bangladesh" path বানানো হচ্ছে (edit page-এ শুধু id + নাম লাগলেই
+  // যথেষ্ট, কিন্তু view-তে পুরো path দেখানো ভালো UX)
+  const livesInDisplay = user.livesInLocationId
+    ? await this.locationsService.getDisplayPath(
+        user.livesInLocationId,
+      )
+    : null;
+
+  const fromDisplay = user.fromLocationId
+    ? await this.locationsService.getDisplayPath(
+        user.fromLocationId,
+      )
+    : null;
+
   return {
   id: user.id,
   name: user.name,
   createdAt: user.createdAt,
   worksAt: user.worksAt,
   studiesAt: user.studiesAt,
-  livesIn: user.livesIn,
-  from: user.from,
+  livesInLocationId: user.livesInLocationId,
+  livesInLocation: user.livesInLocation,
+  livesInDisplay,
+  fromLocationId: user.fromLocationId,
+  fromLocation: user.fromLocation,
+  fromDisplay,
   birthday: user.birthday,
   gender: user.gender,
   bio: user.bio,
@@ -711,8 +738,8 @@ async updateUserInfo(
     data: {
       worksAt: dto.worksAt,
       studiesAt: dto.studiesAt,
-      livesIn: dto.livesIn,
-      from: dto.from,
+      livesInLocationId: dto.livesInLocationId,
+      fromLocationId: dto.fromLocationId,
       birthday: dto.birthday
         ? new Date(dto.birthday)
         : undefined,
@@ -724,8 +751,14 @@ async updateUserInfo(
       name: true,
       worksAt: true,
       studiesAt: true,
-      livesIn: true,
-      from: true,
+      livesInLocationId: true,
+      livesInLocation: {
+        select: { id: true, name: true },
+      },
+      fromLocationId: true,
+      fromLocation: {
+        select: { id: true, name: true },
+      },
       birthday: true,
       gender: true,
       bio: true,

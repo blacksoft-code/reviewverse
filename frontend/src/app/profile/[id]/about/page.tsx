@@ -14,8 +14,8 @@ type AboutUser = {
   createdAt: string;
   worksAt: string | null;
   studiesAt: string | null;
-  livesIn: string | null;
-  from: string | null;
+  livesInDisplay: string | null;
+  fromDisplay: string | null;
   birthday: string | null;
   gender: Gender | null;
   bio: string | null;
@@ -141,24 +141,24 @@ export default function AboutPage() {
           </div>
         )}
 
-        {user.livesIn && (
+        {user.livesInDisplay && (
           <div>
             <p className="text-sm text-gray-500">
               Lives in
             </p>
             <p className="mt-1 font-medium">
-              {user.livesIn}
+              {user.livesInDisplay}
             </p>
           </div>
         )}
 
-        {user.from && (
+        {user.fromDisplay && (
           <div>
             <p className="text-sm text-gray-500">
               From
             </p>
             <p className="mt-1 font-medium">
-              {user.from}
+              {user.fromDisplay}
             </p>
           </div>
         )}

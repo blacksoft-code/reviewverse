@@ -24,17 +24,23 @@ export class UpdateUserInfoDto {
   @MaxLength(100)
   studiesAt?: string;
 
-  @ApiPropertyOptional({ example: 'Dhaka, Bangladesh' })
+  @ApiPropertyOptional({
+    example: 'a1b2c3d4-1234-4c87-bfe0-d7b03d1f296c',
+    description:
+      'Location tree থেকে বাছাই করা id (predictive search দিয়ে)',
+  })
   @IsOptional()
   @IsString()
-  @MaxLength(100)
-  livesIn?: string;
+  livesInLocationId?: string;
 
-  @ApiPropertyOptional({ example: 'Chittagong, Bangladesh' })
+  @ApiPropertyOptional({
+    example: 'a1b2c3d4-1234-4c87-bfe0-d7b03d1f296c',
+    description:
+      'Location tree থেকে বাছাই করা id (predictive search দিয়ে)',
+  })
   @IsOptional()
   @IsString()
-  @MaxLength(100)
-  from?: string;
+  fromLocationId?: string;
 
   @ApiPropertyOptional({
     example: '1998-05-14',

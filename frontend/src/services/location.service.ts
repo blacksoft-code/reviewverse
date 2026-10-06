@@ -7,6 +7,8 @@ export type Location = {
   type: string | null;
   parentId: string | null;
   parent?: { id: string; name: string } | null;
+  // শুধু search() রেজাল্টে আসে — leaf → root, "Mirpur, Dhaka, Bangladesh"
+  displayName?: string;
 };
 
 // Backend-এর ResponseInterceptor সব response-কে

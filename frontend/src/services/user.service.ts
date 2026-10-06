@@ -283,8 +283,8 @@ export type Gender =
 export type UpdateUserInfoInput = {
   worksAt?: string;
   studiesAt?: string;
-  livesIn?: string;
-  from?: string;
+  livesInLocationId?: string;
+  fromLocationId?: string;
   birthday?: string; // ISO date string, e.g. '1998-05-14'
   gender?: Gender;
   bio?: string;

@@ -9,14 +9,17 @@ import {
   updateUserInfo,
   Gender,
 } from '@/services/user.service';
+import UserLocationPicker from '@/components/locations/UserLocationPicker';
 
 type EditableUser = {
   id: string;
   name: string;
   worksAt: string | null;
   studiesAt: string | null;
-  livesIn: string | null;
-  from: string | null;
+  livesInLocationId: string | null;
+  livesInDisplay: string | null;
+  fromLocationId: string | null;
+  fromDisplay: string | null;
   birthday: string | null;
   gender: Gender | null;
   bio: string | null;
@@ -42,12 +45,18 @@ export default function EditProfilePage() {
   const [form, setForm] = useState({
     worksAt: '',
     studiesAt: '',
-    livesIn: '',
-    from: '',
+    livesInLocationId: '',
+    fromLocationId: '',
     birthday: '',
     gender: '' as Gender | '',
     bio: '',
   });
+
+  // UserLocationPicker-দুটোর input প্রথমবার pre-fill করার জন্য
+  const [livesInInitialDisplay, setLivesInInitialDisplay] =
+    useState<string | null>(null);
+  const [fromInitialDisplay, setFromInitialDisplay] =
+    useState<string | null>(null);
 
   // নিজের প্রোফাইল না হলে এই পেজে থাকার দরকার নেই
   useEffect(() => {
@@ -73,14 +82,20 @@ export default function EditProfilePage() {
         setForm({
           worksAt: data.worksAt ?? '',
           studiesAt: data.studiesAt ?? '',
-          livesIn: data.livesIn ?? '',
-          from: data.from ?? '',
+          livesInLocationId: data.livesInLocationId ?? '',
+          fromLocationId: data.fromLocationId ?? '',
           birthday: data.birthday
             ? data.birthday.slice(0, 10)
             : '',
           gender: data.gender ?? '',
           bio: data.bio ?? '',
         });
+        setLivesInInitialDisplay(
+          data.livesInDisplay ?? null,
+        );
+        setFromInitialDisplay(
+          data.fromDisplay ?? null,
+        );
       } catch (err) {
         setError(
           err instanceof Error
@@ -105,8 +120,10 @@ export default function EditProfilePage() {
       await updateUserInfo({
         worksAt: form.worksAt,
         studiesAt: form.studiesAt,
-        livesIn: form.livesIn,
-        from: form.from,
+        livesInLocationId:
+          form.livesInLocationId || undefined,
+        fromLocationId:
+          form.fromLocationId || undefined,
         birthday: form.birthday || undefined,
         gender: form.gender || undefined,
         bio: form.bio,
@@ -192,16 +209,14 @@ export default function EditProfilePage() {
           <label className="text-sm text-gray-500">
             Lives in
           </label>
-          <input
-            value={form.livesIn}
-            onChange={(e) =>
+          <UserLocationPicker
+            initialDisplayName={livesInInitialDisplay}
+            onChange={(locationId) =>
               setForm((f) => ({
                 ...f,
-                livesIn: e.target.value,
+                livesInLocationId: locationId ?? '',
               }))
             }
-            placeholder="e.g. Dhaka, Bangladesh"
-            className="mt-1 w-full rounded-lg border p-2.5 text-sm"
           />
         </div>
 
@@ -209,16 +224,14 @@ export default function EditProfilePage() {
           <label className="text-sm text-gray-500">
             From
           </label>
-          <input
-            value={form.from}
-            onChange={(e) =>
+          <UserLocationPicker
+            initialDisplayName={fromInitialDisplay}
+            onChange={(locationId) =>
               setForm((f) => ({
                 ...f,
-                from: e.target.value,
+                fromLocationId: locationId ?? '',
               }))
             }
-            placeholder="e.g. Chittagong, Bangladesh"
-            className="mt-1 w-full rounded-lg border p-2.5 text-sm"
           />
         </div>
 

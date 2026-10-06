@@ -34,11 +34,15 @@ model User {
 
   worksAt   String?
   studiesAt String?
-  livesIn   String?
-  from      String?
-  birthday  DateTime?
-  gender    Gender?
-  bio       String?
+
+  livesInLocationId String?
+  livesInLocation   Location? @relation("UserLivesIn", fields: [livesInLocationId], references: [id])
+
+  fromLocationId String?
+  fromLocation   Location? @relation("UserFrom", fields: [fromLocationId], references: [id])
+  birthday       DateTime?
+  gender         Gender?
+  bio            String?
 
   role Role @default(USER)
 
@@ -131,7 +135,9 @@ model Location {
   parent   Location?  @relation("LocationChildren", fields: [parentId], references: [id])
   children Location[] @relation("LocationChildren")
 
-  entities Entity[]
+  entities     Entity[]
+  livesInUsers User[]   @relation("UserLivesIn")
+  fromUsers    User[]   @relation("UserFrom")
 
   ancestorOf   LocationClosure[] @relation("Ancestor")
   descendantOf LocationClosure[] @relation("Descendant")
