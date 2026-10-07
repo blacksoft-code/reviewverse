@@ -7,6 +7,7 @@ import {
 
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateUserInfoDto } from './dto/update-user-info.dto';
+import { UpdateFriendPrivacyDto } from './dto/update-friend-privacy.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { LocationsService } from '../locations/locations.service';
 
@@ -1117,4 +1118,174 @@ async getEntityRelationshipStatus(
   };
 }
 //last brac
+
+  // ───────────── Friend list privacy + viewer-aware friends + block list ─────────────
+
+  // কে এই profile-এর friend list দেখতে পারবে — owner সবসময় পারে;
+  // অন্যরা PUBLIC / FRIENDS / PRIVATE setting অনুযায়ী।
+  // restricted হলে friends/friendCount কিছুই leak করা হয় না।
+  async getFriendsForViewer(
+    viewerId: string | null,
+    profileUserId: string,
+  ) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: profileUserId },
+      select: {
+        id: true,
+        name: true,
+        isActive: true,
+        friendListVisibility: true,
+      },
+    });
+
+    if (!user || !user.isActive) {
+      throw new NotFoundException('User not found.');
+    }
+
+    const isOwner = viewerId === profileUserId;
+
+    let canView = isOwner;
+    let restrictedReason:
+      | 'PRIVATE'
+      | 'FRIENDS_ONLY'
+      | 'BLOCKED'
+      | null = null;
+
+    // viewer-এর সাথে block সম্পর্ক আছে এমন user-দের id (দুই দিকেই)
+    let blockedIds = new Set<string>();
+
+    if (!isOwner) {
+      if (viewerId) {
+        const blocks = await this.prisma.userBlock.findMany({
+          where: {
+            OR: [
+              { blockerId: viewerId },
+              { blockedId: viewerId },
+            ],
+          },
+          select: { blockerId: true, blockedId: true },
+        });
+
+        blockedIds = new Set(
+          blocks.map((b) =>
+            b.blockerId === viewerId ? b.blockedId : b.blockerId,
+          ),
+        );
+      }
+
+      if (blockedIds.has(profileUserId)) {
+        restrictedReason = 'BLOCKED';
+      } else if (user.friendListVisibility === 'PUBLIC') {
+        canView = true;
+      } else if (user.friendListVisibility === 'FRIENDS') {
+        if (viewerId) {
+          const friendship =
+            await this.prisma.friendship.findFirst({
+              where: {
+                OR: [
+                  { userId1: viewerId, userId2: profileUserId },
+                  { userId1: profileUserId, userId2: viewerId },
+                ],
+              },
+              select: { id: true },
+            });
+
+          canView = !!friendship;
+        }
+
+        if (!canView) restrictedReason = 'FRIENDS_ONLY';
+      } else {
+        restrictedReason = 'PRIVATE';
+      }
+    }
+
+    if (!canView) {
+      return {
+        id: user.id,
+        name: user.name,
+        isOwner,
+        canView: false,
+        restrictedReason,
+        friendCount: null,
+        friends: [],
+      };
+    }
+
+    const friendships = await this.prisma.friendship.findMany({
+      where: {
+        OR: [{ userId1: profileUserId }, { userId2: profileUserId }],
+      },
+      include: {
+        user1: { select: { id: true, name: true } },
+        user2: { select: { id: true, name: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const friends = friendships
+      .map((f) => (f.userId1 === profileUserId ? f.user2 : f.user1))
+      .filter((friend) => !blockedIds.has(friend.id));
+
+    return {
+      id: user.id,
+      name: user.name,
+      isOwner,
+      canView: true,
+      restrictedReason: null,
+      friendCount: friends.length,
+      friends,
+    };
+  }
+
+  async getFriendPrivacy(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { friendListVisibility: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found.');
+    }
+
+    return { friendListVisibility: user.friendListVisibility };
+  }
+
+  async updateFriendPrivacy(
+    userId: string,
+    dto: UpdateFriendPrivacyDto,
+  ) {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { friendListVisibility: dto.friendListVisibility },
+      select: { friendListVisibility: true },
+    });
+
+    return { friendListVisibility: user.friendListVisibility };
+  }
+
+  // নিজের block list — কাকে কাকে block করেছি
+  async getBlockedUsers(userId: string) {
+    const blocks = await this.prisma.userBlock.findMany({
+      where: { blockerId: userId },
+      include: {
+        blocked: {
+          select: { id: true, name: true, isActive: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const blockedUsers = blocks
+      .filter((b) => b.blocked.isActive)
+      .map((b) => ({
+        id: b.blocked.id,
+        name: b.blocked.name,
+        blockedAt: b.createdAt,
+      }));
+
+    return {
+      count: blockedUsers.length,
+      blockedUsers,
+    };
+  }
 }

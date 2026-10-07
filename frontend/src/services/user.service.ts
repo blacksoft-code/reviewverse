@@ -298,3 +298,44 @@ export async function updateUserInfo(
     body: JSON.stringify(input),
   });
 }
+
+export type FriendListVisibility =
+  | 'PUBLIC'
+  | 'FRIENDS'
+  | 'PRIVATE';
+
+export type BlockedUser = {
+  id: string;
+  name: string;
+  blockedAt: string;
+};
+
+export async function getBlockedUsers() {
+  return request('/users/blocked') as Promise<{
+    success: boolean;
+    statusCode: number;
+    data: {
+      count: number;
+      blockedUsers: BlockedUser[];
+    };
+    timestamp: string;
+  }>;
+}
+
+export async function getFriendPrivacy() {
+  return request('/users/me/privacy') as Promise<{
+    success: boolean;
+    statusCode: number;
+    data: { friendListVisibility: FriendListVisibility };
+    timestamp: string;
+  }>;
+}
+
+export async function updateFriendPrivacy(
+  friendListVisibility: FriendListVisibility,
+) {
+  return request('/users/me/privacy', {
+    method: 'PATCH',
+    body: JSON.stringify({ friendListVisibility }),
+  });
+}

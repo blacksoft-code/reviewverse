@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from 'react';
 
+import { useAuth } from '@/context/AuthContext';
+import BlockedUsersList from '@/components/profile/BlockedUsersList';
+import FriendListPrivacy from '@/components/profile/FriendListPrivacy';
+
 import {
   acceptFriendRequest,
   blockUser,
@@ -34,8 +38,15 @@ export default function FriendsContent({
   userId,
   userName,
 }: FriendsContentProps) {
+  const { user: currentUser } = useAuth();
+  const isOwner = currentUser?.id === userId;
+
   const [activeTab, setActiveTab] =
-    useState<'friends' | 'requests'>('friends');
+    useState<'friends' | 'requests' | 'blocked'>('friends');
+
+  const [canView, setCanView] = useState(true);
+  const [restrictedReason, setRestrictedReason] =
+    useState<string | null>(null);
 
   const [friends, setFriends] =
     useState<Friend[]>([]);
@@ -62,6 +73,11 @@ export default function FriendsContent({
 
         const response =
           await getFriends(userId);
+
+        setCanView(response.data.canView ?? true);
+        setRestrictedReason(
+          response.data.restrictedReason ?? null,
+        );
 
         setFriends(
           response.data.friends ?? [],
@@ -102,7 +118,7 @@ export default function FriendsContent({
   };
 
   const handleTabChange = (
-    tab: 'friends' | 'requests',
+    tab: 'friends' | 'requests' | 'blocked',
   ) => {
     setActiveTab(tab);
 
@@ -245,6 +261,7 @@ export default function FriendsContent({
     <section className="mx-auto max-w-5xl px-6 py-8">
       <div className="rounded-xl bg-white p-6 shadow-sm">
 
+        {isOwner && (
         <div className="border-b">
           <div className="flex gap-8">
             <button
@@ -274,24 +291,61 @@ export default function FriendsContent({
             >
               Friend Request
             </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                handleTabChange('blocked')
+              }
+              className={`pb-4 text-sm font-semibold ${
+                activeTab === 'blocked'
+                  ? 'border-b-2 border-black text-black'
+                  : 'text-gray-500'
+              }`}
+            >
+              Blocked
+            </button>
           </div>
         </div>
+        )}
 
-        {activeTab === 'friends' ? (
+        {!isOwner || activeTab === 'friends' ? (
           <div className="mt-6">
             <div className="mb-5">
               <h2 className="text-2xl font-bold text-gray-900">
-                Your friends
+                {isOwner
+                  ? 'Your friends'
+                  : `${userName}'s friends`}
               </h2>
 
-              <p className="mt-1 text-sm text-gray-500">
-                {friends.length} friends
-              </p>
+              {canView && (
+                <p className="mt-1 text-sm text-gray-500">
+                  {friends.length} friends
+                </p>
+              )}
             </div>
+
+            {isOwner && <FriendListPrivacy />}
 
             {loadingFriends ? (
               <div className="py-10 text-center text-gray-500">
                 Loading friends...
+              </div>
+            ) : !canView ? (
+              <div className="py-12 text-center">
+                <div className="text-4xl">
+                  🔒
+                </div>
+
+                <h3 className="mt-4 text-lg font-semibold text-gray-900">
+                  Friend list is not available
+                </h3>
+
+                <p className="mt-2 text-sm text-gray-500">
+                  {restrictedReason === 'FRIENDS_ONLY'
+                    ? `Only ${userName}'s friends can see this list.`
+                    : `${userName} keeps their friend list private.`}
+                </p>
               </div>
             ) : friends.length === 0 ? (
               <div className="py-12 text-center">
@@ -329,6 +383,7 @@ export default function FriendsContent({
                       </span>
                     </a>
 
+                    {isOwner && (
                     <div className="relative">
                       <button
                         type="button"
@@ -387,11 +442,14 @@ export default function FriendsContent({
                         </div>
                       )}
                     </div>
+                    )}
                   </div>
                 ))}
               </div>
             )}
           </div>
+        ) : activeTab === 'blocked' ? (
+          <BlockedUsersList />
         ) : (
           <div className="mt-6">
             <div className="mb-5">

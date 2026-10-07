@@ -19,6 +19,12 @@ enum FriendRequestStatus {
   CANCELLED
 }
 
+enum FriendListVisibility {
+  PUBLIC
+  FRIENDS
+  PRIVATE
+}
+
 enum Gender {
   MALE
   FEMALE
@@ -45,7 +51,8 @@ model User {
   gender         Gender?
   bio            String?
 
-  role Role @default(USER)
+  friendListVisibility FriendListVisibility @default(PUBLIC)
+  role                 Role                 @default(USER)
 
   isActive Boolean @default(true)
 

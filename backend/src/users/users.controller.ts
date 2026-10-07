@@ -19,6 +19,8 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { UpdateUserInfoDto } from './dto/update-user-info.dto';
+import { UpdateFriendPrivacyDto } from './dto/update-friend-privacy.dto';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 
 @ApiTags('Users')
 @ApiBearerAuth()
@@ -230,6 +232,59 @@ getPendingFriendRequests(
   );
 }
 
+@Get('blocked')
+@UseGuards(JwtAuthGuard)
+@ApiOperation({
+  summary: 'Get users I have blocked',
+})
+@ApiResponse({
+  status: 200,
+  description: 'Blocked users retrieved successfully',
+})
+@ApiResponse({
+  status: 401,
+  description: 'Unauthorized',
+})
+getBlockedUsers(
+  @Req() req: any,
+) {
+  return this.usersService.getBlockedUsers(
+    req.user.userId,
+  );
+}
+
+@Get('me/privacy')
+@UseGuards(JwtAuthGuard)
+@ApiOperation({
+  summary: 'Get my friend list privacy setting',
+})
+getMyFriendPrivacy(
+  @Req() req: any,
+) {
+  return this.usersService.getFriendPrivacy(
+    req.user.userId,
+  );
+}
+
+@Patch('me/privacy')
+@UseGuards(JwtAuthGuard)
+@ApiOperation({
+  summary: 'Update my friend list privacy (PUBLIC / FRIENDS / PRIVATE)',
+})
+@ApiResponse({
+  status: 200,
+  description: 'Privacy updated successfully',
+})
+updateMyFriendPrivacy(
+  @Body() dto: UpdateFriendPrivacyDto,
+  @Req() req: any,
+) {
+  return this.usersService.updateFriendPrivacy(
+    req.user.userId,
+    dto,
+  );
+}
+
 @Get(':id')
 @ApiOperation({
   summary: 'Get user profile',
@@ -274,8 +329,9 @@ updateMyInfo(
 }
 
 @Get(':id/friends')
+@UseGuards(OptionalJwtAuthGuard)
 @ApiOperation({
-  summary: 'Get user friends',
+  summary: 'Get user friends (respects friend list privacy)',
 })
 @ApiResponse({
   status: 200,
@@ -287,8 +343,12 @@ updateMyInfo(
 })
 getFriends(
   @Param('id') userId: string,
+  @Req() req: any,
 ) {
-  return this.usersService.getFriends(userId);
+  return this.usersService.getFriendsForViewer(
+    req.user?.userId ?? null,
+    userId,
+  );
 }
 
 @Get(':id/relationship')
