@@ -29,6 +29,13 @@ const BUSINESS_NOTIFICATION_TYPES = new Set([
   'POST_REPLY',
   'CLAIM_APPROVED',
   'CLAIM_REJECTED',
+  'QUESTION_ASKED',
+]);
+
+// এই টাইপগুলো entity-র নামে আসে ("Kacchi Bhai replied...") —
+// owner/manager-এর ব্যক্তিগত নাম দেখানো হবে না, message-ই পুরো বাক্য
+const ENTITY_VOICE_NOTIFICATION_TYPES = new Set([
+  'QUESTION_ANSWERED',
 ]);
 
 export default function NotificationBell() {
@@ -131,12 +138,16 @@ export default function NotificationBell() {
                     n.isRead ? 'bg-white' : 'bg-blue-50'
                   }`}
                 >
-                  <p>
-                    <span className="font-medium">
-                      {n.actor?.name ?? 'Someone'}
-                    </span>{' '}
-                    {n.message}
-                  </p>
+                  {ENTITY_VOICE_NOTIFICATION_TYPES.has(n.type) ? (
+                    <p className="font-medium">{n.message}</p>
+                  ) : (
+                    <p>
+                      <span className="font-medium">
+                        {n.actor?.name ?? 'Someone'}
+                      </span>{' '}
+                      {n.message}
+                    </p>
+                  )}
                   <p className="mt-1 text-xs text-gray-400">
                     {timeAgo(n.createdAt)}
                   </p>

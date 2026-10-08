@@ -39,6 +39,7 @@ import LocationPicker from '@/components/locations/LocationPicker';
 import AmenitySelector from '@/components/amenities/AmenitySelector';
 import PaymentMethodSelector from '@/components/payment-methods/PaymentMethodSelector';
 import BusinessHoursEditor from '@/components/business-hours/BusinessHoursEditor';
+import EntityQASection from '@/components/entities/qa/EntityQASection';
 import OfferingTypeInput from '@/components/offerings/OfferingTypeInput';
 import OfferingForm from '@/components/offerings/OfferingForm';
 import {
@@ -49,7 +50,7 @@ import {
 } from '@/services/offering.service';
 
 
-type Tab = 'posts' | 'offerings' | 'info' | 'hours' ;
+type Tab = 'posts' | 'offerings' | 'qa' | 'info' | 'hours';
 
 export default function BusinessHomePage() {
   const params = useParams();
@@ -159,16 +160,24 @@ export default function BusinessHomePage() {
   }, [authLoading, user, entityId]);
 
   // ─────────────────────────────
-  // Clear active business
-  // when leaving this page
+  // Notification link (?tab=qa&questionId=...) থেকে এলে
+  // সরাসরি Q&A tab খুলবে।
+  // Active business এখানে আর clear হয় না — page ছাড়লেও
+  // entity mode থেকে যায় (শুধু "Switch back"/logout-এ বের হয়)।
   // ─────────────────────────────
 
-  useEffect(() => {
-    return () => {
-      setActiveBusiness(null);
-    };
+  const [focusQuestionId, setFocusQuestionId] = useState<
+    string | undefined
+  >(undefined);
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const query = new URLSearchParams(window.location.search);
+
+    if (query.get('tab') === 'qa') {
+      setTab('qa');
+    }
+
+    setFocusQuestionId(query.get('questionId') ?? undefined);
   }, []);
 
   // ─────────────────────────────
@@ -648,6 +657,18 @@ export default function BusinessHomePage() {
 
             <button
               type="button"
+              onClick={() => setTab('qa')}
+              className={`border-b-2 px-4 py-2 text-sm font-medium ${
+                tab === 'qa'
+                  ? 'border-black text-black'
+                  : 'border-transparent text-gray-500 hover:text-black'
+              }`}
+            >
+              Q&A
+            </button>
+
+            <button
+              type="button"
               onClick={() => setTab('info')}
               className={`border-b-2 px-4 py-2 text-sm font-medium ${
                 tab === 'info'
@@ -1076,6 +1097,21 @@ export default function BusinessHomePage() {
                 )
               )}
             </div>
+          </div>
+        )}
+
+        {/* ================================================= */}
+        {/* Q&A TAB — entity profile থেকেই reply হয় */}
+        {/* ================================================= */}
+
+        {tab === 'qa' && (
+          <div className="mt-6">
+            <EntityQASection
+              entityId={entityId}
+              entityName={entity.name}
+              variant="manage"
+              focusQuestionId={focusQuestionId}
+            />
           </div>
         )}
 

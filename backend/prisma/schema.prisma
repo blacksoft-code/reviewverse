@@ -87,6 +87,9 @@ model User {
   postReactions   PostReaction[]
   postComments    PostComment[]
 
+  askedQuestions    EntityQuestion[] @relation("QuestionAsker")
+  answeredQuestions EntityQuestion[] @relation("QuestionAnswerer")
+
   notificationsReceived Notification[] @relation("NotificationRecipient")
   notificationsSent     Notification[] @relation("NotificationActor")
 }
@@ -105,6 +108,8 @@ enum NotificationType {
   FRIEND_REQUEST_ACCEPTED
   CLAIM_APPROVED
   CLAIM_REJECTED
+  QUESTION_ASKED
+  QUESTION_ANSWERED
 }
 
 model Notification {
@@ -299,6 +304,7 @@ model Entity {
   claims      EntityClaim[]
   posts       EntityPost[]
   offerings   Offering[]
+  questions   EntityQuestion[]
 
   reviews Review[]
   media   Media[]
@@ -655,4 +661,26 @@ model PostComment {
   @@index([postId])
   @@index([parentId])
   @@index([userId])
+}
+
+model EntityQuestion {
+  id String @id @default(uuid())
+
+  entityId String
+  askerId  String
+
+  question     String    @db.VarChar(500)
+  answer       String?   @db.VarChar(2000)
+  answeredById String?
+  answeredAt   DateTime?
+
+  entity     Entity @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  asker      User   @relation("QuestionAsker", fields: [askerId], references: [id], onDelete: Cascade)
+  answeredBy User?  @relation("QuestionAnswerer", fields: [answeredById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([entityId, createdAt])
+  @@index([askerId])
 }

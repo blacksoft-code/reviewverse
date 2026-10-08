@@ -13,7 +13,9 @@ export type NotificationType =
   | 'FRIEND_REQUEST'
   | 'FRIEND_REQUEST_ACCEPTED'
   | 'CLAIM_APPROVED'
-  | 'CLAIM_REJECTED';
+  | 'CLAIM_REJECTED'
+  | 'QUESTION_ASKED'
+  | 'QUESTION_ANSWERED';
 
 export interface AppNotification {
   id: string;

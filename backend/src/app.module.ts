@@ -30,6 +30,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { OfferingsModule } from './offerings/offerings.module';
 import { SubCategoriesModule } from './sub-categories/subcategories.module';
 import { LocationsModule } from './locations/locations.module';
+import { EntityQuestionsModule } from './entity-questions/entity-questions.module';
 
 @Module({
   imports: 
@@ -76,6 +77,7 @@ import { LocationsModule } from './locations/locations.module';
     OfferingsModule, 
     SubCategoriesModule,
     LocationsModule,
+    EntityQuestionsModule,
   ],
   controllers: [AppController],
   providers: [

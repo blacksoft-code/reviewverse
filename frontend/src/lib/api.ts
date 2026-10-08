@@ -13,6 +13,22 @@ export async function apiFetch<T>(
       ? localStorage.getItem('access_token')
       : null;
 
+  // Entity mode-এ থাকলে backend-কে জানানো হয় "আমি এই entity হিসেবে কাজ
+  // করছি" — Q&A-তে এটা দিয়েই enforce হয়: entity mode-এ প্রশ্ন করা যাবে
+  // না, আর reply শুধু entity mode-এ (ঐ entity-র) দেওয়া যাবে।
+  let actingEntityId: string | null = null;
+
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = localStorage.getItem('active_business');
+      actingEntityId = raw
+        ? (JSON.parse(raw)?.business?.id ?? null)
+        : null;
+    } catch {
+      actingEntityId = null;
+    }
+  }
+
   console.log('[apiFetch] API_URL:', API_URL);
   console.log('[apiFetch] URL:', `${API_URL}${endpoint}`);    
 
@@ -27,6 +43,10 @@ export async function apiFetch<T>(
           ? {
               Authorization: `Bearer ${token}`,
             }
+          : {}),
+
+        ...(actingEntityId
+          ? { 'X-Acting-Entity-Id': actingEntityId }
           : {}),
 
         ...options.headers,
