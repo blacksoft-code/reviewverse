@@ -104,3 +104,47 @@ export async function uploadImages(
 
   return data.data;
 }
+
+// ─────────────────────────────
+// Photos tab (public)
+// ─────────────────────────────
+
+export type PhotoSource =
+  | 'PROFILE'
+  | 'COVER'
+  | 'LOGO'
+  | 'REVIEW'
+  | 'POST';
+
+export type PhotoItem = {
+  id: string;
+  url: string;
+  source: PhotoSource;
+  createdAt: string;
+  label?: string;
+  href?: string;
+};
+
+async function fetchPhotos(path: string): Promise<PhotoItem[]> {
+  const response = await fetch(`${API_URL}${path}`, {
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    return [];
+  }
+
+  const body: ApiEnvelope<PhotoItem[]> = await response.json();
+
+  return body.data ?? [];
+}
+
+// user-এর profile + cover + review-এর ছবি (নতুন আগে)
+export function getUserPhotos(userId: string) {
+  return fetchPhotos(`/media/user/${userId}`);
+}
+
+// entity-র post + logo + cover-এর ছবি (নতুন আগে)
+export function getEntityPhotos(entityId: string) {
+  return fetchPhotos(`/media/entity/${entityId}`);
+}

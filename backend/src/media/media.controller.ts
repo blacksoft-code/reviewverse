@@ -3,7 +3,9 @@ import {
   Body,
   Controller,
   ForbiddenException,
+  Get,
   NotFoundException,
+  Param,
   Post,
   Req,
   UploadedFile,
@@ -38,6 +40,18 @@ export class MediaController {
     private readonly prisma: PrismaService,
     private readonly entityMemberships: EntityMembershipsService,
   ) {}
+
+  // ── Photos tab (public) ──
+
+  @Get('user/:userId')
+  getUserPhotos(@Param('userId') userId: string) {
+    return this.mediaService.getUserPhotos(userId);
+  }
+
+  @Get('entity/:entityId')
+  getEntityPhotos(@Param('entityId') entityId: string) {
+    return this.mediaService.getEntityPhotos(entityId);
+  }
 
   @Post('upload')
   @UseGuards(JwtAuthGuard)

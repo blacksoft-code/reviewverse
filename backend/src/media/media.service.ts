@@ -35,6 +35,33 @@ const SINGULAR_TYPES: MediaType[] = [
   'OFFERING',
 ];
 
+// Photos tab-এ দেখানো একটা ছবি
+export type PhotoSource =
+  | 'PROFILE'
+  | 'COVER'
+  | 'LOGO'
+  | 'REVIEW'
+  | 'POST';
+
+export type PhotoItem = {
+  id: string;
+  url: string;
+  source: PhotoSource;
+  createdAt: Date;
+  // ছবিটা কোথা থেকে এসেছে (যেমন "Review at Biomed") — থাকলে দেখানো হয়
+  label?: string;
+  href?: string;
+};
+
+const SOURCE_BY_TYPE: Partial<Record<MediaType, PhotoSource>> = {
+  USER_PROFILE: 'PROFILE',
+  USER_COVER: 'COVER',
+  ENTITY_LOGO: 'LOGO',
+  ENTITY_COVER: 'COVER',
+  REVIEW: 'REVIEW',
+  ENTITY_POST: 'POST',
+};
+
 export type MediaRefs = {
   userId?: string;
   entityId?: string;
@@ -170,6 +197,132 @@ const url = `${baseUrl}/uploads/${folder}/${filename}`;
     }
 
     return results;
+  }
+
+  // ─────────────────────────────
+  // USER PHOTOS (public — সবাই দেখতে পাবে)
+  // user-এর profile photo + cover photo + তার সব review-এর ছবি,
+  // সবচেয়ে নতুন আগে। (OFFERING/POST-এর ছবি এখানে আসে না)
+  // ─────────────────────────────
+  async getUserPhotos(userId: string): Promise<PhotoItem[]> {
+    const rows = await this.prisma.media.findMany({
+      where: {
+        OR: [
+          {
+            userId,
+            type: { in: ['USER_PROFILE', 'USER_COVER'] },
+          },
+          {
+            type: 'REVIEW',
+            review: { userId },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        url: true,
+        type: true,
+        createdAt: true,
+        review: {
+          select: {
+            id: true,
+            entity: { select: { name: true, slug: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return rows.flatMap((m) => {
+      const source = SOURCE_BY_TYPE[m.type];
+      if (!source) return [];
+
+      const item: PhotoItem = {
+        id: m.id,
+        url: m.url,
+        source,
+        createdAt: m.createdAt,
+      };
+
+      if (m.type === 'REVIEW' && m.review) {
+        item.label = `Review at ${m.review.entity.name}`;
+        item.href = `/entities/${m.review.entity.slug}/reviews?reviewId=${m.review.id}`;
+      }
+
+      return [item];
+    });
+  }
+
+  // ─────────────────────────────
+  // ENTITY PHOTOS (public)
+  // entity-র post-এর সব ছবি + logo (profile) + cover, নতুন আগে।
+  // REVIEW আর OFFERING-এর ছবি ইচ্ছে করেই বাদ।
+  // ─────────────────────────────
+  async getEntityPhotos(entityId: string): Promise<PhotoItem[]> {
+    const [rows, entity] = await Promise.all([
+      this.prisma.media.findMany({
+        where: {
+          OR: [
+            {
+              entityId,
+              type: { in: ['ENTITY_LOGO', 'ENTITY_COVER'] },
+            },
+            {
+              type: 'ENTITY_POST',
+              entityPost: { entityId },
+            },
+          ],
+        },
+        select: {
+          id: true,
+          url: true,
+          type: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.entity.findUnique({
+        where: { id: entityId },
+        select: {
+          logo: true,
+          coverPhoto: true,
+          updatedAt: true,
+        },
+      }),
+    ]);
+
+    const items: PhotoItem[] = rows.flatMap((m) => {
+      const source = SOURCE_BY_TYPE[m.type];
+      return source
+        ? [{ id: m.id, url: m.url, source, createdAt: m.createdAt }]
+        : [];
+    });
+
+    // পুরনো business-এ logo/cover শুধু Entity-র field-এ থাকতে পারে (Media row
+    // ছাড়া) — সেগুলোও যেন বাদ না পড়ে
+    const known = new Set(items.map((i) => i.url));
+
+    if (entity?.logo && !known.has(entity.logo)) {
+      items.push({
+        id: `logo-${entityId}`,
+        url: entity.logo,
+        source: 'LOGO',
+        createdAt: entity.updatedAt,
+      });
+    }
+
+    if (entity?.coverPhoto && !known.has(entity.coverPhoto)) {
+      items.push({
+        id: `cover-${entityId}`,
+        url: entity.coverPhoto,
+        source: 'COVER',
+        createdAt: entity.updatedAt,
+      });
+    }
+
+    return items.sort(
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+    );
   }
 
   async findByRef(refs: MediaRefs) {

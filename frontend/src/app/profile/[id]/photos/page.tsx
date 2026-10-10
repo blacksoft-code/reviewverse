@@ -1,4 +1,6 @@
 import { getUserProfile } from '@/services/user.service';
+import { getUserPhotos } from '@/services/media.service';
+import PhotosGallery from '@/components/media/PhotosGallery';
 
 type PhotosPageProps = {
   params: Promise<{
@@ -11,7 +13,11 @@ export default async function PhotosPage({
 }: PhotosPageProps) {
   const { id } = await params;
 
-  const response = await getUserProfile(id);
+  const [response, photos] = await Promise.all([
+    getUserProfile(id),
+    getUserPhotos(id),
+  ]);
+
   const user = response.data;
 
   return (
@@ -19,22 +25,13 @@ export default async function PhotosPage({
       <h2 className="text-2xl font-bold">Photos</h2>
 
       <p className="mt-1 text-sm text-gray-500">
-        Photos shared by {user.name}
+        Profile, cover and review photos of {user.name}
       </p>
 
-      <div className="py-16 text-center">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-2xl">
-          📷
-        </div>
-
-        <h3 className="mt-4 text-lg font-semibold">
-          No photos yet
-        </h3>
-
-        <p className="mt-2 text-sm text-gray-500">
-          {user.name} hasn't shared any photos yet.
-        </p>
-      </div>
+      <PhotosGallery
+        photos={photos}
+        emptyText={`${user.name} hasn't shared any photos yet.`}
+      />
     </section>
   );
 }
