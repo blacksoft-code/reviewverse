@@ -2,7 +2,11 @@ import {
   Controller,
   Get,
   Query,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
+
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 
 import { SearchService } from './search.service';
 
@@ -21,6 +25,7 @@ export class SearchController {
   ) {}
 
   @Get()
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({
     summary: 'Search users and entities',
   })
@@ -38,7 +43,11 @@ export class SearchController {
   })
   search(
     @Query('q') query: string,
+    @Req() req: any,
   ) {
-    return this.searchService.search(query);
+    return this.searchService.search(
+      query,
+      req.user?.userId ?? null,
+    );
   }
 }

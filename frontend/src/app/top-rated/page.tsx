@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import HideIfBlocked from '@/components/blocks/HideIfBlocked';
 import { getTopRated } from '@/services/entity.service';
 
 export default async function TopRatedPage() {
@@ -30,6 +31,11 @@ export default async function TopRatedPage() {
           <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
 
             {entities.map((entity, index) => (
+              <HideIfBlocked
+                key={entity.id}
+                kind="entity"
+                id={entity.id}
+              >
               <Link
                 key={entity.id}
                 href={`/entities/${encodeURIComponent(
@@ -66,6 +72,7 @@ export default async function TopRatedPage() {
                   </p>
                 )}
               </Link>
+              </HideIfBlocked>
             ))}
 
           </div>

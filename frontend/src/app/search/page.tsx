@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import HideIfBlocked from '@/components/blocks/HideIfBlocked';
 
 import { search } from '@/services/search.service';
 import { parseExploreQuery } from '@/lib/parseExploreQuery';
@@ -133,10 +134,13 @@ export default async function SearchPage({
             ) : (
               <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {offeringResults.map((offering) => (
-                  <OfferingCard
+                  <HideIfBlocked
                     key={offering.id}
-                    offering={offering}
-                  />
+                    kind="entity"
+                    id={offering.entity.id}
+                  >
+                    <OfferingCard offering={offering} />
+                  </HideIfBlocked>
                 ))}
               </div>
             )}
@@ -192,6 +196,11 @@ export default async function SearchPage({
                     entity.offerings?.[0];
 
                   return (
+                    <HideIfBlocked
+                      key={entity.id}
+                      kind="entity"
+                      id={entity.id}
+                    >
                     <Link
                       key={entity.id}
                       href={`/entities/${encodeURIComponent(entity.slug)}`}
@@ -226,6 +235,7 @@ export default async function SearchPage({
                         )}
                       </div>
                     </Link>
+                    </HideIfBlocked>
                   );
                 },
               )}
@@ -305,10 +315,16 @@ export default async function SearchPage({
 
             <div className="overflow-hidden rounded-xl border bg-white">
               {users.map((user) => (
+                <HideIfBlocked
+                  key={user.id}
+                  kind="user"
+                  id={user.id}
+                  className="border-b last:border-b-0"
+                >
                 <Link
                   key={user.id}
                   href={`/profile/${user.id}`}
-                  className="flex items-center gap-4 border-b px-5 py-4 transition last:border-b-0 hover:bg-gray-50"
+                  className="flex items-center gap-4 px-5 py-4 transition hover:bg-gray-50"
                 >
                   {/* PFP */}
 
@@ -330,6 +346,7 @@ export default async function SearchPage({
                     </p>
                   </div>
                 </Link>
+                </HideIfBlocked>
               ))}
             </div>
           </section>
@@ -351,6 +368,11 @@ export default async function SearchPage({
 
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {entities.map((entity) => (
+                <HideIfBlocked
+                  key={entity.id}
+                  kind="entity"
+                  id={entity.id}
+                >
                 <Link
                   key={entity.id}
                   href={`/entities/${encodeURIComponent(
@@ -387,6 +409,7 @@ export default async function SearchPage({
                     )}
                   </p>
                 </Link>
+                </HideIfBlocked>
               ))}
             </div>
           </section>

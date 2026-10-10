@@ -631,7 +631,29 @@ async unblockUser(
   };
 }
 
-async getUserProfile(userId: string) {
+async getUserProfile(
+  userId: string,
+  viewerId?: string | null,
+) {
+  // দুই দিকের block-এ profile অদৃশ্য — Facebook-এর মতো "not available"
+  if (viewerId && viewerId !== userId) {
+    const block = await this.prisma.userBlock.findFirst({
+      where: {
+        OR: [
+          { blockerId: viewerId, blockedId: userId },
+          { blockerId: userId, blockedId: viewerId },
+        ],
+      },
+      select: { id: true },
+    });
+
+    if (block) {
+      throw new NotFoundException(
+        'This profile is not available.',
+      );
+    }
+  }
+
   const user = await this.prisma.user.findUnique({
     where: {
       id: userId,
@@ -935,6 +957,21 @@ async followEntity(
     );
   }
 
+  const entityBlock = await this.prisma.entityBlock.findUnique({
+    where: {
+      userId_entityId: {
+        userId,
+        entityId,
+      },
+    },
+  });
+
+  if (entityBlock) {
+    throw new BadRequestException(
+      'Unblock this entity to follow it.',
+    );
+  }
+
   const existingFollow =
     await this.prisma.entityFollow.findUnique({
       where: {
@@ -1042,13 +1079,21 @@ async blockEntity(
     );
   }
 
-  const block =
-    await this.prisma.entityBlock.create({
+  // Block আর Follow একসাথে চলে না — block করলে follow আপনাআপনি উঠে যায়
+  const [block] = await this.prisma.$transaction([
+    this.prisma.entityBlock.create({
       data: {
         userId,
         entityId,
       },
-    });
+    }),
+    this.prisma.entityFollow.deleteMany({
+      where: {
+        userId,
+        entityId,
+      },
+    }),
+  ]);
 
   return block;
 }
@@ -1286,6 +1331,39 @@ async getEntityRelationshipStatus(
     return {
       count: blockedUsers.length,
       blockedUsers,
+    };
+  }
+
+  // নিজের blocked entity (business) list
+  async getBlockedEntities(userId: string) {
+    const blocks = await this.prisma.entityBlock.findMany({
+      where: { userId },
+      include: {
+        entity: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            location: true,
+            category: { select: { id: true, name: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const blockedEntities = blocks.map((b) => ({
+      id: b.entity.id,
+      name: b.entity.name,
+      slug: b.entity.slug,
+      location: b.entity.location,
+      category: b.entity.category,
+      blockedAt: b.createdAt,
+    }));
+
+    return {
+      count: blockedEntities.length,
+      blockedEntities,
     };
   }
 }

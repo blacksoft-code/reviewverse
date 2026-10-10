@@ -4,6 +4,7 @@ import {
 } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { BlocksService } from '../blocks/blocks.service';
 import { ReactionType } from '@prisma/client';
 import { NotificationsService } from '../notifications/notifications.service';
 
@@ -12,6 +13,7 @@ export class ReviewReactionsService {
   constructor(
     private prisma: PrismaService,
     private notificationsService: NotificationsService,
+    private blocksService: BlocksService,
   ) {}
 
   // একই user আগেও react করে থাকলে টাইপ বদলে যাবে (upsert) —
@@ -63,10 +65,14 @@ export class ReviewReactionsService {
     reviewId: string,
     userId?: string,
   ) {
+    // block থাকলে (দুই দিকেই) ওদের reaction count-এ ধরা হবে না
+    const hiddenUserIds =
+      await this.blocksService.getHiddenUserIds(userId);
+
     const [grouped, myReaction] = await Promise.all([
       this.prisma.reviewReaction.groupBy({
         by: ['type'],
-        where: { reviewId },
+        where: { reviewId, userId: { notIn: hiddenUserIds } },
         _count: { type: true },
       }),
       userId

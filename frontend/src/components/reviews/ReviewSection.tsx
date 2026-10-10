@@ -12,6 +12,7 @@ import {
 import PhotoGrid from '@/components/media/PhotoGrid';
 import ReactionButton from '@/components/reviews/ReactionButton';
 import CommentSection from '@/components/reviews/CommentSection';
+import { useBlocks } from '@/hooks/useBlocks';
 
 type ReviewSectionProps = {
   entityId: string;
@@ -26,6 +27,17 @@ export default function ReviewSection({
 }: ReviewSectionProps) {
   const [reviews, setReviews] =
     useState<Review[]>(initialReviews);
+
+  // Block থাকলে (দুই দিকেই) ওই user-দের review এই page-এ দেখানো হবে না
+  const { hiddenUserIds } = useBlocks();
+
+  useEffect(() => {
+    if (hiddenUserIds.size === 0) return;
+
+    setReviews((current) =>
+      current.filter((r) => !hiddenUserIds.has(r.userId)),
+    );
+  }, [hiddenUserIds]);
 
   // ⚠️ static prop না রেখে reviews state থেকেই derive করা হচ্ছে (backend-এর
   // same logic: প্রতি user-এর personal average, তারপর সব user মিলিয়ে গড়) —

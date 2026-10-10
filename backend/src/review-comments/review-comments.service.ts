@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { BlocksService } from '../blocks/blocks.service';
 import { NotificationsService } from '../notifications/notifications.service';
 
 const MAX_REPLIES_PER_COMMENT = 20;
@@ -15,6 +16,7 @@ export class ReviewCommentsService {
   constructor(
     private prisma: PrismaService,
     private notificationsService: NotificationsService,
+    private blocksService: BlocksService,
   ) {}
 
   async create(
@@ -112,15 +114,27 @@ export class ReviewCommentsService {
 
   // Top-level comment গুলো + প্রতিটার reply (max 20, createdAt asc)
   // এবং total comment count (top-level + সব reply, feed algorithm-এর জন্য)
-  async findByReview(reviewId: string) {
+  async findByReview(
+    reviewId: string,
+    viewerId?: string | null,
+  ) {
+    // block থাকলে (দুই দিকেই) ওদের comment/reply লুকানো হবে
+    const hiddenUserIds =
+      await this.blocksService.getHiddenUserIds(viewerId);
+
     const [comments, totalCount] = await Promise.all([
       this.prisma.reviewComment.findMany({
-        where: { reviewId, parentId: null },
+        where: {
+          reviewId,
+          parentId: null,
+          userId: { notIn: hiddenUserIds },
+        },
         include: {
           user: {
             select: { id: true, name: true },
           },
           replies: {
+            where: { userId: { notIn: hiddenUserIds } },
             include: {
               user: {
                 select: { id: true, name: true },
@@ -132,7 +146,10 @@ export class ReviewCommentsService {
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.reviewComment.count({
-        where: { reviewId },
+        where: {
+          reviewId,
+          userId: { notIn: hiddenUserIds },
+        },
       }),
     ]);
 

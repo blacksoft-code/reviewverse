@@ -19,6 +19,7 @@ import { PostCommentsService } from './post-comments.service';
 import { CreatePostCommentDto } from './dto/create-post-comment.dto';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 
 @ApiTags('Post Comments')
 @Controller()
@@ -48,12 +49,19 @@ export class PostCommentsController {
   }
 
   @Get('entity-posts/:postId/comments')
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({
     summary:
       'Get top-level comments with their replies for a post',
   })
-  findByPost(@Param('postId') postId: string) {
-    return this.commentsService.findByPost(postId);
+  findByPost(
+    @Param('postId') postId: string,
+    @Req() req: any,
+  ) {
+    return this.commentsService.findByPost(
+      postId,
+      req.user?.userId ?? null,
+    );
   }
 
   @Delete('post-comments/:commentId')

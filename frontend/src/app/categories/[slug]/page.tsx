@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import HideIfBlocked from '@/components/blocks/HideIfBlocked';
 import { getCategoryBySlug } from '@/services/category.service';
 
 type CategoryPageProps = {
@@ -49,6 +50,11 @@ export default async function CategoryPage({
             <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
 
               {category.entities.map((entity) => (
+                <HideIfBlocked
+                  key={entity.id}
+                  kind="entity"
+                  id={entity.id}
+                >
                 <Link
                   key={entity.id}
                   href={`/entities/${encodeURIComponent(
@@ -70,6 +76,7 @@ export default async function CategoryPage({
                     </p>
                   )}
                 </Link>
+                </HideIfBlocked>
               ))}
 
             </div>

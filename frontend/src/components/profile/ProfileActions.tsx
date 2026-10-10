@@ -255,12 +255,9 @@ export default function ProfileActions({
         setIsBlocked(false);
       } else {
         await blockUser(userId);
-        setIsBlocked(true);
-        setIsFollowing(false);
-        setIsFriend(false);
-        setFriendRequestId(null);
-        setFriendRequestStatus(null);
-        setFriendRequestDirection(null);
+        // block-এর পর এই profile আর available থাকে না — reload করলে
+        // BlockGuard "not available" দেখাবে
+        window.location.reload();
       }
     } catch (error) {
       alert(

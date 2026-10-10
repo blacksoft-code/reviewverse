@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
 import LocationPicker from '@/components/locations/LocationPicker';
+import { useBlocks } from '@/hooks/useBlocks';
 import { getCategories, Category } from '@/services/category.service';
 import { searchLocations } from '@/services/location.service';
 import {
@@ -40,6 +41,12 @@ function ExplorePageContent() {
     Category[]
   >([]);
   const [results, setResults] = useState<Entity[]>([]);
+
+  // আমি যে business block করেছি সেগুলো result থেকে বাদ
+  const { blockedEntityIds } = useBlocks();
+  const visibleResults = results.filter(
+    (entity) => !blockedEntityIds.has(entity.id),
+  );
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState('');
@@ -337,12 +344,12 @@ function ExplorePageContent() {
 
         {searched && !loading && (
           <div className="mt-6 space-y-3">
-            {results.length === 0 ? (
+            {visibleResults.length === 0 ? (
               <p className="text-sm text-gray-500">
                 কোনো business পাওয়া যায়নি।
               </p>
             ) : (
-              results.map((entity) => (
+              visibleResults.map((entity) => (
                 <Link
                   key={entity.id}
                   href={`/entities/${entity.slug}`}

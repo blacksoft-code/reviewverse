@@ -4,6 +4,7 @@ import {
 } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { BlocksService } from '../blocks/blocks.service';
 import { ReactionType } from '@prisma/client';
 import { NotificationsService } from '../notifications/notifications.service';
 
@@ -12,6 +13,7 @@ export class PostReactionsService {
   constructor(
     private prisma: PrismaService,
     private notificationsService: NotificationsService,
+    private blocksService: BlocksService,
   ) {}
 
   async react(
@@ -57,10 +59,14 @@ export class PostReactionsService {
   }
 
   async getSummary(postId: string, userId?: string) {
+    // block থাকলে (দুই দিকেই) ওদের reaction count-এ ধরা হবে না
+    const hiddenUserIds =
+      await this.blocksService.getHiddenUserIds(userId);
+
     const [grouped, myReaction] = await Promise.all([
       this.prisma.postReaction.groupBy({
         by: ['type'],
-        where: { postId },
+        where: { postId, userId: { notIn: hiddenUserIds } },
         _count: { type: true },
       }),
       userId

@@ -1,3 +1,5 @@
+import { invalidateBlockOverview } from './block.service';
+
 const API_URL =
 process.env.NEXT_PUBLIC_API_URL ||
 'http://localhost:3000';
@@ -214,6 +216,7 @@ return request(
 export async function blockUser(
 userId: string,
 ) {
+invalidateBlockOverview();
 return request(
 `/users/${userId}/block`,
 {
@@ -225,6 +228,7 @@ method: 'POST',
 export async function unblockUser(
 userId: string,
 ) {
+invalidateBlockOverview();
 return request(
 `/users/${userId}/unblock`,
 {
@@ -246,12 +250,14 @@ export async function unfollowEntity(entityId: string) {
 }
 
 export async function blockEntity(entityId: string) {
+  invalidateBlockOverview();
   return request(`/users/entity/${entityId}/block`, {
     method: 'POST',
   });
 }
 
 export async function unblockEntity(entityId: string) {
+  invalidateBlockOverview();
   return request(`/users/entity/${entityId}/unblock`, {
     method: 'DELETE',
   });
@@ -338,4 +344,25 @@ export async function updateFriendPrivacy(
     method: 'PATCH',
     body: JSON.stringify({ friendListVisibility }),
   });
+}
+
+export type BlockedEntity = {
+  id: string;
+  name: string;
+  slug: string;
+  location: string | null;
+  category: { id: string; name: string } | null;
+  blockedAt: string;
+};
+
+export async function getBlockedEntities() {
+  return request('/users/blocked-entities') as Promise<{
+    success: boolean;
+    statusCode: number;
+    data: {
+      count: number;
+      blockedEntities: BlockedEntity[];
+    };
+    timestamp: string;
+  }>;
 }

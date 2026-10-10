@@ -93,8 +93,13 @@ export class FeedService {
         select: { entityId: true },
       }),
       this.prisma.userBlock.findMany({
-        where: { blockerId: userId },
-        select: { blockedId: true },
+        where: {
+          OR: [
+            { blockerId: userId },
+            { blockedId: userId },
+          ],
+        },
+        select: { blockerId: true, blockedId: true },
       }),
       this.prisma.entityBlock.findMany({
         where: { userId },
@@ -114,8 +119,9 @@ export class FeedService {
       followedEntityIds: followedEntities.map(
         (i) => i.entityId,
       ),
-      blockedUserIds: blockedUsers.map(
-        (i) => i.blockedId,
+      // দুই দিকেই — আমি যাকে block করেছি এবং যে আমাকে block করেছে
+      blockedUserIds: blockedUsers.map((i) =>
+        i.blockerId === userId ? i.blockedId : i.blockerId,
       ),
       blockedEntityIds: blockedEntities.map(
         (i) => i.entityId,

@@ -1,5 +1,6 @@
 import { getEntityBySlug } from '@/services/entity.service';
 import EntityHeader from '@/components/entities/EntityHeader';
+import BlockGuard from '@/components/blocks/BlockGuard';
 
 type EntityLayoutProps = {
   children: React.ReactNode;
@@ -27,6 +28,7 @@ export default async function EntityLayout({
   };
 
   return (
+    <BlockGuard kind="entity" id={entity.id}>
     <main className="min-h-screen bg-gray-100">
       <EntityHeader
         entity={{
@@ -46,5 +48,6 @@ export default async function EntityLayout({
         {children}
       </div>
     </main>
+    </BlockGuard>
   );
 }

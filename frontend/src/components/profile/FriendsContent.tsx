@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import { useAuth } from '@/context/AuthContext';
-import BlockedUsersList from '@/components/profile/BlockedUsersList';
+import BlockedContent from '@/components/profile/BlockedContent';
 import FriendListPrivacy from '@/components/profile/FriendListPrivacy';
 
 import {
@@ -449,7 +449,7 @@ export default function FriendsContent({
             )}
           </div>
         ) : activeTab === 'blocked' ? (
-          <BlockedUsersList />
+          <BlockedContent />
         ) : (
           <div className="mt-6">
             <div className="mb-5">

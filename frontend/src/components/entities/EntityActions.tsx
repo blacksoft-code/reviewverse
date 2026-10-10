@@ -68,8 +68,9 @@ export default function EntityActions({
 
       await blockEntity(entityId);
 
-      setIsBlocked(true);
-      setIsFollowing(false);
+      // block-এর পর entity page আর available থাকে না — reload করলে
+      // BlockGuard "not available" দেখাবে
+      window.location.reload();
     } catch (error) {
       alert(
         error instanceof Error

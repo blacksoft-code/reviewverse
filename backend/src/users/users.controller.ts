@@ -253,6 +253,19 @@ getBlockedUsers(
   );
 }
 
+@Get('blocked-entities')
+@UseGuards(JwtAuthGuard)
+@ApiOperation({
+  summary: 'Get entities (businesses) I have blocked',
+})
+getBlockedEntities(
+  @Req() req: any,
+) {
+  return this.usersService.getBlockedEntities(
+    req.user.userId,
+  );
+}
+
 @Get('me/privacy')
 @UseGuards(JwtAuthGuard)
 @ApiOperation({
@@ -286,6 +299,7 @@ updateMyFriendPrivacy(
 }
 
 @Get(':id')
+@UseGuards(OptionalJwtAuthGuard)
 @ApiOperation({
   summary: 'Get user profile',
 })
@@ -299,8 +313,12 @@ updateMyFriendPrivacy(
 })
 getUserProfile(
   @Param('id') userId: string,
+  @Req() req: any,
 ) {
-  return this.usersService.getUserProfile(userId);
+  return this.usersService.getUserProfile(
+    userId,
+    req.user?.userId ?? null,
+  );
 }
 
 @Patch('me/info')

@@ -1,5 +1,6 @@
 import { getUserProfile } from '@/services/user.service';
 import ProfileHeader from '@/components/profile/ProfileHeader';
+import BlockGuard from '@/components/blocks/BlockGuard';
 
 type ProfileMedia = {
   id: string;
@@ -36,6 +37,7 @@ export default async function ProfileLayout({
       ?.url ?? null;
 
   return (
+    <BlockGuard kind="user" id={profile.id}>
     <main className="min-h-screen bg-gray-50 px-4 py-8">
       <div className="mx-auto max-w-5xl">
         <ProfileHeader
@@ -51,5 +53,6 @@ export default async function ProfileLayout({
         <div className="mt-6">{children}</div>
       </div>
     </main>
+    </BlockGuard>
   );
 }

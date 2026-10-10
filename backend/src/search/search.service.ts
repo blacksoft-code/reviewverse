@@ -1,13 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { BlocksService } from '../blocks/blocks.service';
 
 @Injectable()
 export class SearchService {
   constructor(
     private prisma: PrismaService,
+    private blocksService: BlocksService,
   ) {}
 
-  async search(query: string) {
+  async search(query: string, viewerId?: string | null) {
     const searchQuery = query.trim();
 
     if (!searchQuery) {
@@ -17,10 +19,16 @@ export class SearchService {
       };
     }
 
+    const [hiddenUserIds, blockedEntityIds] =
+      await Promise.all([
+        this.blocksService.getHiddenUserIds(viewerId),
+        this.blocksService.getBlockedEntityIds(viewerId),
+      ]);
+
     const [users, entities] =
       await Promise.all([
-        this.searchUsers(searchQuery),
-        this.searchEntities(searchQuery),
+        this.searchUsers(searchQuery, hiddenUserIds),
+        this.searchEntities(searchQuery, blockedEntityIds),
       ]);
 
     return {
@@ -33,10 +41,14 @@ export class SearchService {
   // USER SEARCH
   // =========================
 
-  private async searchUsers(query: string) {
+  private async searchUsers(
+    query: string,
+    hiddenUserIds: string[] = [],
+  ) {
     const users = await this.prisma.user.findMany({
       where: {
         isActive: true,
+        id: { notIn: hiddenUserIds },
         name: {
           contains: query,
           mode: 'insensitive',
@@ -86,9 +98,13 @@ export class SearchService {
   // ENTITY SEARCH
   // =========================
 
-  private async searchEntities(query: string) {
+  private async searchEntities(
+    query: string,
+    blockedEntityIds: string[] = [],
+  ) {
     const entities = await this.prisma.entity.findMany({
       where: {
+        id: { notIn: blockedEntityIds },
         OR: [
           {
             name: {
