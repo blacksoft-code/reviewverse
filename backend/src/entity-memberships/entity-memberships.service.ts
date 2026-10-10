@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -229,5 +230,39 @@ export class EntityMembershipsService {
     });
 
     return !!membership;
+  }
+
+  // ─────────────────────────────
+  // Review-এ comment/react করার সময় "কে করছে" ঠিক করে:
+  //  - business profile (entity mode) থেকে, ঐ business-এরই review-তে → entity হিসেবে
+  //    (return = entityId)
+  //  - business-এর owner/manager নিজের personal profile থেকে নিজের business-এর
+  //    review-তে → ব্লক (business profile-এ switch করতে হবে)
+  //  - অন্য সবাই → সাধারণ personal user (return = null)
+  // ─────────────────────────────
+  async resolveReviewActor(
+    reviewEntityId: string,
+    userId: string,
+    actingEntityId?: string | null,
+  ): Promise<string | null> {
+    const isMember = await this.hasAccess(reviewEntityId, userId);
+
+    if (actingEntityId && actingEntityId === reviewEntityId) {
+      if (!isMember) {
+        throw new ForbiddenException(
+          'You do not manage this business.',
+        );
+      }
+
+      return reviewEntityId;
+    }
+
+    if (isMember) {
+      throw new ForbiddenException(
+        'Switch to this business profile to comment or react on its reviews.',
+      );
+    }
+
+    return null;
   }
 }

@@ -5,14 +5,25 @@ export type CommentAuthor = {
   name: string;
 };
 
+// Business profile থেকে লেখা comment-এ এটা থাকে — তখন owner-এর নামের
+// বদলে business-এর নাম/লোগো দেখানো হয়
+export type CommentEntityAuthor = {
+  id: string;
+  name: string;
+  logo: string | null;
+  slug: string;
+};
+
 export type ReviewCommentReply = {
   id: string;
   content: string;
   userId: string;
   reviewId: string;
   parentId: string | null;
+  entityId: string | null;
   createdAt: string;
   user: CommentAuthor;
+  entity: CommentEntityAuthor | null;
 };
 
 export type ReviewCommentThread = ReviewCommentReply & {

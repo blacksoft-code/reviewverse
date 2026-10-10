@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   Param,
   Post,
   Req,
@@ -39,11 +40,13 @@ export class ReviewReactionsController {
     @Param('reviewId') reviewId: string,
     @Body() dto: ReactToReviewDto,
     @Req() req: any,
+    @Headers('x-acting-entity-id') actingEntityId?: string,
   ) {
     return this.reactionsService.react(
       reviewId,
       req.user.userId,
       dto.type,
+      actingEntityId,
     );
   }
 
@@ -54,10 +57,12 @@ export class ReviewReactionsController {
   unreact(
     @Param('reviewId') reviewId: string,
     @Req() req: any,
+    @Headers('x-acting-entity-id') actingEntityId?: string,
   ) {
     return this.reactionsService.unreact(
       reviewId,
       req.user.userId,
+      actingEntityId,
     );
   }
 
@@ -70,10 +75,12 @@ export class ReviewReactionsController {
   getSummary(
     @Param('reviewId') reviewId: string,
     @Req() req: any,
+    @Headers('x-acting-entity-id') actingEntityId?: string,
   ) {
     return this.reactionsService.getSummary(
       reviewId,
       req.user?.userId,
+      actingEntityId,
     );
   }
 }

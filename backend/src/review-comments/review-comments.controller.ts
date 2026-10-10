@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   Param,
   Post,
   Req,
@@ -39,12 +40,14 @@ export class ReviewCommentsController {
     @Param('reviewId') reviewId: string,
     @Body() dto: CreateCommentDto,
     @Req() req: any,
+    @Headers('x-acting-entity-id') actingEntityId?: string,
   ) {
     return this.commentsService.create(
       reviewId,
       req.user.userId,
       dto.content,
       dto.parentId,
+      actingEntityId,
     );
   }
 
@@ -71,10 +74,12 @@ export class ReviewCommentsController {
   remove(
     @Param('commentId') commentId: string,
     @Req() req: any,
+    @Headers('x-acting-entity-id') actingEntityId?: string,
   ) {
     return this.commentsService.remove(
       commentId,
       req.user.userId,
+      actingEntityId,
     );
   }
 }

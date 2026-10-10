@@ -51,6 +51,15 @@ export async function createReview(
   );
 }
 
+// Entity-র সব review (business dashboard-এর Reviews tab-এর জন্য)
+export async function getReviewsByEntity(entityId: string) {
+  return apiFetch<{
+    success: boolean;
+    statusCode: number;
+    data: Review[];
+  }>(`/reviews/entity/${entityId}`);
+}
+
 //update review
 
 type UpdateReviewPayload = {

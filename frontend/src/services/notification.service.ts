@@ -15,7 +15,8 @@ export type NotificationType =
   | 'CLAIM_APPROVED'
   | 'CLAIM_REJECTED'
   | 'QUESTION_ASKED'
-  | 'QUESTION_ANSWERED';
+  | 'QUESTION_ANSWERED'
+  | 'ENTITY_COMMENT_REPLY';
 
 export interface AppNotification {
   id: string;
@@ -23,6 +24,8 @@ export interface AppNotification {
   message: string;
   link: string | null;
   entityId: string | null;
+  reviewId?: string | null;
+  postId?: string | null;
   isRead: boolean;
   createdAt: string;
   actor: { id: string; name: string } | null;

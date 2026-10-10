@@ -3,8 +3,10 @@
 import { FormEvent, useEffect, useState } from 'react';
 
 import { useAuth } from '@/context/AuthContext';
+import { useBusinessContext } from '@/context/BusinessContext';
 import {
   CommentsResponse,
+  ReviewCommentReply,
   ReviewCommentThread,
   createComment,
   deleteComment,
@@ -13,12 +15,64 @@ import {
 
 const MAX_REPLIES = 20;
 
+// Business হিসেবে লেখা হলে business-এর নাম, নাহলে user-এর নাম
+function authorName(c: ReviewCommentReply) {
+  return c.entity?.name ?? c.user.name;
+}
+
+function Avatar({
+  c,
+  size,
+}: {
+  c: ReviewCommentReply;
+  size: 'md' | 'sm';
+}) {
+  const box =
+    size === 'md'
+      ? 'h-8 w-8 text-xs'
+      : 'h-6 w-6 text-[10px]';
+
+  return (
+    <div
+      className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-200 font-bold text-gray-600 ${box}`}
+    >
+      {c.entity?.logo ? (
+        <img
+          src={c.entity.logo}
+          alt={c.entity.name}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        authorName(c).charAt(0).toUpperCase()
+      )}
+    </div>
+  );
+}
+
+function BusinessBadge({ c }: { c: ReviewCommentReply }) {
+  if (!c.entity) return null;
+
+  return (
+    <span className="ml-1.5 rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700">
+      Business
+    </span>
+  );
+}
+
 export default function CommentSection({
   reviewId,
+  reviewEntityId,
 }: {
   reviewId: string;
+  // এই review যে business-এর — entity mode-এ ঐ business হিসেবে comment করতে লাগে
+  reviewEntityId?: string;
 }) {
   const { user } = useAuth();
+  const { activeBusiness } = useBusinessContext();
+
+  // এই business-এর profile থেকে দেখছি কিনা (তখন comment business-এর নামে যাবে)
+  const actingAsEntity =
+    !!reviewEntityId && activeBusiness?.id === reviewEntityId;
 
   const [data, setData] =
     useState<CommentsResponse | null>(null);
@@ -147,7 +201,11 @@ export default function CommentSection({
             onChange={(e) =>
               setNewComment(e.target.value)
             }
-            placeholder="Write a comment..."
+            placeholder={
+              actingAsEntity
+                ? `Comment as ${activeBusiness?.name}...`
+                : 'Write a comment...'
+            }
             className="flex-1 rounded-full border px-4 py-2 text-sm"
           />
           <button
@@ -183,6 +241,7 @@ export default function CommentSection({
             }
             submittingReply={submittingReply}
             currentUserId={user?.id}
+            activeBusinessId={activeBusiness?.id}
             onDelete={handleDelete}
           />
         ))}
@@ -209,6 +268,7 @@ function CommentItem({
   onSubmitReply,
   submittingReply,
   currentUserId,
+  activeBusinessId,
   onDelete,
 }: {
   comment: ReviewCommentThread;
@@ -222,22 +282,29 @@ function CommentItem({
   onSubmitReply: () => void;
   submittingReply: boolean;
   currentUserId?: string;
+  activeBusinessId?: string;
   onDelete: (id: string) => void;
 }) {
+  // Business-এর comment শুধু ঐ business-এর profile থেকে মোছা যায়;
+  // personal comment নিজের account থেকে
+  const canDelete = (c: ReviewCommentReply) =>
+    c.entityId
+      ? activeBusinessId === c.entityId
+      : currentUserId === c.userId;
+
   const replyCount = comment.replies.length;
   const atLimit = replyCount >= MAX_REPLIES;
 
   return (
     <div>
       <div className="flex items-start gap-2">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-600">
-          {comment.user.name.charAt(0).toUpperCase()}
-        </div>
+        <Avatar c={comment} size="md" />
 
         <div className="flex-1">
           <div className="rounded-2xl bg-gray-100 px-3 py-2">
             <p className="text-sm font-medium">
-              {comment.user.name}
+              {authorName(comment)}
+              <BusinessBadge c={comment} />
             </p>
             <p className="text-sm">{comment.content}</p>
           </div>
@@ -257,7 +324,7 @@ function CommentItem({
               Reply
             </button>
 
-            {currentUserId === comment.userId && (
+            {canDelete(comment) && (
               <button
                 type="button"
                 onClick={() => onDelete(comment.id)}
@@ -322,16 +389,13 @@ function CommentItem({
                   key={reply.id}
                   className="flex items-start gap-2"
                 >
-                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-200 text-[10px] font-bold text-gray-600">
-                    {reply.user.name
-                      .charAt(0)
-                      .toUpperCase()}
-                  </div>
+                  <Avatar c={reply} size="sm" />
 
                   <div className="flex-1">
                     <div className="rounded-2xl bg-gray-100 px-3 py-1.5">
                       <p className="text-xs font-medium">
-                        {reply.user.name}
+                        {authorName(reply)}
+                        <BusinessBadge c={reply} />
                       </p>
                       <p className="text-sm">
                         {reply.content}
@@ -345,8 +409,7 @@ function CommentItem({
                         ).toLocaleDateString()}
                       </span>
 
-                      {currentUserId ===
-                        reply.userId && (
+                      {canDelete(reply) && (
                         <button
                           type="button"
                           onClick={() =>

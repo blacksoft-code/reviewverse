@@ -1,5 +1,6 @@
 'use client';
 
+import { getNotificationHref } from '@/lib/notification-link';
 import { useCallback, useEffect, useState } from 'react';
 
 import { useAuth } from '@/context/AuthContext';
@@ -131,9 +132,12 @@ export default function NotificationsPage() {
       emitNotificationsChanged();
     }
 
-    if (n.link) {
+    // business-এর notification হলে business dashboard-এর সঠিক tab-এ যাবে
+    const href = getNotificationHref(n);
+
+    if (href) {
       // bell-এর মতো hard navigation (Next.js router-cache বাগ এড়াতে)
-      window.location.href = n.link;
+      window.location.href = href;
     }
   };
 
@@ -252,9 +256,15 @@ export default function NotificationsPage() {
                       }`}
                     >
                       <p>
-                        <span className="font-medium">
-                          {n.actor?.name ?? 'Someone'}
-                        </span>{' '}
+                        {/* actor না থাকলে (business reply করলে) message-ই পুরো বাক্য,
+                            যেমন "biomed commented on your review." */}
+                        {n.actor && (
+                          <>
+                            <span className="font-medium">
+                              {n.actor.name}
+                            </span>{' '}
+                          </>
+                        )}
                         {n.message}
                       </p>
 

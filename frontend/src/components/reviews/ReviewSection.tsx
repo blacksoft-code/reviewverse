@@ -457,7 +457,10 @@ async function handleUpdate(reviewId: string) {
                     </div>
 
                     {openCommentsFor === review.id && (
-                      <CommentSection reviewId={review.id} />
+                      <CommentSection
+                        reviewId={review.id}
+                        reviewEntityId={entityId}
+                      />
                     )}
 
                     {isExpanded && olderReviews.length > 0 && (

@@ -8,6 +8,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { BlocksService } from '../blocks/blocks.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { EntityMembershipsService } from '../entity-memberships/entity-memberships.service';
 
 const MAX_REPLIES_PER_COMMENT = 20;
 
@@ -17,13 +18,21 @@ export class ReviewCommentsService {
     private prisma: PrismaService,
     private notificationsService: NotificationsService,
     private blocksService: BlocksService,
+    private entityMemberships: EntityMembershipsService,
   ) {}
+
+  // কমেন্টে কে লিখেছে দেখানোর জন্য — business হিসেবে লিখলে business-এর নাম/লোগো
+  private readonly authorSelect = {
+    user: { select: { id: true, name: true } },
+    entity: { select: { id: true, name: true, logo: true, slug: true } },
+  } as const;
 
   async create(
     reviewId: string,
     userId: string,
     content: string,
     parentId?: string,
+    actingEntityId?: string,
   ) {
     const review = await this.prisma.review.findUnique({
       where: { id: reviewId },
@@ -33,7 +42,19 @@ export class ReviewCommentsService {
       throw new NotFoundException('Review not found.');
     }
 
-    let parentComment: { userId: string; parentId: string | null } | null = null;
+    // business profile থেকে করলে entityId (নাহলে null)
+    const asEntityId =
+      await this.entityMemberships.resolveReviewActor(
+        review.entityId,
+        userId,
+        actingEntityId,
+      );
+
+    let parentComment: {
+      userId: string;
+      parentId: string | null;
+      entityId: string | null;
+    } | null = null;
 
     if (parentId) {
       const parent =
@@ -75,23 +96,49 @@ export class ReviewCommentsService {
         userId,
         reviewId,
         parentId: parentId ?? null,
+        entityId: asEntityId,
       },
-      include: {
-        user: {
-          select: { id: true, name: true },
-        },
-      },
+      include: this.authorSelect,
     });
 
     const link = `/entities/${review.entityId}/reviews?reviewId=${review.id}`;
 
-    if (parentComment) {
+    // business হিসেবে করলে notification-এ business-এর নাম যাবে (actorId দেওয়া হয় না,
+    // নাহলে owner-এর ব্যক্তিগত নাম দেখাতো): "biomed commented on your review."
+    const entityName = comment.entity?.name ?? null;
+
+    if (parentComment?.entityId) {
+      // parent comment business-এর (যেমন biomed)। তাই reply-এর notification
+      // owner-এর personal bell-এ না গিয়ে ঐ business-এর bell-এ যায় (business-এর
+      // সব member পায়), আর link যায় business dashboard-এর Reviews tab-এ।
+      // Business নিজেই নিজের comment-এ reply করলে notify করার দরকার নেই।
+      if (asEntityId !== parentComment.entityId) {
+        const members = await this.prisma.entityMembership.findMany({
+          where: { entityId: parentComment.entityId },
+          select: { userId: true },
+        });
+
+        await this.notificationsService.notifyMany(
+          members.map((m) => m.userId),
+          {
+            actorId: userId,
+            type: 'ENTITY_COMMENT_REPLY',
+            message: 'replied to your comment.',
+            link: `/business/${parentComment.entityId}?tab=reviews&reviewId=${review.id}`,
+            entityId: parentComment.entityId,
+            reviewId: review.id,
+          },
+        );
+      }
+    } else if (parentComment) {
       // reply হলে সরাসরি parent comment-এর মালিককে notify
       await this.notificationsService.notify({
         recipientId: parentComment.userId,
-        actorId: userId,
+        actorId: entityName ? undefined : userId,
         type: 'REVIEW_REPLY',
-        message: 'replied to your comment.',
+        message: entityName
+          ? `${entityName} replied to your comment.`
+          : 'replied to your comment.',
         link,
         entityId: review.entityId,
         reviewId: review.id,
@@ -100,9 +147,11 @@ export class ReviewCommentsService {
       // top-level comment হলে review-এর মালিককে notify
       await this.notificationsService.notify({
         recipientId: review.userId,
-        actorId: userId,
+        actorId: entityName ? undefined : userId,
         type: 'REVIEW_COMMENT',
-        message: 'commented on your review.',
+        message: entityName
+          ? `${entityName} commented on your review.`
+          : 'commented on your review.',
         link,
         entityId: review.entityId,
         reviewId: review.id,
@@ -130,16 +179,10 @@ export class ReviewCommentsService {
           userId: { notIn: hiddenUserIds },
         },
         include: {
-          user: {
-            select: { id: true, name: true },
-          },
+          ...this.authorSelect,
           replies: {
             where: { userId: { notIn: hiddenUserIds } },
-            include: {
-              user: {
-                select: { id: true, name: true },
-              },
-            },
+            include: this.authorSelect,
             orderBy: { createdAt: 'asc' },
           },
         },
@@ -156,7 +199,11 @@ export class ReviewCommentsService {
     return { comments, totalCount };
   }
 
-  async remove(commentId: string, userId: string) {
+  async remove(
+    commentId: string,
+    userId: string,
+    actingEntityId?: string,
+  ) {
     const comment =
       await this.prisma.reviewComment.findUnique({
         where: { id: commentId },
@@ -169,6 +216,16 @@ export class ReviewCommentsService {
     if (comment.userId !== userId) {
       throw new ForbiddenException(
         'You can only delete your own comment.',
+      );
+    }
+
+    // business হিসেবে লেখা comment শুধু ঐ business-এর profile থেকেই মোছা যাবে
+    if (
+      comment.entityId &&
+      comment.entityId !== actingEntityId
+    ) {
+      throw new ForbiddenException(
+        'Switch to this business profile to delete its comment.',
       );
     }
 

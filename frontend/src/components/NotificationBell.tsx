@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNotifications } from '../hooks/useNotifications';
 import { useBusinessContext } from '../context/BusinessContext';
+import { getNotificationHref } from '../lib/notification-link';
 import {
   AppNotification,
   emitNotificationsChanged,
@@ -39,6 +40,7 @@ const BUSINESS_NOTIFICATION_TYPES = new Set([
   'CLAIM_APPROVED',
   'CLAIM_REJECTED',
   'QUESTION_ASKED',
+  'ENTITY_COMMENT_REPLY',
 ]);
 
 export default function NotificationBell() {
@@ -191,10 +193,13 @@ export default function NotificationBell() {
 
     setOpen(false);
 
-    if (n.link) {
+    // business-এর notification হলে business dashboard-এর সঠিক tab-এ যাবে
+    const href = getNotificationHref(n);
+
+    if (href) {
       // router.push() মাঝেমধ্যে ভুল cached route দেখাচ্ছিল (Next.js router-cache
       // বাগ), তাই hard navigation দিয়ে পুরোপুরি fresh page লোড করা হচ্ছে
-      window.location.href = n.link;
+      window.location.href = href;
     }
   }
 

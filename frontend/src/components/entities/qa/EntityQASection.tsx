@@ -22,16 +22,97 @@ type EntityQASectionProps = {
   variant?: 'public' | 'manage';
   // Notification link থেকে এলে ঐ প্রশ্নটাই খোলা থাকবে
   focusQuestionId?: string;
+  // 'dark' = public page (আগের মতো), 'light' = Apple-style business dashboard
+  theme?: 'dark' | 'light';
 };
+
+// Theme অনুযায়ী class-গুলো এক জায়গায় — কাঠামো/লজিক একই থাকে
+const THEMES = {
+  dark: {
+    section: 'rounded-xl bg-black p-6',
+    title: 'text-2xl font-semibold text-white',
+    sub: 'mt-1 text-sm text-gray-400',
+    hint: 'mt-4 rounded-lg border border-gray-700 p-3 text-sm text-gray-300',
+    askBox: 'mt-6 rounded-lg border border-gray-700 p-5',
+    askTitle: 'font-semibold text-white',
+    askSub: 'mt-1 text-sm text-gray-400',
+    loginText: 'mt-4 text-sm text-gray-300',
+    textarea:
+      'w-full rounded-lg border border-gray-700 bg-gray-900 p-3 text-sm text-white placeholder-gray-500 focus:outline-none',
+    counter: 'mt-1 text-right text-xs text-gray-500',
+    primary:
+      'rounded-lg bg-white px-5 py-2.5 text-sm font-medium text-black hover:bg-gray-200 disabled:opacity-50',
+    primarySm:
+      'rounded-lg bg-white px-4 py-2 text-sm font-medium text-black hover:bg-gray-200 disabled:opacity-50',
+    secondary:
+      'rounded-lg border border-gray-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-900',
+    secondarySm:
+      'rounded-lg border border-gray-700 px-4 py-2 text-sm font-medium text-white hover:bg-gray-900',
+    muted: 'mt-6 text-sm text-gray-400',
+    error: 'mt-6 text-sm text-red-400',
+    emptyBox:
+      'mt-6 rounded-lg border border-dashed border-gray-700 p-10 text-center',
+    emptyIcon: 'text-3xl text-white',
+    emptyTitle: 'mt-3 font-semibold text-white',
+    emptySub: 'mt-1 text-sm text-gray-400',
+    item: 'rounded-lg border border-gray-700',
+    qText: 'break-words font-medium text-white',
+    meta: 'mt-1 text-xs text-gray-500',
+    chevron: 'mt-1 h-5 w-5 shrink-0 text-gray-300 transition-transform',
+    divider: 'border-t border-gray-800 px-4 pb-4 pt-3',
+    answerLabel:
+      'mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500',
+    answerText: 'whitespace-pre-wrap break-words text-sm text-gray-200',
+    noAnswer: 'text-sm italic text-gray-500',
+  },
+  light: {
+    section: '',
+    title: 'text-[28px] font-semibold tracking-tight text-[#1d1d1f]',
+    sub: 'mt-1 text-[15px] text-[#6e6e73]',
+    hint: 'mt-4 rounded-2xl bg-[#f5f5f7] p-4 text-sm text-[#6e6e73]',
+    askBox: 'mt-6 rounded-2xl bg-[#f5f5f7] p-5',
+    askTitle: 'font-semibold text-[#1d1d1f]',
+    askSub: 'mt-1 text-sm text-[#6e6e73]',
+    loginText: 'mt-4 text-sm text-[#6e6e73]',
+    textarea:
+      'w-full rounded-xl border border-[#d2d2d7] bg-white p-3 text-sm text-[#1d1d1f] placeholder-[#86868b] outline-none focus:border-[#0071e3] focus:ring-4 focus:ring-[#0071e3]/15',
+    counter: 'mt-1 text-right text-xs text-[#86868b]',
+    primary:
+      'rounded-full bg-[#0071e3] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#0077ed] disabled:opacity-50',
+    primarySm:
+      'rounded-full bg-[#0071e3] px-4 py-2 text-sm font-medium text-white hover:bg-[#0077ed] disabled:opacity-50',
+    secondary:
+      'rounded-full bg-[#e8e8ed] px-5 py-2.5 text-sm font-medium text-[#1d1d1f] hover:bg-[#dcdce1]',
+    secondarySm:
+      'rounded-full bg-[#e8e8ed] px-4 py-2 text-sm font-medium text-[#1d1d1f] hover:bg-[#dcdce1]',
+    muted: 'mt-6 text-sm text-[#6e6e73]',
+    error: 'mt-6 text-sm text-[#d70015]',
+    emptyBox: 'mt-6 rounded-2xl bg-[#f5f5f7] p-10 text-center',
+    emptyIcon: 'text-3xl text-[#86868b]',
+    emptyTitle: 'mt-3 font-semibold text-[#1d1d1f]',
+    emptySub: 'mt-1 text-sm text-[#6e6e73]',
+    item: 'rounded-2xl bg-[#f5f5f7]',
+    qText: 'break-words font-medium text-[#1d1d1f]',
+    meta: 'mt-1 text-xs text-[#86868b]',
+    chevron: 'mt-1 h-5 w-5 shrink-0 text-[#86868b] transition-transform',
+    divider: 'border-t border-black/5 px-4 pb-4 pt-3',
+    answerLabel:
+      'mb-1 text-xs font-semibold uppercase tracking-wide text-[#86868b]',
+    answerText: 'whitespace-pre-wrap break-words text-sm text-[#1d1d1f]',
+    noAnswer: 'text-sm italic text-[#86868b]',
+  },
+} as const;
 
 export default function EntityQASection({
   entityId,
   entityName,
   variant = 'public',
   focusQuestionId,
+  theme = 'dark',
 }: EntityQASectionProps) {
   const { user, loading: authLoading } = useAuth();
   const { activeBusiness } = useBusinessContext();
+  const t = THEMES[theme];
 
   const [questions, setQuestions] = useState<EntityQuestion[]>([]);
   const [canAnswer, setCanAnswer] = useState(false);
@@ -158,19 +239,19 @@ export default function EntityQASection({
   }
 
   return (
-    <section className="rounded-xl bg-black p-6">
-      <h2 className="text-2xl font-semibold text-white">
+    <section className={t.section}>
+      <h2 className={t.title}>
         Questions & Answers
       </h2>
 
-      <p className="mt-1 text-sm text-gray-400">
+      <p className={t.sub}>
         Ask questions about {entityName} and help other people learn
         more about this business.
       </p>
 
       {/* Hint: member কিন্তু personal profile থেকে দেখছে */}
       {canAnswer && !canReply && (
-        <p className="mt-4 rounded-lg border border-gray-700 p-3 text-sm text-gray-300">
+        <p className={t.hint}>
           To reply to questions, switch to {entityName}&apos;s
           profile from the account menu.
         </p>
@@ -178,15 +259,15 @@ export default function EntityQASection({
 
       {/* Ask Question */}
       {showAskBox && (
-      <div className="mt-6 rounded-lg border border-gray-700 p-5">
-        <h3 className="font-semibold text-white">Have a question?</h3>
+      <div className={t.askBox}>
+        <h3 className={t.askTitle}>Have a question?</h3>
 
-        <p className="mt-1 text-sm text-gray-400">
+        <p className={t.askSub}>
           Ask something about this business.
         </p>
 
         {!user ? (
-          <p className="mt-4 text-sm text-gray-300">
+          <p className={t.loginText}>
             Please{' '}
             <Link href="/login" className="underline">
               log in
@@ -201,10 +282,10 @@ export default function EntityQASection({
               maxLength={QUESTION_MAX_LENGTH}
               rows={3}
               placeholder="Type your question..."
-              className="w-full rounded-lg border border-gray-700 bg-gray-900 p-3 text-sm text-white placeholder-gray-500 focus:outline-none"
+              className={t.textarea}
             />
 
-            <div className="mt-1 text-right text-xs text-gray-500">
+            <div className={t.counter}>
               {newQuestion.length}/{QUESTION_MAX_LENGTH}
             </div>
 
@@ -213,7 +294,7 @@ export default function EntityQASection({
                 type="button"
                 onClick={handleAsk}
                 disabled={asking || !newQuestion.trim()}
-                className="rounded-lg bg-white px-5 py-2.5 text-sm font-medium text-black hover:bg-gray-200 disabled:opacity-50"
+                className={t.primary}
               >
                 {asking ? 'Posting...' : 'Post Question'}
               </button>
@@ -224,7 +305,7 @@ export default function EntityQASection({
                   setShowAskForm(false);
                   setNewQuestion('');
                 }}
-                className="rounded-lg border border-gray-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-900"
+                className={t.secondary}
               >
                 Cancel
               </button>
@@ -234,7 +315,7 @@ export default function EntityQASection({
           <button
             type="button"
             onClick={() => setShowAskForm(true)}
-            className="mt-4 rounded-lg bg-white px-5 py-2.5 text-sm font-medium text-black hover:bg-gray-200"
+            className={`mt-4 ${t.primary}`}
           >
             Ask a Question
           </button>
@@ -244,18 +325,18 @@ export default function EntityQASection({
 
       {/* List */}
       {loading ? (
-        <p className="mt-6 text-sm text-gray-400">Loading...</p>
+        <p className={t.muted}>Loading...</p>
       ) : error ? (
-        <p className="mt-6 text-sm text-red-400">{error}</p>
+        <p className={t.error}>{error}</p>
       ) : questions.length === 0 ? (
-        <div className="mt-6 rounded-lg border border-dashed border-gray-700 p-10 text-center">
-          <div className="text-3xl text-white">?</div>
+        <div className={t.emptyBox}>
+          <div className={t.emptyIcon}>?</div>
 
-          <h3 className="mt-3 font-semibold text-white">
+          <h3 className={t.emptyTitle}>
             No questions yet
           </h3>
 
-          <p className="mt-1 text-sm text-gray-400">
+          <p className={t.emptySub}>
             Be the first person to ask a question about this business.
           </p>
         </div>
@@ -268,7 +349,7 @@ export default function EntityQASection({
             return (
               <li
                 key={q.id}
-                className="rounded-lg border border-gray-700"
+                className={t.item}
               >
                 {/* Question row + arrow */}
                 <button
@@ -278,11 +359,11 @@ export default function EntityQASection({
                   className="flex w-full items-start justify-between gap-4 p-4 text-left"
                 >
                   <div className="min-w-0">
-                    <p className="break-words font-medium text-white">
+                    <p className={t.qText}>
                       {q.question}
                     </p>
 
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className={t.meta}>
                       Asked by {q.asker.name} ·{' '}
                       {new Date(q.createdAt).toLocaleDateString()}
                     </p>
@@ -291,7 +372,7 @@ export default function EntityQASection({
                   <svg
                     viewBox="0 0 20 20"
                     fill="currentColor"
-                    className={`mt-1 h-5 w-5 shrink-0 text-gray-300 transition-transform ${
+                    className={`${t.chevron} ${
                       isOpen ? 'rotate-180' : ''
                     }`}
                     aria-hidden="true"
@@ -306,7 +387,7 @@ export default function EntityQASection({
 
                 {/* Answer */}
                 {isOpen && (
-                  <div className="border-t border-gray-800 px-4 pb-4 pt-3">
+                  <div className={t.divider}>
                     {isAnswering ? (
                       <div>
                         <textarea
@@ -315,10 +396,10 @@ export default function EntityQASection({
                           maxLength={ANSWER_MAX_LENGTH}
                           rows={4}
                           placeholder="Write your answer..."
-                          className="w-full rounded-lg border border-gray-700 bg-gray-900 p-3 text-sm text-white placeholder-gray-500 focus:outline-none"
+                          className={t.textarea}
                         />
 
-                        <div className="mt-1 text-right text-xs text-gray-500">
+                        <div className={t.counter}>
                           {answerText.length}/{ANSWER_MAX_LENGTH}
                         </div>
 
@@ -329,7 +410,7 @@ export default function EntityQASection({
                             disabled={
                               savingAnswer || !answerText.trim()
                             }
-                            className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black hover:bg-gray-200 disabled:opacity-50"
+                            className={t.primarySm}
                           >
                             {savingAnswer ? 'Saving...' : 'Save Answer'}
                           </button>
@@ -337,7 +418,7 @@ export default function EntityQASection({
                           <button
                             type="button"
                             onClick={() => setAnsweringId(null)}
-                            className="rounded-lg border border-gray-700 px-4 py-2 text-sm font-medium text-white hover:bg-gray-900"
+                            className={t.secondarySm}
                           >
                             Cancel
                           </button>
@@ -347,16 +428,16 @@ export default function EntityQASection({
                       <>
                         {q.answer ? (
                           <div>
-                            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            <p className={t.answerLabel}>
                               Answer from {entityName}
                             </p>
 
-                            <p className="whitespace-pre-wrap break-words text-sm text-gray-200">
+                            <p className={t.answerText}>
                               {q.answer}
                             </p>
                           </div>
                         ) : (
-                          <p className="text-sm italic text-gray-500">
+                          <p className={t.noAnswer}>
                             No answer yet.
                           </p>
                         )}
@@ -365,7 +446,7 @@ export default function EntityQASection({
                           <button
                             type="button"
                             onClick={() => startAnswer(q)}
-                            className="mt-3 rounded-lg border border-gray-700 px-4 py-2 text-sm font-medium text-white hover:bg-gray-900"
+                            className={`mt-3 ${t.secondarySm}`}
                           >
                             {q.answer ? 'Edit Answer' : 'Reply'}
                           </button>
