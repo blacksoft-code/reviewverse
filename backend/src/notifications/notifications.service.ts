@@ -1,7 +1,30 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationType } from '@prisma/client';
 import { NotificationsGateway } from './notifications.gateway';
+
+// Notification history কতদিন থাকবে — এর পুরনোগুলো auto delete হয়ে যায়
+export const NOTIFICATION_RETENTION_DAYS = 30;
+
+// কত ঘণ্টা পরপর পুরনো notification মুছে ফেলার job চলবে
+const CLEANUP_INTERVAL_HOURS = 6;
+
+// এই টাইপগুলো business-এর (frontend NotificationBell-এর তালিকার সাথে মিল রাখা)
+const BUSINESS_NOTIFICATION_TYPES: NotificationType[] = [
+  'NEW_REVIEW',
+  'NEW_ENTITY_FOLLOWER',
+  'POST_REACTION',
+  'POST_COMMENT',
+  'POST_REPLY',
+  'CLAIM_APPROVED',
+  'CLAIM_REJECTED',
+  'QUESTION_ASKED',
+];
 
 interface NotifyParams {
   recipientId: string;
@@ -15,11 +38,70 @@ interface NotifyParams {
 }
 
 @Injectable()
-export class NotificationsService {
+export class NotificationsService
+  implements OnModuleInit, OnModuleDestroy
+{
+  private readonly logger = new Logger(
+    NotificationsService.name,
+  );
+
+  private cleanupTimer: NodeJS.Timeout | null = null;
+
   constructor(
     private prisma: PrismaService,
     private gateway: NotificationsGateway,
   ) {}
+
+  // ───────────── ৩০ দিনের retention + auto delete ─────────────
+
+  private retentionCutoff() {
+    return new Date(
+      Date.now() -
+        NOTIFICATION_RETENTION_DAYS * 24 * 60 * 60 * 1000,
+    );
+  }
+
+  // Server চালু হলে একবার, তারপর প্রতি ৬ ঘণ্টায় পুরনো notification মুছবে।
+  // (আলাদা scheduler package লাগে না — idempotent, তাই একাধিক instance চললেও সমস্যা নেই)
+  onModuleInit() {
+    this.deleteExpired();
+
+    this.cleanupTimer = setInterval(
+      () => this.deleteExpired(),
+      CLEANUP_INTERVAL_HOURS * 60 * 60 * 1000,
+    );
+
+    // এই timer যেন process বন্ধ হতে বাধা না দেয়
+    this.cleanupTimer.unref?.();
+  }
+
+  onModuleDestroy() {
+    if (this.cleanupTimer) clearInterval(this.cleanupTimer);
+  }
+
+  async deleteExpired() {
+    try {
+      const { count } =
+        await this.prisma.notification.deleteMany({
+          where: { createdAt: { lt: this.retentionCutoff() } },
+        });
+
+      if (count > 0) {
+        this.logger.log(
+          `Deleted ${count} notification(s) older than ${NOTIFICATION_RETENTION_DAYS} days`,
+        );
+      }
+
+      return count;
+    } catch (error) {
+      this.logger.error(
+        'Failed to delete expired notifications',
+        error as Error,
+      );
+
+      return 0;
+    }
+  }
 
   async notify(params: NotifyParams) {
     // নিজের action-এ নিজেকে notify করার দরকার নেই
@@ -64,7 +146,10 @@ export class NotificationsService {
 
   async findForUser(userId: string) {
     return this.prisma.notification.findMany({
-      where: { recipientId: userId },
+      where: {
+        recipientId: userId,
+        createdAt: { gte: this.retentionCutoff() },
+      },
       include: {
         actor: { select: { id: true, name: true } },
       },
@@ -73,9 +158,62 @@ export class NotificationsService {
     });
   }
 
+  // Bell-এর "See all" পেজের জন্য — গত ৩০ দিনের পুরো history, পেজ ধরে ধরে।
+  // entityId দিলে সেই business-এর business-notification, না দিলে personal notification
+  // (frontend bell-এর business/personal mode-এর মতোই)
+  async findHistory(
+    userId: string,
+    options: {
+      cursor?: string;
+      limit?: number;
+      entityId?: string;
+    },
+  ) {
+    const limit = Math.min(
+      Math.max(options.limit ?? 20, 1),
+      50,
+    );
+
+    const scope = options.entityId
+      ? {
+          type: { in: BUSINESS_NOTIFICATION_TYPES },
+          entityId: options.entityId,
+        }
+      : { type: { notIn: BUSINESS_NOTIFICATION_TYPES } };
+
+    const rows = await this.prisma.notification.findMany({
+      where: {
+        recipientId: userId,
+        createdAt: { gte: this.retentionCutoff() },
+        ...scope,
+      },
+      include: {
+        actor: { select: { id: true, name: true } },
+      },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: limit + 1,
+      ...(options.cursor
+        ? { cursor: { id: options.cursor }, skip: 1 }
+        : {}),
+    });
+
+    const hasMore = rows.length > limit;
+    const items = hasMore ? rows.slice(0, limit) : rows;
+
+    return {
+      items,
+      nextCursor: hasMore ? items[items.length - 1].id : null,
+      retentionDays: NOTIFICATION_RETENTION_DAYS,
+    };
+  }
+
   async getUnreadCount(userId: string) {
     const count = await this.prisma.notification.count({
-      where: { recipientId: userId, isRead: false },
+      where: {
+        recipientId: userId,
+        isRead: false,
+        createdAt: { gte: this.retentionCutoff() },
+      },
     });
 
     return { count };
@@ -90,9 +228,23 @@ export class NotificationsService {
     return { message: 'Marked as read.' };
   }
 
-  async markAllAsRead(userId: string) {
+  // scope না দিলে আগের মতোই সব read; entityId দিলে শুধু ঐ business-এর,
+  // scope=personal দিলে শুধু personal notification
+  async markAllAsRead(
+    userId: string,
+    options: { entityId?: string; scope?: string } = {},
+  ) {
+    const scope = options.entityId
+      ? {
+          type: { in: BUSINESS_NOTIFICATION_TYPES },
+          entityId: options.entityId,
+        }
+      : options.scope === 'personal'
+        ? { type: { notIn: BUSINESS_NOTIFICATION_TYPES } }
+        : {};
+
     await this.prisma.notification.updateMany({
-      where: { recipientId: userId, isRead: false },
+      where: { recipientId: userId, isRead: false, ...scope },
       data: { isRead: true },
     });
 

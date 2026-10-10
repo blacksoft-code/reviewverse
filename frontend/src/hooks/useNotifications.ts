@@ -30,14 +30,21 @@ export function useNotifications() {
     if (!token || !API_URL) return;
 
     // প্রথমবার পেজ লোড হলে existing notification + count আনা হচ্ছে
-    getNotifications()
-      .then((data) =>
-        setNotifications(Array.isArray(data) ? data : []),
-      )
-      .catch(() => setNotifications([]));
-    getUnreadCount()
-      .then((res) => setUnreadCount(res?.count ?? 0))
-      .catch(() => {});
+    const refresh = () => {
+      getNotifications()
+        .then((data) =>
+          setNotifications(Array.isArray(data) ? data : []),
+        )
+        .catch(() => setNotifications([]));
+      getUnreadCount()
+        .then((res) => setUnreadCount(res?.count ?? 0))
+        .catch(() => {});
+    };
+
+    refresh();
+
+    // History পেজে read করলে bell-এর badge/list-ও আপডেট হবে
+    window.addEventListener('notifications:changed', refresh);
 
     // real-time connection — নতুন notification এলেই top-এ বসবে ও count বাড়বে
     const socket = io(`${API_URL}/notifications`, {
@@ -56,6 +63,7 @@ export function useNotifications() {
     socketRef.current = socket;
 
     return () => {
+      window.removeEventListener('notifications:changed', refresh);
       socket.disconnect();
       socketRef.current = null;
     };

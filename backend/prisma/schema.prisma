@@ -135,6 +135,7 @@ model Notification {
 
   @@index([recipientId])
   @@index([recipientId, isRead])
+  @@index([createdAt])
 }
 
 model Location {
