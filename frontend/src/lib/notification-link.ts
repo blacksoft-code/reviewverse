@@ -20,6 +20,7 @@ export function getNotificationHref(
       case 'POST_REACTION':
       case 'POST_COMMENT':
       case 'POST_REPLY':
+      case 'POST_SHARED':
         return `${dashboard}?tab=posts${
           n.postId ? `&postId=${n.postId}` : ''
         }`;

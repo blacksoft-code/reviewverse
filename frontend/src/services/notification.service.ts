@@ -16,7 +16,12 @@ export type NotificationType =
   | 'CLAIM_REJECTED'
   | 'QUESTION_ASKED'
   | 'QUESTION_ANSWERED'
-  | 'ENTITY_COMMENT_REPLY';
+  | 'ENTITY_COMMENT_REPLY'
+  | 'SHARE_REACTION'
+  | 'SHARE_COMMENT'
+  | 'SHARE_REPLY'
+    'REVIEW_SHARED'
+  | 'POST_SHARED';
 
 export interface AppNotification {
   id: string;

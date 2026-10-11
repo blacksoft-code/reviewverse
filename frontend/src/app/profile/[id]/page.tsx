@@ -1,5 +1,7 @@
 'use client';
 
+import ShareButton from '@/components/shares/ShareButton';
+
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -135,6 +137,8 @@ export default function ProfilePage() {
 
               <div className="mt-5 flex items-center gap-6 border-t pt-4 text-sm">
                 <ReactionButton reviewId={review.id} />
+
+                <ShareButton reviewId={review.id} />
 
                 <button
                   type="button"

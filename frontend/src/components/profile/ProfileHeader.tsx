@@ -21,6 +21,7 @@ const TABS = [
   { label: 'About', href: '/about' },
   { label: 'Friends', href: '/friends' },
   { label: 'Photos', href: '/photos' },
+  { label: 'Shares', href: '/shares' },
 ] as const;
 
 export default function ProfileHeader({

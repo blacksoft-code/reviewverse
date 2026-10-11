@@ -25,6 +25,7 @@ const BUSINESS_NOTIFICATION_TYPES: NotificationType[] = [
   'CLAIM_REJECTED',
   'QUESTION_ASKED',
   'ENTITY_COMMENT_REPLY',
+  'POST_SHARED',
 ];
 
 interface NotifyParams {

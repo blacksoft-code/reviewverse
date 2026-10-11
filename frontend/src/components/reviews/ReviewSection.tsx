@@ -1,5 +1,6 @@
 'use client';
 
+import ShareButton from '@/components/shares/ShareButton';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ReviewForm from './ReviewForm';
@@ -431,6 +432,8 @@ async function handleUpdate(reviewId: string) {
                     <div className="mt-4 flex items-center gap-6 border-t pt-3">
                       <ReactionButton reviewId={review.id} />
 
+                      <ShareButton reviewId={review.id} />
+
                       <button
                         type="button"
                         onClick={() =>
@@ -521,13 +524,6 @@ async function handleUpdate(reviewId: string) {
           })
         )}
       </div>
-{/* ==================Review Form===================== */}
-      {/*
-      <ReviewForm
-        entityId={entityId}
-        onReviewCreated={handleReviewCreated}
-      />
-      */}
     </section>
   );
 }

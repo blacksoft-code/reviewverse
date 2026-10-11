@@ -4,6 +4,7 @@ import type { FeedPost } from '@/services/feed.service';
 import PhotoGrid from '@/components/media/PhotoGrid';
 import PostReactionButton from '@/components/entities/posts/PostReactionButton';
 import PostCommentSection from '@/components/entities/posts/PostCommentSection';
+import ShareButton from '@/components/shares/ShareButton';
 
 export default function FeedPostCard({
   post,
@@ -49,6 +50,7 @@ export default function FeedPostCard({
      
       <div className="mt-4 border-t pt-3">
         <PostReactionButton postId={post.id} />
+        <ShareButton entityPostId={post.id} />
         <PostCommentSection postId={post.id} />
       </div>
         

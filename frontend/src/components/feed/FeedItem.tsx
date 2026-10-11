@@ -7,6 +7,7 @@ import type { FeedReview } from '@/services/feed.service';
 import PhotoGrid from '@/components/media/PhotoGrid';
 import ReactionButton from '@/components/reviews/ReactionButton';
 import CommentSection from '@/components/reviews/CommentSection';
+import ShareButton from '@/components/shares/ShareButton';
 
 export default function FeedItem({
   review,
@@ -50,6 +51,8 @@ export default function FeedItem({
       {/* NEW — Reactions + Comments */}
       <div className="mt-4 flex items-center gap-6 border-t pt-3">
         <ReactionButton reviewId={review.id} />
+
+        <ShareButton reviewId={review.id} />
 
         <button
           type="button"

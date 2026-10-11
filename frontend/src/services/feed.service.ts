@@ -1,4 +1,5 @@
 import { apiFetch } from '@/lib/api';
+import type { ShareItem } from './share.service';
 
 export type FeedReview = {
   id: string;
@@ -18,6 +19,7 @@ export type FeedReview = {
     slug: string;
     location: string | null;
   };
+  media?: { id: string; url: string }[];
 };
 
 export type FeedPostMedia = {
@@ -52,6 +54,14 @@ export type FeedEntry =
       createdAt: string;
       priority: number;
       post: FeedPost;
+    }
+  | {
+      // কেউ অন্যের review/post share করেছে
+      type: 'share';
+      id: string;
+      createdAt: string;
+      priority: number;
+      share: ShareItem;
     };
 
 export type FeedPage = {

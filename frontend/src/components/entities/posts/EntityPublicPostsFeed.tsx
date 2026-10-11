@@ -1,5 +1,6 @@
 'use client';
 
+import ShareButton from '@/components/shares/ShareButton';
 import { useEffect, useState } from 'react';
 
 import PostCard from './PostCard';
@@ -79,6 +80,7 @@ export default function EntityPublicPostsFeed({
 
         <div className="px-5 pb-4">
           <PostReactionButton postId={post.id} />
+          <ShareButton entityPostId={post.id} />
           <PostCommentSection postId={post.id} />
         </div>
       </div>

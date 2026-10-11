@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import {
+  SHARE_INCLUDE,
+  ShareDto,
+  toShareDto,
+} from '../shares/share.helpers';
 
 // কত দিনের মধ্যের পোস্ট/রিভিউকে "fresh" ধরা হবে
 const FRESHNESS_DAYS = 3;
@@ -56,6 +61,14 @@ export type FeedItem =
           logo: string | null;
         };
       };
+    }
+  | {
+      // কেউ অন্যের review/post share করলে — feed-এ তার নিজের পোস্টের মতোই
+      type: 'share';
+      id: string;
+      createdAt: Date;
+      priority: number;
+      share: ShareDto;
     };
 
 @Injectable()
@@ -183,7 +196,7 @@ export class FeedService {
   ) {
     const relations = await this.getRelations(userId);
 
-    const [reviews, posts] = await Promise.all([
+    const [reviews, posts, shares] = await Promise.all([
       this.prisma.review.findMany({
         where: {
           userId: { notIn: relations.blockedUserIds },
@@ -232,6 +245,31 @@ export class FeedService {
           },
         },
       }),
+      // Share-গুলো: sharer block-এ না থাকলে, আর মূল review/post-এর
+      // author/entity block-এ না থাকলে
+      this.prisma.share.findMany({
+        where: {
+          userId: { notIn: relations.blockedUserIds },
+          OR: [
+            {
+              review: {
+                is: {
+                  userId: { notIn: relations.blockedUserIds },
+                  entityId: { notIn: relations.blockedEntityIds },
+                },
+              },
+            },
+            {
+              entityPost: {
+                is: {
+                  entityId: { notIn: relations.blockedEntityIds },
+                },
+              },
+            },
+          ],
+        },
+        include: SHARE_INCLUDE,
+      }),
     ]);
 
     const items: FeedItem[] = [
@@ -259,6 +297,23 @@ export class FeedService {
           post,
         }),
       ),
+      ...shares.map((s): FeedItem => {
+        // Priority আগের নিয়মেই — sharer-কে user হিসেবে ধরে
+        // (friend=1, followed user=2, followed entity=3, বাকি=4)
+        const originalEntityId =
+          s.review?.entityId ?? s.entityPost?.entityId ?? '';
+
+        return {
+          type: 'share',
+          id: s.id,
+          createdAt: s.createdAt,
+          priority: this.priorityForReview(
+            { userId: s.userId, entityId: originalEntityId },
+            relations,
+          ),
+          share: toShareDto(s),
+        };
+      }),
     ];
 
     // Priority ASC, তারপর একই priority-তে সবচেয়ে নতুনটা আগে
@@ -310,7 +365,7 @@ export class FeedService {
       ...relations.followedUserIds,
     ];
 
-    const [newReviewsCount, newPostsCount] =
+    const [newReviewsCount, newPostsCount, newSharesCount] =
       await Promise.all([
         this.prisma.review.count({
           where: {
@@ -333,10 +388,19 @@ export class FeedService {
             },
           },
         }),
+        this.prisma.share.count({
+          where: {
+            createdAt: { gt: since },
+            userId: {
+              in: relevantUserIds,
+              notIn: relations.blockedUserIds,
+            },
+          },
+        }),
       ]);
 
     return {
-      count: newReviewsCount + newPostsCount,
+      count: newReviewsCount + newPostsCount + newSharesCount,
     };
   }
 }
