@@ -43,3 +43,16 @@ body {
 .apple-ui h3 {
   letter-spacing: -0.022em;
 }
+
+/* ─────────────────────────────────────────────
+   Entity mode-এ public page preview — শুধু দেখা, interaction বন্ধ
+   (link/tab navigation আগের মতো কাজ করে)
+   ───────────────────────────────────────────── */
+.entity-readonly button,
+.entity-readonly input,
+.entity-readonly textarea,
+.entity-readonly select,
+.entity-readonly [role="button"] {
+  cursor: not-allowed !important;
+  opacity: 0.55;
+}

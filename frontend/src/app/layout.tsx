@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 import Navbar from '@/components/Navbar';
+import EntityModeReadOnly from '@/components/EntityModeReadOnly';
 import { AuthProvider } from '@/context/AuthContext';
 import { BusinessProvider } from '@/context/BusinessContext'; // ← NEW
 
@@ -31,7 +32,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <AuthProvider>        
           <BusinessProvider>       {/* ← NEW */}
             <Navbar />
-            {children}
+            <EntityModeReadOnly>{children}</EntityModeReadOnly>
           </BusinessProvider>      {/* ← NEW */}
         </AuthProvider>
 
