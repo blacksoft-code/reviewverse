@@ -1,6 +1,8 @@
 'use client';
 
 import ShareButton from '@/components/shares/ShareButton';
+import SharedCard from '@/components/shares/SharedCard';
+import { getUserShares, ShareItem } from '@/services/share.service';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -22,6 +24,7 @@ type ProfileUser = {
     rating: number;
     content: string;
     createdAt: string;
+    media?: { id: string; url: string }[];
     entity: {
       id: string;
       name: string;
@@ -47,13 +50,20 @@ export default function ProfilePage() {
   const [openCommentsFor, setOpenCommentsFor] =
     useState<string | null>(null);
 
+  // এই user-এর share করা review/post — reviews-এর সাথে মিশিয়ে দেখানো হয়
+  const [shares, setShares] = useState<ShareItem[]>([]);
+
   useEffect(() => {
     async function loadProfile() {
       try {
         setLoading(true);
         setError('');
-        const response = await getUserProfile(profileId);
+        const [response, sharesRes] = await Promise.all([
+          getUserProfile(profileId),
+          getUserShares(profileId).catch(() => null),
+        ]);
         setProfile(response.data as ProfileUser);
+        setShares(sharesRes?.data ?? []);
       } catch (err) {
         setError(
           err instanceof Error
@@ -80,19 +90,57 @@ export default function ProfilePage() {
     );
   }
 
+  // Review আর share এক timeline-এ, সবচেয়ে নতুন আগে
+  const timeline = [
+    ...profile.reviews.map((review) => ({
+      kind: 'review' as const,
+      id: review.id,
+      createdAt: review.createdAt,
+      review,
+    })),
+    ...shares.map((share) => ({
+      kind: 'share' as const,
+      id: share.id,
+      createdAt: share.createdAt,
+      share,
+    })),
+  ].sort(
+    (a, b) =>
+      new Date(b.createdAt).getTime() -
+      new Date(a.createdAt).getTime(),
+  );
+
   return (
     <section>
-      <h2 className="text-2xl font-bold text-gray-900">
-        Reviews
-      </h2>
 
       <div className="mt-4 space-y-5">
-        {profile.reviews.length === 0 ? (
+        {timeline.length === 0 ? (
           <div className="rounded-xl bg-white p-6 text-gray-500 shadow-sm">
             No reviews yet.
           </div>
         ) : (
-          profile.reviews.map((review) => (
+          timeline.map((item) => {
+            if (item.kind === 'share') {
+              return (
+                <div
+                  key={`share-${item.id}`}
+                  className="rounded-xl bg-white p-4 text-gray-900 shadow-sm"
+                >
+                  <SharedCard
+                    share={item.share}
+                    onDeleted={(shareId) =>
+                      setShares((prev) =>
+                        prev.filter((s) => s.id !== shareId),
+                      )
+                    }
+                  />
+                </div>
+              );
+            }
+
+            const review = item.review;
+
+            return (
             <article
               key={review.id}
               className="rounded-xl bg-white p-6 shadow-sm"
@@ -152,19 +200,14 @@ export default function ProfilePage() {
                   💬 Comments
                 </button>
 
-                <button
-                  type="button"
-                  className="font-medium text-gray-500 hover:underline"
-                >
-                  ↗ Share
-                </button>
               </div>
 
               {openCommentsFor === review.id && (
                 <CommentSection reviewId={review.id} />
               )}
             </article>
-          ))
+            );
+          })
         )}
       </div>
     </section>

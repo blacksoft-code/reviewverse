@@ -307,10 +307,15 @@ export class FeedService {
           type: 'share',
           id: s.id,
           createdAt: s.createdAt,
-          priority: this.priorityForReview(
-            { userId: s.userId, entityId: originalEntityId },
-            relations,
-          ),
+          // নিজের share নিজের feed-এ friend-tier (1)-এ — নাহলে "বাকি সবাই"
+          // (4)-এ পড়ে সবার নিচে চলে যেত, দেখাই যেত না
+          priority:
+            s.userId === userId
+              ? 1
+              : this.priorityForReview(
+                  { userId: s.userId, entityId: originalEntityId },
+                  relations,
+                ),
           share: toShareDto(s),
         };
       }),
