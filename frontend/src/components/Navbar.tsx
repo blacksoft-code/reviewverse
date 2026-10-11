@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   useAuth,
 } from '@/context/AuthContext';
@@ -18,6 +19,7 @@ export default function Navbar() {
   } = useAuth();
 
   const { activeBusiness } = useBusinessContext();
+  const pathname = usePathname();
 
   // NEW:
   // Logout করার সময় token এবং global user state
@@ -41,6 +43,17 @@ export default function Navbar() {
           {/* Logo → business dashboard */}
           <Link
             href={`/business/${activeBusiness.id}`}
+            onClick={(e) => {
+              // Dashboard-এর ভেতরেই থাকলে (যেমন Business info tab-এ) Next.js
+              // একই page ধরে নিয়ে tab রিসেট করে না — তাই fresh load করে
+              // default Overview tab-এ ফেরা হয়
+              const dashboardPath = `/business/${activeBusiness.id}`;
+
+              if (pathname === dashboardPath) {
+                e.preventDefault();
+                window.location.href = dashboardPath;
+              }
+            }}
             className="text-xl font-bold"
           >
             ReviewVerse
