@@ -7,6 +7,7 @@ import {
 import BusinessSwitcher from '@/components/BusinessSwitcher';
 import SearchBox from '@/components/search/SearchBox';
 import NotificationBell from '@/components/NotificationBell';
+import { useBusinessContext } from '@/context/BusinessContext';
 
 export default function Navbar() {
 
@@ -15,6 +16,8 @@ export default function Navbar() {
     loading,
     logout,
   } = useAuth();
+
+  const { activeBusiness } = useBusinessContext();
 
   // NEW:
   // Logout করার সময় token এবং global user state
@@ -25,6 +28,49 @@ export default function Navbar() {
     logout();
   }
 
+  // ─────────────────────────────
+  // Entity mode (business profile) — আলাদা navbar:
+  // শুধু logo (→ business dashboard), entity-র notification bell,
+  // business switcher আর logout। Search/Explore/Admin ইত্যাদি থাকে না।
+  // ─────────────────────────────
+  if (user && activeBusiness) {
+    return (
+      <nav className="border-b bg-black">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+
+          {/* Logo → business dashboard */}
+          <Link
+            href={`/business/${activeBusiness.id}`}
+            className="text-xl font-bold"
+          >
+            ReviewVerse
+          </Link>
+
+          <div className="flex items-center gap-5">
+
+            {/* Entity-র notification (business mode-এর bell) */}
+            <NotificationBell />
+
+            {/* Business switcher */}
+            <BusinessSwitcher />
+
+            {/* Logout */}
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="rounded-lg border bg-black px-4 py-2 text-sm hover:bg-gray-50"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </nav>
+    );
+  }
+
+  // ─────────────────────────────
+  // Personal mode — আগের মতোই, কোনো পরিবর্তন নেই
+  // ─────────────────────────────
   return (
     <nav className="border-b bg-black">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
