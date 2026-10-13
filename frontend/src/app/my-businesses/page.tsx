@@ -7,32 +7,13 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
 import {
-  EntityClaim,
   EntityMembership,
-  getMyClaims,
   getMyMemberships,
 } from '@/services/entity-membership.service';
 
-function ClaimStatusBadge({
-  status,
-}: {
-  status: EntityClaim['status'];
-}) {
-  const styles: Record<EntityClaim['status'], string> = {
-    PENDING: 'bg-yellow-100 text-yellow-700',
-    APPROVED: 'bg-green-100 text-green-700',
-    REJECTED: 'bg-red-100 text-red-700',
-  };
-
-  return (
-    <span
-      className={`rounded-full px-3 py-1 text-xs font-medium ${styles[status]}`}
-    >
-      {status}
-    </span>
-  );
-}
-
+// শুধু entry point: আমি যেসব business manage করি তার list।
+// Post/offering/info সব manage হয় business dashboard-এ;
+// claim-এর status দেখা যায় Settings → Business claims-এ।
 export default function MyBusinessesPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
@@ -40,11 +21,6 @@ export default function MyBusinessesPage() {
   const [memberships, setMemberships] = useState<
     EntityMembership[]
   >([]);
-
-  const [claims, setClaims] = useState<EntityClaim[]>(
-    [],
-  );
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -60,14 +36,8 @@ export default function MyBusinessesPage() {
 
     async function loadData() {
       try {
-        const [membershipsRes, claimsRes] =
-          await Promise.all([
-            getMyMemberships(),
-            getMyClaims(),
-          ]);
-
-        setMemberships(membershipsRes.data);
-        setClaims(claimsRes.data);
+        const res = await getMyMemberships();
+        setMemberships(res.data);
       } catch (err) {
         setError(
           err instanceof Error
@@ -93,13 +63,11 @@ export default function MyBusinessesPage() {
   return (
     <main className="min-h-screen p-8">
       <div className="mx-auto max-w-4xl">
-        <h1 className="text-3xl font-bold">
-          My Businesses
-        </h1>
+        <h1 className="text-3xl font-bold">My Businesses</h1>
 
         <p className="mt-2 text-gray-600">
-          Businesses you manage and claims you have
-          submitted.
+          Open a business dashboard to manage its posts, services,
+          info and more.
         </p>
 
         {error && (
@@ -108,106 +76,44 @@ export default function MyBusinessesPage() {
           </p>
         )}
 
-        {/* ================================= */}
-        {/* MEMBERSHIPS */}
-        {/* ================================= */}
-
-        <section className="mt-8">
-          <h2 className="text-xl font-semibold">
-            Businesses I Manage
-          </h2>
-
-          {memberships.length === 0 ? (
-            <p className="mt-3 text-sm text-gray-500">
-              You don&apos;t manage any business yet.
-            </p>
-          ) : (
-            <div className="mt-4 space-y-3">
-              {memberships.map((membership) => (
-                <div
-                  key={membership.id}
-                  className="flex items-center justify-between rounded-lg border p-4"
-                >
-                  <Link
-                    href={`/entities/${membership.entity?.slug}`}
-                    className="hover:underline"
-                  >
-                    <p className="font-medium">
-                      {membership.entity?.name}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Role: {membership.role}
-                    </p>
-                  </Link>
-
-                <div className="flex gap-2">
-                  <Link
-                    href={`/my-businesses/${membership.entityId}/posts`}
-                    className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-gray-50"
-                  >
-                    Manage Posts
-                  </Link>
-                  <Link
-                      href={`/my-businesses/${membership.entityId}/offerings`}
-                      className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-gray-50"
-                    >
-                      Manage Offerings
-                    </Link>
-                  </div>  
+        {memberships.length === 0 ? (
+          <p className="mt-8 text-sm text-gray-500">
+            You don&apos;t manage any business yet.
+          </p>
+        ) : (
+          <div className="mt-8 space-y-3">
+            {memberships.map((membership) => (
+              <div
+                key={membership.id}
+                className="flex items-center justify-between rounded-lg border p-4"
+              >
+                <div>
+                  <p className="font-medium">
+                    {membership.entity?.name}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Role: {membership.role}
+                  </p>
                 </div>
-              ))}
-            </div>
-          )}
-        </section>
 
-        {/* ================================= */}
-        {/* CLAIMS */}
-        {/* ================================= */}
-
-        <section className="mt-10">
-          <h2 className="text-xl font-semibold">
-            My Claims
-          </h2>
-
-          {claims.length === 0 ? (
-            <p className="mt-3 text-sm text-gray-500">
-              You haven&apos;t claimed any business yet.
-            </p>
-          ) : (
-            <div className="mt-4 space-y-3">
-              {claims.map((claim) => (
-                <div
-                  key={claim.id}
-                  className="flex items-center justify-between rounded-lg border p-4"
+                <Link
+                  href={`/business/${membership.entityId}`}
+                  className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-gray-50"
                 >
-                  <div>
-                    <p className="font-medium">
-                      {claim.entity?.name}
-                    </p>
+                  Open dashboard
+                </Link>
+              </div>
+            ))}
+          </div>
+        )}
 
-                    <p className="text-sm text-gray-500">
-                      Submitted on{' '}
-                      {new Date(
-                        claim.createdAt,
-                      ).toLocaleDateString()}
-                    </p>
-                  </div>
-
-                  <ClaimStatusBadge
-                    status={claim.status}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <div className="mt-10">
-          <Link
-            href="/add-business"
-            className="text-sm font-medium underline"
-          >
+        <div className="mt-10 flex items-center gap-6 text-sm font-medium">
+          <Link href="/add-business" className="underline">
             + Add a new business
+          </Link>
+
+          <Link href="/settings/claims" className="underline">
+            My business claims
           </Link>
         </div>
       </div>

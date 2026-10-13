@@ -207,6 +207,17 @@ export default function BusinessSwitcher() {
             View all my businesses
           </Link>
 
+          {/* Claim একটা personal কাজ — entity mode-এ দেখানো হয় না */}
+          {!activeBusiness && (
+            <Link
+              href="/settings/claims"
+              onClick={() => setOpen(false)}
+              className="block rounded-md px-3 py-2 text-sm text-gray-600 hover:bg-gray-100"
+            >
+              Business claims
+            </Link>
+          )}
+
           <div className="my-1 border-t" />
           <button
             type="button"
