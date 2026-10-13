@@ -136,6 +136,12 @@ export class SharesController {
     );
   }
 
+  @Get(':shareId/reactions/users')
+  @UseGuards(OptionalJwtAuthGuard)
+  reactors(@Param('shareId') shareId: string, @Req() req: any) {
+    return this.engagement.getReactors(shareId, req.user?.userId);
+  }
+
   // ── comments ──
 
   @Post(':shareId/comments')

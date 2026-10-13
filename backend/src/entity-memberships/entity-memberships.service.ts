@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   ConflictException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -233,36 +232,25 @@ export class EntityMembershipsService {
   }
 
   // ─────────────────────────────
-  // Review-এ comment/react করার সময় "কে করছে" ঠিক করে:
-  //  - business profile (entity mode) থেকে, ঐ business-এরই review-তে → entity হিসেবে
-  //    (return = entityId)
-  //  - business-এর owner/manager নিজের personal profile থেকে নিজের business-এর
-  //    review-তে → ব্লক (business profile-এ switch করতে হবে)
-  //  - অন্য সবাই → সাধারণ personal user (return = null)
+  // Review-এ comment/react করার সময় "কে করছে" ঠিক করে — mode অনুযায়ী:
+  //  - business mode-এ (X-Acting-Entity-Id আছে, আর user ঐ business-এর
+  //    owner/manager) → সবকিছু ঐ business-এর নামে (return = acting entityId)
+  //  - personal mode-এ (header নেই) → user-এর নিজের নামে (return = null),
+  //    নিজের business-এর review-তেও — কোনো block নেই
+  //  Header আছে কিন্তু user আসলে ঐ business-এর member না (পুরনো/ভুল value)
+  //  হলে header উপেক্ষা করে personal ধরা হয়।
   // ─────────────────────────────
   async resolveReviewActor(
-    reviewEntityId: string,
+    _reviewEntityId: string,
     userId: string,
     actingEntityId?: string | null,
   ): Promise<string | null> {
-    const isMember = await this.hasAccess(reviewEntityId, userId);
-
-    if (actingEntityId && actingEntityId === reviewEntityId) {
-      if (!isMember) {
-        throw new ForbiddenException(
-          'You do not manage this business.',
-        );
-      }
-
-      return reviewEntityId;
+    if (!actingEntityId) {
+      return null;
     }
 
-    if (isMember) {
-      throw new ForbiddenException(
-        'Switch to this business profile to comment or react on its reviews.',
-      );
-    }
+    const isMember = await this.hasAccess(actingEntityId, userId);
 
-    return null;
+    return isMember ? actingEntityId : null;
   }
 }

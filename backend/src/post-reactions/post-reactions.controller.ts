@@ -76,4 +76,19 @@ export class PostReactionsController {
       req.user?.userId,
     );
   }
+
+  @Get('users')
+  @UseGuards(OptionalJwtAuthGuard)
+  @ApiOperation({
+    summary: 'Who reacted (with reaction type) — for the reactors modal',
+  })
+  getReactors(
+    @Param('postId') postId: string,
+    @Req() req: any,
+  ) {
+    return this.reactionsService.getReactors(
+      postId,
+      req.user?.userId,
+    );
+  }
 }

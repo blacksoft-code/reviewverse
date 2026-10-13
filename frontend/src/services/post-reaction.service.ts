@@ -1,5 +1,9 @@
 import { apiFetch } from '@/lib/api';
-import type { ReactionType, ReactionSummary } from './reaction.service';
+import type {
+  ReactionType,
+  ReactionSummary,
+  Reactor,
+} from './reaction.service';
 
 export type { ReactionType, ReactionSummary };
 
@@ -34,5 +38,11 @@ export async function getPostReactionSummary(
 ) {
   return apiFetch<ApiEnvelope<ReactionSummary>>(
     `/entity-posts/${postId}/reactions/summary`,
+  );
+}
+
+export async function getPostReactors(postId: string) {
+  return apiFetch<ApiEnvelope<Reactor[]>>(
+    `/entity-posts/${postId}/reactions/users`,
   );
 }

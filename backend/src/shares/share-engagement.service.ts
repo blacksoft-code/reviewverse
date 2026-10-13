@@ -246,4 +246,30 @@ export class ShareEngagementService {
 
     return { message: 'Comment deleted.' };
   }
+
+  // ─────────────────────────────
+  // কে কে react করেছে (modal-এর জন্য) — নিজেকেও ধরে
+  // ─────────────────────────────
+  async getReactors(shareId: string, userId?: string) {
+    const hiddenUserIds =
+      await this.blocksService.getHiddenUserIds(userId);
+
+    const rows = await this.prisma.shareReaction.findMany({
+      where: { shareId, userId: { notIn: hiddenUserIds } },
+      select: {
+        type: true,
+        createdAt: true,
+        user: { select: { id: true, name: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return rows.map((r) => ({
+      userId: r.user.id,
+      name: r.user.name,
+      type: r.type,
+      createdAt: r.createdAt,
+      entity: null,
+    }));
+  }
 }

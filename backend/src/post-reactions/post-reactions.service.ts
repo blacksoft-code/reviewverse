@@ -99,4 +99,30 @@ export class PostReactionsService {
       myReaction: myReaction?.type ?? null,
     };
   }
+
+  // ─────────────────────────────
+  // কে কে react করেছে (modal-এর জন্য) — নিজেকেও ধরে
+  // ─────────────────────────────
+  async getReactors(postId: string, userId?: string) {
+    const hiddenUserIds =
+      await this.blocksService.getHiddenUserIds(userId);
+
+    const rows = await this.prisma.postReaction.findMany({
+      where: { postId, userId: { notIn: hiddenUserIds } },
+      select: {
+        type: true,
+        createdAt: true,
+        user: { select: { id: true, name: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return rows.map((r) => ({
+      userId: r.user.id,
+      name: r.user.name,
+      type: r.type,
+      createdAt: r.createdAt,
+      entity: null,
+    }));
+  }
 }

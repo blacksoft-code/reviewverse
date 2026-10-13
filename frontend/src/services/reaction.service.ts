@@ -13,6 +13,16 @@ export type ReactionSummary = {
   myReaction: ReactionType | null;
 };
 
+// "কে কে react করেছে" — modal-এর এক সারি
+export type Reactor = {
+  userId: string;
+  name: string;
+  type: ReactionType;
+  createdAt: string;
+  // business হিসেবে react করলে business-এর তথ্য
+  entity: { id: string; name: string; slug: string; logo: string | null } | null;
+};
+
 type ApiEnvelope<T> = {
   success: boolean;
   statusCode: number;
@@ -46,5 +56,11 @@ export async function getReactionSummary(
 ) {
   return apiFetch<ApiEnvelope<ReactionSummary>>(
     `/reviews/${reviewId}/reactions/summary`,
+  );
+}
+
+export async function getReviewReactors(reviewId: string) {
+  return apiFetch<ApiEnvelope<Reactor[]>>(
+    `/reviews/${reviewId}/reactions/users`,
   );
 }

@@ -70,9 +70,9 @@ export default function CommentSection({
   const { user } = useAuth();
   const { activeBusiness } = useBusinessContext();
 
-  // এই business-এর profile থেকে দেখছি কিনা (তখন comment business-এর নামে যাবে)
-  const actingAsEntity =
-    !!reviewEntityId && activeBusiness?.id === reviewEntityId;
+  // Business mode-এ থাকলে সব comment ঐ business-এর নামে যায়,
+  // personal mode-এ user-এর নিজের নামে
+  const actingAsEntity = !!activeBusiness;
 
   const [data, setData] =
     useState<CommentsResponse | null>(null);

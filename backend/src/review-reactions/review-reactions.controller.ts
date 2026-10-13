@@ -83,4 +83,19 @@ export class ReviewReactionsController {
       actingEntityId,
     );
   }
+
+  @Get('users')
+  @UseGuards(OptionalJwtAuthGuard)
+  @ApiOperation({
+    summary: 'Who reacted (with reaction type) — for the reactors modal',
+  })
+  getReactors(
+    @Param('reviewId') reviewId: string,
+    @Req() req: any,
+  ) {
+    return this.reactionsService.getReactors(
+      reviewId,
+      req.user?.userId,
+    );
+  }
 }

@@ -120,9 +120,6 @@ export class ReviewReactionsService {
             where: {
               userId_reviewId: { userId, reviewId },
             },
-            include: {
-              review: { select: { entityId: true } },
-            },
           })
         : Promise.resolve(null),
     ]);
@@ -142,25 +139,48 @@ export class ReviewReactionsService {
       total += g._count.type;
     }
 
-    // Business হিসেবে দেওয়া reaction শুধু ঐ business-এর profile-এ "আমার reaction";
-    // personal reaction ঐ business-এর নিজের profile-এ "আমার" হিসেবে ধরা হয় না।
-    let mine = myReaction?.type ?? null;
-
-    if (myReaction) {
-      const viewingAsOwnerEntity =
-        actingEntityId === myReaction.review.entityId;
-
-      if (myReaction.entityId) {
-        if (myReaction.entityId !== actingEntityId) mine = null;
-      } else if (viewingAsOwnerEntity) {
-        mine = null;
-      }
-    }
+    // Reaction যে "পরিচয়ে" (personal বা কোনো business) দেওয়া হয়েছে, সেই
+    // পরিচয়েই "আমার reaction" হিসেবে দেখায়
+    const mine =
+      myReaction &&
+      (myReaction.entityId ?? null) === (actingEntityId ?? null)
+        ? myReaction.type
+        : null;
 
     return {
       total,
       counts,
       myReaction: mine,
     };
+  }
+
+  // ─────────────────────────────
+  // কে কে react করেছে (Facebook-এর মতো modal-এর জন্য) — নিজেকেও ধরে।
+  // Business হিসেবে react করলে business-এর নাম/লোগো (entity) আসে।
+  // ─────────────────────────────
+  async getReactors(reviewId: string, userId?: string) {
+    const hiddenUserIds =
+      await this.blocksService.getHiddenUserIds(userId);
+
+    const rows = await this.prisma.reviewReaction.findMany({
+      where: { reviewId, userId: { notIn: hiddenUserIds } },
+      select: {
+        type: true,
+        createdAt: true,
+        user: { select: { id: true, name: true } },
+        entity: {
+          select: { id: true, name: true, slug: true, logo: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return rows.map((r) => ({
+      userId: r.user.id,
+      name: r.user.name,
+      type: r.type,
+      createdAt: r.createdAt,
+      entity: r.entity,
+    }));
   }
 }

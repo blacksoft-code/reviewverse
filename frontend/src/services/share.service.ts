@@ -1,5 +1,9 @@
 import { apiFetch } from '@/lib/api';
-import type { ReactionType, ReactionSummary } from './reaction.service';
+import type {
+  ReactionType,
+  ReactionSummary,
+  Reactor,
+} from './reaction.service';
 import type { ReviewCommentReply } from './comment.service';
 
 export type { ReactionType, ReactionSummary };
@@ -163,5 +167,11 @@ export async function deleteShareComment(commentId: string) {
   return apiFetch<ApiEnvelope<{ message: string }>>(
     `/shares/comments/${commentId}`,
     { method: 'DELETE' },
+  );
+}
+
+export async function getShareReactors(shareId: string) {
+  return apiFetch<ApiEnvelope<Reactor[]>>(
+    `/shares/${shareId}/reactions/users`,
   );
 }
