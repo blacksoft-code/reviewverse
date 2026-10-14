@@ -16,6 +16,7 @@ import ReactionButton from '@/components/reviews/ReactionButton';
 import CommentSection from '@/components/reviews/CommentSection';
 import { Review, getReviewsByEntity } from '@/services/review.service';
 import { getEntityFollowersCount } from '@/services/entity.service';
+import { isGoogleMapsUrl } from '@/lib/google-maps';
 import { getEntityQuestions } from '@/services/entity-question.service';
 
 import {
@@ -581,6 +582,15 @@ export default function BusinessHomePage() {
   async function handleSaveInfo(e: FormEvent) {
     e.preventDefault();
 
+    // Maps link দিলে অবশ্যই Google Maps-এর হতে হবে (খালি হলে মুছে যাবে)
+    const mapsUrl = (form.googleMapsUrl ?? '').trim();
+
+    if (mapsUrl && !isGoogleMapsUrl(mapsUrl)) {
+      setError('Please enter a valid Google Maps link.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     setSavingInfo(true);
     setError('');
 
@@ -604,6 +614,9 @@ export default function BusinessHomePage() {
 
           website:
             form.website || undefined,
+
+          // খালি string পাঠালে backend link টা মুছে দেয় (delete)
+          googleMapsUrl: (form.googleMapsUrl ?? '').trim(),
 
           email:
             form.email ?? undefined,
@@ -1527,6 +1540,65 @@ export default function BusinessHomePage() {
                       }
                       className={ui.input}
                     />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className={ui.label}>
+                      Google Maps link
+                    </label>
+
+                    <div className="flex items-start gap-2">
+                      <input
+                        type="url"
+                        inputMode="url"
+                        placeholder="https://maps.app.goo.gl/..."
+                        value={form.googleMapsUrl ?? ''}
+                        onChange={(e) =>
+                          handleFormChange(
+                            'googleMapsUrl',
+                            e.target.value,
+                          )
+                        }
+                        className={`${ui.input} min-w-0 flex-1`}
+                      />
+
+                      {(form.googleMapsUrl ?? '').trim() && (
+                        <>
+                          <a
+                            href={(form.googleMapsUrl ?? '').trim()}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`mt-1.5 ${ui.btnGhost}`}
+                          >
+                            Test
+                          </a>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleFormChange('googleMapsUrl', '')
+                            }
+                            className={`mt-1.5 ${ui.btnDangerSm} !py-2.5`}
+                          >
+                            Remove
+                          </button>
+                        </>
+                      )}
+                    </div>
+
+                    {(form.googleMapsUrl ?? '').trim() &&
+                    !isGoogleMapsUrl(form.googleMapsUrl ?? '') ? (
+                      <p className="mt-1.5 text-xs text-[#d70015]">
+                        Please enter a valid Google Maps link.
+                      </p>
+                    ) : (
+                      <p className="mt-1.5 text-xs text-[#86868b]">
+                        Open your place in Google Maps, tap Share,
+                        copy the link and paste it here. Leave it
+                        empty to remove the button from your
+                        profile.
+                      </p>
+                    )}
                   </div>
 
                   <div className="sm:col-span-2">

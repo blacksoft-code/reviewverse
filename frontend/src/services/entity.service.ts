@@ -18,6 +18,7 @@ export type Entity = {
   updatedAt: string;
   category: Category;
   location?: string | null;
+  googleMapsUrl?: string | null;
   amenities?: {
     id: string;
     name: string;

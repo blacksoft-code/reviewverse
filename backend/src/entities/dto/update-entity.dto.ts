@@ -3,9 +3,17 @@ import {
   IsOptional,
   IsString,
   IsUrl,
+  Matches,
+  MaxLength,
+  ValidateIf,
 } from 'class-validator';
 
 import { ApiPropertyOptional } from '@nestjs/swagger';
+
+// শুধু Google Maps-এর link গ্রহণযোগ্য (google.com/maps, maps.google.com,
+// maps.app.goo.gl, goo.gl/maps)
+export const GOOGLE_MAPS_URL_REGEX =
+  /^https?:\/\/(?:(?:www\.|maps\.)?google\.(?:com|co\.[a-z]{2}|com\.[a-z]{2}|[a-z]{2})\/maps|maps\.google\.(?:com|co\.[a-z]{2}|com\.[a-z]{2}|[a-z]{2})(?:\/|\?|$)|maps\.app\.goo\.gl\/|goo\.gl\/maps(?:\/|\?|$))/i;
 
 export class UpdateEntityDto {
   @ApiPropertyOptional({ example: 'Burger King' })
@@ -44,6 +52,20 @@ export class UpdateEntityDto {
   @IsOptional()
   @IsUrl()
   website?: string;
+
+  @ApiPropertyOptional({
+    example: 'https://maps.app.goo.gl/AbCdEf123',
+    description:
+      'Google Maps link। খালি string ("") পাঠালে link মুছে যাবে',
+  })
+  // খালি/null হলে validation বাদ — যাতে link delete করা যায়
+  @ValidateIf((o) => !!o.googleMapsUrl)
+  @IsUrl({ require_protocol: true })
+  @Matches(GOOGLE_MAPS_URL_REGEX, {
+    message: 'googleMapsUrl must be a valid Google Maps link',
+  })
+  @MaxLength(500)
+  googleMapsUrl?: string | null;
 
   @ApiPropertyOptional({
     example: 'contact@burgerking.com',

@@ -186,12 +186,17 @@ async update(
   // amenityIds আলাদা করে নিচ্ছি কারণ এটা সরাসরি Prisma scalar field
   // না — relation হিসেবে "set" দিয়ে হ্যান্ডেল করতে হবে। বাকি সব
   // ফিল্ড আগের মতোই সরাসরি dto থেকে যাচ্ছে।
-  const { amenityIds, paymentMethodIds, ...rest } = dto;
+  const { amenityIds, paymentMethodIds, googleMapsUrl, ...rest } =
+    dto;
  
   return this.prisma.entity.update({
     where: { id },
     data: {
       ...rest,
+      // Maps link: খালি string পাঠালে মুছে (null) যাবে; পাঠানো না হলে অপরিবর্তিত
+      ...(googleMapsUrl !== undefined && {
+        googleMapsUrl: googleMapsUrl?.trim() || null,
+      }),
       // এই দুটোর কোনোটা পাঠানো হলে তবেই বদলাবে — undefined থাকলে
       // (ফর্মের এই অংশ touch না করলে) পুরনোটা অক্ষত থাকবে।
       ...(amenityIds !== undefined && {

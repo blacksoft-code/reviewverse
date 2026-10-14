@@ -53,6 +53,17 @@ export default async function AboutPage({
             <p className="mt-2 text-gray-400">
               {entity.location || 'Not provided'}
             </p>
+
+            {entity.googleMapsUrl && (
+              <a
+                href={entity.googleMapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-block text-sm text-blue-400 hover:underline"
+              >
+                📍 View on Google Maps
+              </a>
+            )}
           </div>
 
           {/* Phone */}

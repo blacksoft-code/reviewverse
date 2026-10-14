@@ -272,12 +272,13 @@ model Entity {
 
   description String?
 
-  location     String?
-  locationId   String?
-  locationNode Location? @relation(fields: [locationId], references: [id])
-  phone        String?
-  website      String?
-  email        String?
+  location      String?
+  locationId    String?
+  locationNode  Location? @relation(fields: [locationId], references: [id])
+  phone         String?
+  website       String?
+  googleMapsUrl String?   @db.VarChar(500)
+  email         String?
 
   businessHours  BusinessHour[]
   priceRange     String?

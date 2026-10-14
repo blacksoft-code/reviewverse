@@ -12,6 +12,7 @@ export type EntityDetail = {
   locationId: string | null;
   phone: string | null;
   website: string | null;
+  googleMapsUrl: string | null;
   email: string | null;
 
   priceRange: string | null;
@@ -19,7 +20,7 @@ export type EntityDetail = {
 
   coverPhoto: string | null;
   logo: string | null;
-
+  
   amenities: { id: string; name: string }[];
   paymentMethods: { id: string; name: string }[];
 

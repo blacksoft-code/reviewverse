@@ -18,6 +18,7 @@ export type EntityHeaderData = {
   isVerified: boolean;
   averageRating: number;
   reviewCount: number;
+  googleMapsUrl?: string | null;
   category: {
     name: string;
   };
@@ -168,6 +169,18 @@ export default function EntityHeader({
             <EntityActions entityId={entity.id} />
             <ClaimBusinessButton entityId={entity.id} />
 
+            {/* Google Maps — click করলে নতুন tab-এ location খোলে */}
+            {entity.googleMapsUrl && (
+              <a
+                href={entity.googleMapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-lg border px-5 py-2.5 text-sm font-medium hover:bg-gray-50"
+              >
+                📍 View on Maps
+              </a>
+            )}
+
             <button
               type="button"
               className="rounded-lg border px-5 py-2.5 text-sm font-medium hover:bg-gray-50"
@@ -220,9 +233,22 @@ export default function EntityHeader({
               type="button"
               className="rounded-lg border px-4 py-3 text-sm font-medium hover:bg-[#B91C1C]"
             >
+              📷 Add photos
+            </button>
+
+            <button
+              type="button"
+              className="rounded-lg border px-4 py-3 text-sm font-medium hover:bg-[#B91C1C]"
+            >
               🔖 Save
             </button>
 
+            <button
+              type="button"
+              className="rounded-lg border px-4 py-3 text-sm font-medium hover:bg-[#B91C1C]"
+            >
+              ↗ Share
+            </button>
           </div>
         </section>
       </div>
