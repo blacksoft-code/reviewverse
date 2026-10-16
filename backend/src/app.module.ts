@@ -32,6 +32,7 @@ import { SubCategoriesModule } from './sub-categories/subcategories.module';
 import { LocationsModule } from './locations/locations.module';
 import { EntityQuestionsModule } from './entity-questions/entity-questions.module';
 import { SharesModule } from './shares/shares.module';
+import { EntityVerificationsModule } from './entity-verifications/entity-verifications.module';
 import { BlocksModule } from './blocks/blocks.module';
 
 @Module({
@@ -81,6 +82,7 @@ import { BlocksModule } from './blocks/blocks.module';
     LocationsModule,
     EntityQuestionsModule,
     SharesModule,
+    EntityVerificationsModule,
     BlocksModule,
   ],
   controllers: [AppController],

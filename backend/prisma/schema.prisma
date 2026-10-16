@@ -44,12 +44,11 @@ model User {
 
   livesInLocationId String?
   livesInLocation   Location? @relation("UserLivesIn", fields: [livesInLocationId], references: [id])
-
-  fromLocationId String?
-  fromLocation   Location? @relation("UserFrom", fields: [fromLocationId], references: [id])
-  birthday       DateTime?
-  gender         Gender?
-  bio            String?
+  fromLocationId    String?
+  fromLocation      Location? @relation("UserFrom", fields: [fromLocationId], references: [id])
+  birthday          DateTime?
+  gender            Gender?
+  bio               String?
 
   friendListVisibility FriendListVisibility @default(PUBLIC)
   role                 Role                 @default(USER)
@@ -81,14 +80,16 @@ model User {
   entityMemberships EntityMembership[]
   entityClaims      EntityClaim[]
 
-  entityPosts     EntityPost[]
-  reviewReactions ReviewReaction[]
-  reviewComments  ReviewComment[]
-  postReactions   PostReaction[]
-  postComments    PostComment[]
-  shares          Share[]
-  shareReactions  ShareReaction[]
-  shareComments   ShareComment[]
+  entityPosts              EntityPost[]
+  reviewReactions          ReviewReaction[]
+  reviewComments           ReviewComment[]
+  postReactions            PostReaction[]
+  postComments             PostComment[]
+  verificationApplications EntityVerification[] @relation("VerificationApplicant")
+  verificationReviews      EntityVerification[] @relation("VerificationReviewer")
+  shares                   Share[]
+  shareReactions           ShareReaction[]
+  shareComments            ShareComment[]
 
   askedQuestions    EntityQuestion[] @relation("QuestionAsker")
   answeredQuestions EntityQuestion[] @relation("QuestionAnswerer")
@@ -119,6 +120,7 @@ enum NotificationType {
   SHARE_REPLY
   REVIEW_SHARED
   POST_SHARED
+  VERIFICATION_UPDATE
 }
 
 model Notification {
@@ -300,6 +302,10 @@ model Entity {
 
   averageRating Float @default(0)
 
+  isVerified    Boolean   @default(false)
+  verifiedAt    DateTime?
+  verifiedUntil DateTime?
+
   createdById   String?
   categoryId    String?
   subCategoryId String?
@@ -311,11 +317,12 @@ model Entity {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  memberships EntityMembership[]
-  claims      EntityClaim[]
-  posts       EntityPost[]
-  offerings   Offering[]
-  questions   EntityQuestion[]
+  memberships   EntityMembership[]
+  claims        EntityClaim[]
+  posts         EntityPost[]
+  offerings     Offering[]
+  questions     EntityQuestion[]
+  verifications EntityVerification[]
 
   reviewComments  ReviewComment[]  @relation("ReviewCommentEntity")
   reviewReactions ReviewReaction[] @relation("ReviewReactionEntity")
@@ -770,4 +777,79 @@ model ShareComment {
   @@index([shareId])
   @@index([parentId])
   @@index([userId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Business Verification — "Verified" badge-এর আবেদন ও review।
+// Status: PENDING → UNDER_REVIEW → APPROVED / REJECTED।
+// APPROVED হলে Entity.isVerified = true (১ বছর validity), আর Admin
+// পরে REVOKED করতে পারে; মেয়াদ শেষ হলে EXPIRED (renew করতে হয়)।
+// Document-এর file private ও encrypted — DB-তে শুধু metadata।
+// ─────────────────────────────────────────────────────────────
+enum VerificationStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  REVOKED
+  EXPIRED
+}
+
+enum VerificationDocType {
+  NID
+  PASSPORT
+  BUSINESS_REGISTRATION
+  TRADE_LICENSE
+  OTHER
+}
+
+model EntityVerification {
+  id String @id @default(uuid())
+
+  entityId    String
+  applicantId String
+
+  status VerificationStatus @default(PENDING)
+
+  applicantNote String? @db.VarChar(1000)
+
+  reviewerId String?
+  reviewedAt DateTime?
+  // reject বা revoke করার কারণ — business-কে দেখানো হয়
+  reviewNote String?   @db.VarChar(1000)
+
+  approvedAt DateTime?
+  expiresAt  DateTime?
+
+  entity    Entity @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  applicant User   @relation("VerificationApplicant", fields: [applicantId], references: [id], onDelete: Cascade)
+  reviewer  User?  @relation("VerificationReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+
+  documents VerificationDocument[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([entityId, createdAt])
+  @@index([status, createdAt])
+}
+
+model VerificationDocument {
+  id String @id @default(uuid())
+
+  verificationId String
+
+  type         VerificationDocType
+  originalName String
+  mimeType     String
+  size         Int
+
+  // Private disk-এ encrypted file-এর নাম (public URL নেই)
+  storageKey String @unique
+
+  verification EntityVerification @relation(fields: [verificationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([verificationId])
 }
