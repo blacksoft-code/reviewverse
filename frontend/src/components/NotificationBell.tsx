@@ -42,6 +42,7 @@ const BUSINESS_NOTIFICATION_TYPES = new Set([
   'QUESTION_ASKED',
   'ENTITY_COMMENT_REPLY',
   'POST_SHARED',
+  'VERIFICATION_UPDATE',
 ]);
 
 export default function NotificationBell() {

@@ -25,6 +25,9 @@ export function getNotificationHref(
           n.postId ? `&postId=${n.postId}` : ''
         }`;
 
+      case 'VERIFICATION_UPDATE':
+        return `${dashboard}/settings`;
+
       case 'NEW_ENTITY_FOLLOWER':
       case 'CLAIM_APPROVED':
         return `${dashboard}?tab=overview`;

@@ -21,7 +21,8 @@ export type NotificationType =
   | 'SHARE_COMMENT'
   | 'SHARE_REPLY'
     'REVIEW_SHARED'
-  | 'POST_SHARED';
+  | 'POST_SHARED'
+    'VERIFICATION_UPDATE';
 
 export interface AppNotification {
   id: string;

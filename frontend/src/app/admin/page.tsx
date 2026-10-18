@@ -36,6 +36,12 @@ const sections: AdminSection[] = [
     emoji: '📋',
   },
   {
+    href: '/admin/verifications',
+    title: 'Verifications',
+    description: 'Business verification আবেদন ও document review করা।',
+    emoji: '✅',
+  },
+  {
     href: '/admin/locations',
     title: 'Locations',
     description: 'Location tree দেখা, rename, move, delete করা।',
