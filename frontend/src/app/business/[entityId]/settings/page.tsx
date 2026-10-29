@@ -7,6 +7,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useBusinessContext } from '@/context/BusinessContext';
 import { getEntityById } from '@/services/entity-management.service';
+import PlanBillingSection from '@/components/plans/PlanBillingSection';
 import {
   DOC_TYPE_LABELS,
   STATUS_LABELS,
@@ -361,6 +362,12 @@ export default function BusinessSettingsPage() {
             {error}
           </p>
         )}
+
+        {/* ===================================================== */}
+        {/* PLAN & BILLING */}
+        {/* ===================================================== */}
+
+        <PlanBillingSection entityId={entityId} />
 
         {/* ===================================================== */}
         {/* VERIFY THIS BUSINESS */}

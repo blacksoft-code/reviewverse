@@ -17,6 +17,8 @@ import CommentSection from '@/components/reviews/CommentSection';
 import { Review, getReviewsByEntity } from '@/services/review.service';
 import { getEntityFollowersCount } from '@/services/entity.service';
 import { isGoogleMapsUrl } from '@/lib/google-maps';
+import { PlanUsage, getPlanUsage } from '@/services/plan.service';
+import UsageBar from '@/components/plans/UsageBar';
 import { getEntityQuestions } from '@/services/entity-question.service';
 
 import {
@@ -52,6 +54,7 @@ import {
   Offering,
   deleteOffering,
   getOfferingsByEntity,
+  setOfferingVisibility,
   updateOffering,
 } from '@/services/offering.service';
 
@@ -95,6 +98,9 @@ export default function BusinessHomePage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [followersCount, setFollowersCount] = useState(0);
   const [unansweredCount, setUnansweredCount] = useState(0);
+
+  // Plan আর offering-এর ব্যবহার (Services tab-এর counter)
+  const [planUsage, setPlanUsage] = useState<PlanUsage | null>(null);
 
   // কোন (user + offering) group-এর পুরনো review গুলো "more..." দিয়ে খোলা আছে
   const [expandedReviewGroups, setExpandedReviewGroups] =
@@ -288,6 +294,7 @@ export default function BusinessHomePage() {
         reviewsRes,
         followersRes,
         questionsRes,
+        usageRes,
       ] = await Promise.all([
         getEntityById(entityId),
         getManageFeed(entityId),
@@ -297,6 +304,7 @@ export default function BusinessHomePage() {
         getReviewsByEntity(entityId).catch(() => null),
         getEntityFollowersCount(entityId).catch(() => null),
         getEntityQuestions(entityId).catch(() => null),
+        getPlanUsage(entityId).catch(() => null),
       ]);
 
       setEntity(entityRes.data);
@@ -319,6 +327,7 @@ export default function BusinessHomePage() {
 
       setPosts(postsRes.data);
       setOfferings(offeringsRes.data);
+      setPlanUsage(usageRes?.data ?? null);
 
       setReviews(reviewsRes?.data ?? []);
       setFollowersCount(followersRes?.data ?? 0);
@@ -537,6 +546,41 @@ export default function BusinessHomePage() {
   // Delete Offering
   // ─────────────────────────────
 
+  // Offering বদলালে (বানানো/মোছা/lock) তালিকা আর counter সার্ভার থেকে আবার আনা —
+  // কারণ সার্ভার নিজে থেকে locked offering খুলে দিতে পারে (যেমন মোছার পর slot খালি হলে)
+  async function refreshOfferingsAndUsage() {
+    try {
+      const [offeringsRes, usageRes] = await Promise.all([
+        getOfferingsByEntity(entityId, { manage: true }),
+        getPlanUsage(entityId).catch(() => null),
+      ]);
+
+      setOfferings(offeringsRes.data);
+      setPlanUsage(usageRes?.data ?? null);
+    } catch {
+      // আগের তালিকাই থাকুক
+    }
+  }
+
+  // Owner নিজে বাছে কোনটা public থাকবে (plan-এর limit-এর ভেতরে)
+  async function handleToggleVisibility(offering: Offering) {
+    setActingOnOffering(offering.id);
+    setError('');
+
+    try {
+      await setOfferingVisibility(offering.id, !offering.isPublic);
+      await refreshOfferingsAndUsage();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Could not change visibility',
+      );
+    } finally {
+      setActingOnOffering(null);
+    }
+  }
+
   async function handleDeleteOffering(
     offeringId: string,
   ) {
@@ -549,6 +593,8 @@ export default function BusinessHomePage() {
       setOfferings((prev) =>
         prev.filter((o) => o.id !== offeringId),
       );
+
+      await refreshOfferingsAndUsage();
     } catch (err) {
       setError(
         err instanceof Error
@@ -1290,21 +1336,63 @@ export default function BusinessHomePage() {
 
               <OfferingForm
                 entityId={entityId}
-                onCreated={(offering) =>
-                  setOfferings((prev) => [offering, ...prev])
-                }
+                onCreated={(offering) => {
+                  setOfferings((prev) => [offering, ...prev]);
+                  refreshOfferingsAndUsage();
+                }}
                 wrapperClassName="space-y-3 rounded-3xl bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)] ring-1 ring-black/5"
                 submitButtonClassName={ui.btn}
               />
 
-              {offerings.some((o) => !o.isPublic) && (
-                <p className="rounded-2xl bg-[#ff9f0a]/10 p-4 text-sm text-[#a15c00]">
-                  🔒{' '}
-                  {offerings.filter((o) => !o.isPublic).length}{' '}
-                  of your services are locked. Customers can&apos;t see
-                  or review them, but old reviews stay. Upgrade your
-                  plan to unlock more.
-                </p>
+              {/* Plan আর ব্যবহার */}
+              {planUsage && (
+                <div className={ui.card}>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-[13px] font-medium text-[#6e6e73]">
+                        Your plan
+                      </p>
+                      <p className="text-[22px] font-semibold">
+                        {planUsage.plan.config.name}
+                      </p>
+                    </div>
+
+                    <Link
+                      href={`/business/${entityId}/settings#plan`}
+                      className={ui.btnGhost}
+                    >
+                      {planUsage.plan.tier === 'PRO'
+                        ? 'Manage plan'
+                        : 'Upgrade plan'}
+                    </Link>
+                  </div>
+
+                  <div className="mt-5 space-y-4">
+                    <UsageBar
+                      label="Public services"
+                      value={planUsage.publicCount}
+                      max={planUsage.publicLimit}
+                    />
+                    <UsageBar
+                      label="Total services"
+                      value={planUsage.totalCount}
+                      max={planUsage.totalLimit}
+                    />
+                  </div>
+
+                  {planUsage.lockedCount > 0 && (
+                    <p className="mt-4 rounded-2xl bg-[#ff9f0a]/10 p-4 text-sm text-[#a15c00]">
+                      🔒 {planUsage.lockedCount} locked{' '}
+                      {planUsage.lockedCount === 1
+                        ? 'service'
+                        : 'services'}
+                      . Customers can&apos;t see or review{' '}
+                      {planUsage.lockedCount === 1 ? 'it' : 'them'},
+                      but old reviews stay. Lock one of your public
+                      services to make room, or upgrade your plan.
+                    </p>
+                  )}
+                </div>
               )}
 
               {offerings.length === 0 ? (
@@ -1435,6 +1523,29 @@ export default function BusinessHomePage() {
                           className={ui.btnGhostSm}
                         >
                           Edit
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleToggleVisibility(offering)}
+                          disabled={
+                            actingOnOffering === offering.id ||
+                            (!offering.isPublic &&
+                              !!planUsage &&
+                              planUsage.publicCount >=
+                                planUsage.publicLimit)
+                          }
+                          title={
+                            !offering.isPublic &&
+                            !!planUsage &&
+                            planUsage.publicCount >=
+                              planUsage.publicLimit
+                              ? 'Public limit reached — lock another service or upgrade your plan'
+                              : undefined
+                          }
+                          className={ui.btnGhostSm}
+                        >
+                          {offering.isPublic ? 'Lock' : 'Make public'}
                         </button>
 
                         <button
