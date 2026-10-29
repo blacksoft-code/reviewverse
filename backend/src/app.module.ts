@@ -33,6 +33,7 @@ import { LocationsModule } from './locations/locations.module';
 import { EntityQuestionsModule } from './entity-questions/entity-questions.module';
 import { SharesModule } from './shares/shares.module';
 import { EntityVerificationsModule } from './entity-verifications/entity-verifications.module';
+import { PlansModule } from './plans/plans.module';
 import { BlocksModule } from './blocks/blocks.module';
 
 @Module({
@@ -83,6 +84,7 @@ import { BlocksModule } from './blocks/blocks.module';
     EntityQuestionsModule,
     SharesModule,
     EntityVerificationsModule,
+    PlansModule,
     BlocksModule,
   ],
   controllers: [AppController],

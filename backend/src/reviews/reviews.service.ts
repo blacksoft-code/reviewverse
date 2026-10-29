@@ -1,4 +1,5 @@
 import { 
+  BadRequestException,
   Injectable,
   ForbiddenException,
   NotFoundException, 
@@ -91,6 +92,31 @@ export class ReviewsService {
     createReviewDto: CreateReviewDto,
   ) {
     console.log('CREATE REVIEW CALLED');
+
+    // Offering দিলে সেটা এই business-এর হতে হবে, আর locked হলে নতুন review
+    // নেওয়া যাবে না (আগের review যেমন ছিল তেমনই থাকে)। এটা আগে যাচাই করা হয়,
+    // যাতে ব্যর্থ হলে পুরনো review-এর isLatest বদলে না যায়।
+    if (createReviewDto.offeringId) {
+      const offering = await this.prisma.offering.findUnique({
+        where: { id: createReviewDto.offeringId },
+        select: { entityId: true, isPublic: true },
+      });
+
+      if (
+        !offering ||
+        offering.entityId !== createReviewDto.entityId
+      ) {
+        throw new BadRequestException(
+          'This offering does not belong to this business.',
+        );
+      }
+
+      if (!offering.isPublic) {
+        throw new BadRequestException(
+          'This offering is currently locked and cannot be reviewed.',
+        );
+      }
+    }
 
     // এই user আগে এই একই entity-তে, একই item (বা item ছাড়া general review
     // হিসেবে) কোনো review দিয়ে থাকলে সেটাকে আর "latest" ধরা হবে না —

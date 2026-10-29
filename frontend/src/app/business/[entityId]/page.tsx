@@ -291,7 +291,8 @@ export default function BusinessHomePage() {
       ] = await Promise.all([
         getEntityById(entityId),
         getManageFeed(entityId),
-        getOfferingsByEntity(entityId),
+        // dashboard-এ locked offering সহ সব দেখা যায় (manage)
+        getOfferingsByEntity(entityId, { manage: true }),
         // overview-এর অতিরিক্ত data — fail করলে dashboard ভাঙবে না
         getReviewsByEntity(entityId).catch(() => null),
         getEntityFollowersCount(entityId).catch(() => null),
@@ -1296,6 +1297,16 @@ export default function BusinessHomePage() {
                 submitButtonClassName={ui.btn}
               />
 
+              {offerings.some((o) => !o.isPublic) && (
+                <p className="rounded-2xl bg-[#ff9f0a]/10 p-4 text-sm text-[#a15c00]">
+                  🔒{' '}
+                  {offerings.filter((o) => !o.isPublic).length}{' '}
+                  of your services are locked. Customers can&apos;t see
+                  or review them, but old reviews stay. Upgrade your
+                  plan to unlock more.
+                </p>
+              )}
+
               {offerings.length === 0 ? (
                 <p className="text-[15px] text-[#6e6e73]">
                   No services yet — add your first one above.
@@ -1396,6 +1407,12 @@ export default function BusinessHomePage() {
                               <span className="text-xs text-[#86868b]">
                                 {offering.type}
                               </span>
+
+                              {!offering.isPublic && (
+                                <span className="ml-2 rounded-full bg-[#ff9f0a]/15 px-2 py-0.5 text-xs font-medium text-[#a15c00]">
+                                  🔒 Locked
+                                </span>
+                              )}
                             </div>
 
                             <span className="whitespace-nowrap text-[17px] font-semibold">

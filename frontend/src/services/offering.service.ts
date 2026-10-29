@@ -8,6 +8,8 @@ export type Offering = {
   price: number;
   description: string | null;
   averageRating: number;
+  // false = locked (plan-এর limit-এর বাইরে) — শুধু owner-এর dashboard-এ দেখা যায়
+  isPublic: boolean;
   media: { id: string; url: string }[];
   createdAt: string;
   updatedAt: string;
@@ -35,9 +37,30 @@ export type UpdateOfferingInput = Partial<CreateOfferingInput>;
 // PUBLIC
 // =========================
 
-export async function getOfferingsByEntity(entityId: string) {
+// manage = true শুধু business dashboard-এর জন্য — owner/manager হলে locked
+// offering সহ সব আসে। বাকি সব জায়গায় (public page, review form) শুধু public।
+export async function getOfferingsByEntity(
+  entityId: string,
+  options?: { manage?: boolean },
+) {
   return apiFetch<ApiEnvelope<Offering[]>>(
-    `/offerings/entity/${entityId}`,
+    `/offerings/entity/${entityId}${
+      options?.manage ? '?manage=true' : ''
+    }`,
+  );
+}
+
+// Owner নিজে বাছে কোনটা public থাকবে (plan-এর limit-এর ভেতরে)
+export async function setOfferingVisibility(
+  offeringId: string,
+  isPublic: boolean,
+) {
+  return apiFetch<ApiEnvelope<Offering>>(
+    `/offerings/${offeringId}/visibility`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ isPublic }),
+    },
   );
 }
 

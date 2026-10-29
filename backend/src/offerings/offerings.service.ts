@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -6,6 +7,7 @@ import {
 
 import { PrismaService } from '../prisma/prisma.service';
 import { EntityMembershipsService } from '../entity-memberships/entity-memberships.service';
+import { PlansService } from '../plans/plans.service';
 import { CreateOfferingDto } from './dto/create-offering.dto';
 import { UpdateOfferingDto } from './dto/update-offering.dto';
 
@@ -14,14 +16,29 @@ export class OfferingsService {
   constructor(
     private prisma: PrismaService,
     private entityMemberships: EntityMembershipsService,
+    private plans: PlansService,
   ) {}
 
   // ─────────────────────────────
   // PUBLIC — সবাই দেখতে পাবে (entity-র services/offerings ট্যাব)
   // ─────────────────────────────
-  async findByEntity(entityId: string) {
+  // `manage = true` আর user ঐ business-এর owner/manager হলে locked সহ সবগুলো
+  // (dashboard-এর জন্য); নাহলে শুধু public গুলো — owner নিজেও public page-এ
+  // locked offering দেখে না।
+  async findByEntity(
+    entityId: string,
+    options?: { manage?: boolean; userId?: string | null },
+  ) {
+    const canManage =
+      !!options?.manage &&
+      !!options.userId &&
+      (await this.entityMemberships.hasAccess(
+        entityId,
+        options.userId,
+      ));
+
     return this.prisma.offering.findMany({
-      where: { entityId },
+      where: { entityId, ...(canManage ? {} : { isPublic: true }) },
       include: {
         media: {
           orderBy: { createdAt: 'asc' },
@@ -42,6 +59,7 @@ export class OfferingsService {
     const offerings = await this.prisma.offering.findMany({
       where: {
         type: { contains: query, mode: 'insensitive' },
+        isPublic: true,
       },
       select: { type: true },
       distinct: ['type'],
@@ -76,6 +94,8 @@ export class OfferingsService {
           equals: offeringType,
           mode: 'insensitive',
         },
+        // Locked offering search-এ আসে না
+        isPublic: true,
         entity: {
           locationId: { in: locationIds },
           ...(options?.categoryId && {
@@ -165,6 +185,16 @@ export class OfferingsService {
       );
     }
 
+    // Plan-এর limit: মোট বানানোর সীমা পার হলে আটকাবে; public সীমা পার হলে
+    // নতুনটা locked হয়ে তৈরি হবে
+    const usage = await this.plans.getUsage(entityId);
+
+    if (usage.totalCount >= usage.totalLimit) {
+      throw new ConflictException(
+        `You can create up to ${usage.totalLimit} offerings on your plan.`,
+      );
+    }
+
     return this.prisma.offering.create({
       data: {
         entityId,
@@ -172,6 +202,7 @@ export class OfferingsService {
         type: dto.type,
         price: dto.price,
         description: dto.description,
+        isPublic: usage.publicCount < usage.publicLimit,
       },
       include: {
         media: {
@@ -251,6 +282,57 @@ export class OfferingsService {
       where: { id: offeringId },
     });
 
+    // খালি হওয়া public slot-এ সবচেয়ে পুরনো locked offering খুলে যায়
+    if (offering.isPublic) {
+      await this.plans.fillToLimit(offering.entityId);
+    }
+
     return { message: 'Offering deleted successfully' };
+  }
+
+  // ─────────────────────────────
+  // VISIBILITY — owner নিজে বাছে কোনটা public থাকবে (limit-এর ভেতরে)
+  // ─────────────────────────────
+  async setVisibility(
+    offeringId: string,
+    userId: string,
+    isPublic: boolean,
+  ) {
+    const offering = await this.prisma.offering.findUnique({
+      where: { id: offeringId },
+    });
+
+    if (!offering) {
+      throw new NotFoundException('Offering not found.');
+    }
+
+    const hasAccess = await this.entityMemberships.hasAccess(
+      offering.entityId,
+      userId,
+    );
+
+    if (!hasAccess) {
+      throw new ForbiddenException(
+        'Only the business owner, manager, or employee can change this offering.',
+      );
+    }
+
+    if (isPublic && !offering.isPublic) {
+      const usage = await this.plans.getUsage(offering.entityId);
+
+      if (usage.publicCount >= usage.publicLimit) {
+        throw new ConflictException(
+          `Your plan allows ${usage.publicLimit} public offerings. Lock another one first or upgrade your plan.`,
+        );
+      }
+    }
+
+    return this.prisma.offering.update({
+      where: { id: offeringId },
+      data: { isPublic },
+      include: {
+        media: { orderBy: { createdAt: 'asc' } },
+      },
+    });
   }
 }
