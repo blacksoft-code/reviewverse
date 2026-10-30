@@ -6,12 +6,14 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import {
+  BadgeOverride,
   BillingCycle,
   EntitySubscription,
   PlanTier,
 } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 import { GRACE_DAYS, PLANS, PlanConfig } from './plans.config';
 
@@ -20,6 +22,14 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 // ACTIVE = মেয়াদের ভেতরে, GRACE = মেয়াদ শেষ কিন্তু ৩ দিনের ভেতরে (সুবিধা চালু),
 // FREE = কোনো paid plan নেই (বা grace-ও শেষ)
 export type PlanStatus = 'FREE' | 'ACTIVE' | 'GRACE';
+
+// Blue badge-এর অবস্থা। missing = AUTO মোডে কী কী বাকি (VERIFICATION / PAID_PLAN)
+export type BadgeState = {
+  show: boolean;
+  mode: BadgeOverride;
+  isVerified: boolean;
+  missing: ('VERIFICATION' | 'PAID_PLAN')[];
+};
 
 export type EffectivePlan = {
   tier: PlanTier;
@@ -35,7 +45,10 @@ export class PlansService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PlansService.name);
   private timer?: NodeJS.Timeout;
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notifications: NotificationsService,
+  ) {}
 
   // Start-এ আগের offering গুলোতে limit বসানো (যেমন Free business-এর ৮টার মধ্যে
   // ৫টা public, বাকি ৩টা locked), তারপর প্রতি ঘণ্টায় মেয়াদ-শেষ plan সামলানো
@@ -301,5 +314,146 @@ export class PlansService implements OnModuleInit, OnModuleDestroy {
     }
 
     return this.getUsage(entityId);
+  }
+
+  // ─────────────────────────────
+  // BLUE BADGE
+  //  FORCE_OFF → কখনোই না (plan থাকলেও)
+  //  FORCE_ON  → সবসময় (verification বা plan ছাড়াই, Admin-এর উপহার)
+  //  AUTO      → Verified এবং চালু paid plan (৩ দিনের grace-সহ) — দুটোই লাগে
+  // ─────────────────────────────
+
+  computeBadge(
+    isVerified: boolean,
+    mode: BadgeOverride,
+    plan: EffectivePlan,
+  ): BadgeState {
+    if (mode === 'FORCE_OFF') {
+      return { show: false, mode, isVerified, missing: [] };
+    }
+
+    if (mode === 'FORCE_ON') {
+      return { show: true, mode, isVerified, missing: [] };
+    }
+
+    const missing: BadgeState['missing'] = [];
+
+    if (!isVerified) missing.push('VERIFICATION');
+    if (!plan.config.blueBadgeEligible) missing.push('PAID_PLAN');
+
+    return { show: missing.length === 0, mode, isVerified, missing };
+  }
+
+  async getBadgeState(entityId: string): Promise<BadgeState> {
+    const entity = await this.prisma.entity.findUnique({
+      where: { id: entityId },
+      select: {
+        isVerified: true,
+        badgeOverride: true,
+        subscription: true,
+      },
+    });
+
+    if (!entity) {
+      return {
+        show: false,
+        mode: 'AUTO',
+        isVerified: false,
+        missing: ['VERIFICATION', 'PAID_PLAN'],
+      };
+    }
+
+    return this.computeBadge(
+      entity.isVerified,
+      entity.badgeOverride,
+      this.resolve(entity.subscription),
+    );
+  }
+
+  // ─────────────────────────────
+  // ADMIN
+  // ─────────────────────────────
+
+  async adminListEntities(q?: string, take = 50) {
+    const entities = await this.prisma.entity.findMany({
+      where: q
+        ? { name: { contains: q, mode: 'insensitive' } }
+        : {},
+      orderBy: { createdAt: 'desc' },
+      take: Math.min(Math.max(take, 1), 100),
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        logo: true,
+        createdAt: true,
+        isVerified: true,
+        verifiedUntil: true,
+        badgeOverride: true,
+        subscription: true,
+      },
+    });
+
+    return entities.map((e) => {
+      const plan = this.resolve(e.subscription);
+
+      return {
+        id: e.id,
+        name: e.name,
+        slug: e.slug,
+        logo: e.logo,
+        createdAt: e.createdAt,
+        isVerified: e.isVerified,
+        verifiedUntil: e.verifiedUntil,
+        plan: {
+          tier: plan.tier,
+          name: plan.config.name,
+          status: plan.status,
+          billingCycle: plan.billingCycle,
+          endsAt: plan.endsAt,
+          graceEndsAt: plan.graceEndsAt,
+        },
+        badge: this.computeBadge(e.isVerified, e.badgeOverride, plan),
+      };
+    });
+  }
+
+  async setBadgeMode(entityId: string, mode: BadgeOverride) {
+    const entity = await this.prisma.entity.findUnique({
+      where: { id: entityId },
+      select: { id: true, badgeOverride: true },
+    });
+
+    if (!entity) {
+      throw new NotFoundException('Business not found.');
+    }
+
+    await this.prisma.entity.update({
+      where: { id: entityId },
+      data: { badgeOverride: mode },
+    });
+
+    // Business-এর সবাইকে জানানো (Admin দিলে বা বন্ধ করলে)
+    if (mode !== entity.badgeOverride && mode !== 'AUTO') {
+      const members = await this.prisma.entityMembership.findMany({
+        where: { entityId },
+        select: { userId: true },
+      });
+
+      await this.notifications.notifyMany(
+        members.map((m) => m.userId),
+        {
+          type: 'VERIFICATION_UPDATE',
+          message:
+            mode === 'FORCE_ON'
+              ? 'The ReviewVerse team gave your business the blue badge.'
+              : 'The blue badge was turned off for your business by the ReviewVerse team.',
+          link: `/business/${entityId}/settings`,
+          entityId,
+        },
+      );
+    }
+
+    return this.getBadgeState(entityId);
   }
 }

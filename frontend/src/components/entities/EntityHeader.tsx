@@ -15,7 +15,8 @@ export type EntityHeaderData = {
   name: string;
   coverPhoto: string | null;
   logo: string | null;
-  isVerified: boolean;
+  // Blue badge দেখাবে কিনা (Verified + paid plan, বা Admin দিলে) — Verified থাকা নিজে public না
+  showBlueBadge?: boolean;
   averageRating: number;
   reviewCount: number;
   googleMapsUrl?: string | null;
@@ -27,7 +28,7 @@ export type EntityHeaderData = {
 const TABS = [
   { label: 'Reviews', href: '' },
   { label: 'Posts', href: '/posts' },
-  { label: 'Offerings', href: '/services' },
+  { label: 'Services', href: '/services' },
   { label: 'Photos', href: '/photos' },
   { label: 'Amenities', href: '/amenities' },
   { label: 'Q&A', href: '/qa' },
@@ -114,10 +115,10 @@ export default function EntityHeader({
                 {entity.name}
               </h1>
 
-              {entity.isVerified && (
+              {entity.showBlueBadge && (
                 <span
                   className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-sm text-white"
-                  title="Verified business"
+                  title="Blue badge"
                 >
                   ✓
                 </span>
@@ -177,7 +178,7 @@ export default function EntityHeader({
                 rel="noopener noreferrer"
                 className="rounded-lg border px-5 py-2.5 text-sm font-medium hover:bg-gray-50"
               >
-                📍 View on Maps
+                📍 View on Google Maps
               </a>
             )}
 

@@ -4,7 +4,9 @@ import {
   ForbiddenException,
   Get,
   Param,
+  Patch,
   Put,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -17,6 +19,7 @@ import {
 import { PlansService } from './plans.service';
 import { PLANS } from './plans.config';
 import { SetPlanDto } from './dto/set-plan.dto';
+import { SetBadgeDto } from './dto/set-badge.dto';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -59,7 +62,40 @@ export class PlansController {
       );
     }
 
-    return this.plansService.getUsage(entityId);
+    // Plan ব্যবহার + Blue badge-এর অবস্থা (verified থাকা শুধু এই business জানে)
+    const [usage, badge] = await Promise.all([
+      this.plansService.getUsage(entityId),
+      this.plansService.getBadgeState(entityId),
+    ]);
+
+    return { ...usage, badge, isVerified: badge.isVerified };
+  }
+
+  @Get('admin/entities')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary:
+      '[Admin] Businesses with their plan, verified status and blue badge state',
+  })
+  adminEntities(@Query('q') q?: string) {
+    return this.plansService.adminListEntities(q);
+  }
+
+  @Patch('admin/entity/:entityId/badge')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary:
+      '[Admin] Give (FORCE_ON), turn off (FORCE_OFF) or reset (AUTO) the blue badge',
+  })
+  setBadge(
+    @Param('entityId') entityId: string,
+    @Body() dto: SetBadgeDto,
+  ) {
+    return this.plansService.setBadgeMode(entityId, dto.mode);
   }
 
   @Put('admin/entity/:entityId')

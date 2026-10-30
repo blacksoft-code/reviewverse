@@ -42,6 +42,12 @@ const sections: AdminSection[] = [
     emoji: '✅',
   },
   {
+    href: '/admin/badges',
+    title: 'Plans & blue badge',
+    description: 'Business-এর plan বসানো এবং blue badge দেওয়া/বন্ধ করা।',
+    emoji: '🔵',
+  },
+  {
     href: '/admin/locations',
     title: 'Locations',
     description: 'Location tree দেখা, rename, move, delete করা।',

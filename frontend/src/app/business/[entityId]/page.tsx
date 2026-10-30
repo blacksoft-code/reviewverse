@@ -768,7 +768,7 @@ export default function BusinessHomePage() {
       badge: latestReviews.length,
     },
     { key: 'posts', label: 'Posts', icon: 'posts' },
-    { key: 'offerings', label: 'Services', icon: 'services' },
+    { key: 'offerings', label: 'Offerings', icon: 'services' },
     {
       key: 'qa',
       label: 'Q&A',
@@ -793,7 +793,7 @@ export default function BusinessHomePage() {
       sub: 'Share updates with the people who follow you.',
     },
     offerings: {
-      title: 'Services',
+      title: 'Offerings',
       sub: 'The products and services you offer.',
     },
     qa: {

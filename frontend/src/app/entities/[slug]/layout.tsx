@@ -22,7 +22,7 @@ export default async function EntityLayout({
     coverPhoto: string | null;
     logo: string | null;
     googleMapsUrl?: string | null;
-    isVerified: boolean;
+    showBlueBadge?: boolean;
     averageRating: number;
     category: { name: string };
     reviews: unknown[];
@@ -38,7 +38,7 @@ export default async function EntityLayout({
           name: entity.name,
           coverPhoto: entity.coverPhoto,
           logo: entity.logo,
-          isVerified: entity.isVerified,
+          showBlueBadge: entity.showBlueBadge ?? false,
           averageRating: entity.averageRating,
           reviewCount: entity.reviews?.length ?? 0,
           category: entity.category,

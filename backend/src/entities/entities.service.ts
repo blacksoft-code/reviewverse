@@ -11,6 +11,7 @@ import { EntityMembershipsService } from '../entity-memberships/entity-membershi
 import { UpdateEntityDto } from './dto/update-entity.dto';
 import { LocationsService } from '../locations/locations.service';
 import { OfferingsService } from '../offerings/offerings.service';
+import { PlansService } from '../plans/plans.service';
 
 @Injectable()
 export class EntitiesService {
@@ -19,7 +20,20 @@ export class EntitiesService {
     private entityMemberships: EntityMembershipsService,
     private locationsService: LocationsService,
     private offeringsService: OfferingsService,
+    private plans: PlansService,
   ) {}
+
+  // Public profile-এ শুধু "blue badge দেখাবে কিনা" যায় — Verified থাকা, plan বা
+  // Admin-এর override কিছুই না
+  private async withBadge<T extends { id: string }>(
+    entity: T | null,
+  ) {
+    if (!entity) return entity;
+
+    const badge = await this.plans.getBadgeState(entity.id);
+
+    return { ...entity, showBlueBadge: badge.show };
+  }
 
 async create(
   createEntityDto: CreateEntityDto,
@@ -155,7 +169,7 @@ async findById(id: string) {
     throw new NotFoundException('Business not found.');
   }
 
-  return entity;
+  return this.withBadge(entity);
 }
 
 // Owner/Manager/Employee (যেকোনো EntityMembership role) business info edit করতে পারবে
@@ -251,14 +265,16 @@ async update(
   }
 
   async findBySlug(slug: string) {
-    return this.prisma.entity.findUnique({
+    const entity = await this.prisma.entity.findUnique({
       where: { slug },
       include: { category: true, amenities: true, paymentMethods: true },
     });
+
+    return this.withBadge(entity);
   }
 
   async findOne(slug: string) {
-    return this.prisma.entity.findFirst({
+    const entity = await this.prisma.entity.findFirst({
       where: { 
         OR: [{ slug }, { id: slug }], 
       },
@@ -289,6 +305,8 @@ async update(
         },
       },
     });
+
+    return this.withBadge(entity);
   }
 
   async search(query: string) {

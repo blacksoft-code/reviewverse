@@ -172,6 +172,58 @@ export default function PlanBillingSection({
         )}
       </div>
 
+      {/* ── Blue badge ── */}
+      <div className="mt-4 rounded-2xl bg-[#f5f5f7] p-5">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[15px] font-semibold">Blue badge</p>
+
+          <span
+            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+              usage.badge.show
+                ? 'bg-[#0071e3]/10 text-[#0071e3]'
+                : 'bg-white text-[#6e6e73]'
+            }`}
+          >
+            {usage.badge.show ? 'Showing on your profile' : 'Not showing'}
+          </span>
+        </div>
+
+        {usage.badge.show && usage.badge.mode === 'FORCE_ON' && (
+          <p className="mt-2 text-sm text-[#424245]">
+            The ReviewVerse team gave your business the blue badge.
+          </p>
+        )}
+
+        {usage.badge.show && usage.badge.mode === 'AUTO' && (
+          <p className="mt-2 text-sm text-[#424245]">
+            Your business is verified and has an active paid plan.
+            The badge stays while your plan is active.
+          </p>
+        )}
+
+        {!usage.badge.show && usage.badge.mode === 'FORCE_OFF' && (
+          <p className="mt-2 text-sm text-[#d70015]">
+            The ReviewVerse team has turned the blue badge off for your
+            business.
+          </p>
+        )}
+
+        {!usage.badge.show && usage.badge.mode === 'AUTO' && (
+          <ul className="mt-2 space-y-1 text-sm text-[#424245]">
+            <li>
+              {usage.badge.isVerified ? '✓' : '○'} Verify your business
+              {usage.badge.isVerified
+                ? ' — done'
+                : ' (apply in “Verify this business” below)'}
+            </li>
+            <li>
+              {usage.badge.missing.includes('PAID_PLAN') ? '○' : '✓'}{' '}
+              Choose any paid plan
+            </li>
+          </ul>
+        )}
+      </div>
+
       {/* ── Cycle toggle ── */}
       <div className="mt-8 flex items-center justify-between gap-4">
         <h3 className="text-[17px] font-semibold">All plans</h3>

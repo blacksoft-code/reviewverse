@@ -396,8 +396,10 @@ export default function BusinessSettingsPage() {
                   ✓ {business?.name} is verified
                 </p>
                 <p className="mt-1 text-sm text-[#1d7a37]">
-                  The Verified badge is showing on your public profile.
-                  Valid until {formatDate(state.verifiedUntil)}.
+                  Valid until {formatDate(state.verifiedUntil)}. This is
+                  private — only you and the ReviewVerse team can see
+                  it. To show the blue badge on your public profile you
+                  also need a paid plan (see Plan &amp; billing above).
                 </p>
 
                 {state.renewalDue && !active && (

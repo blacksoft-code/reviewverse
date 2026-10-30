@@ -5,6 +5,7 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { EntityMembershipsModule } from '../entity-memberships/entity-memberships.module'; // ← NEW
 import { LocationsModule } from '../locations/locations.module';
 import { OfferingsModule } from '../offerings/offerings.module';
+import { PlansModule } from '../plans/plans.module';
 
 @Module({
   imports: [
@@ -12,7 +13,8 @@ import { OfferingsModule } from '../offerings/offerings.module';
     EntityMembershipsModule,
     LocationsModule,
     OfferingsModule,
-  ], // ← EntityMembershipsModule যোগ হলো
+    PlansModule,
+  ],
   controllers: [EntitiesController],
   providers: [EntitiesService],
 })
