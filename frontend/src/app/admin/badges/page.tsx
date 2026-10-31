@@ -61,6 +61,8 @@ export default function AdminBadgesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [notice, setNotice] = useState('');
+  const [force, setForce] = useState(false);
 
   // প্রতিটা business-এর plan নির্বাচন (Apply চাপার আগ পর্যন্ত local)
   const [planDraft, setPlanDraft] = useState<
@@ -102,6 +104,7 @@ export default function AdminBadgesPage() {
   async function run(id: string, action: () => Promise<unknown>) {
     setBusyId(id);
     setError('');
+    setNotice('');
 
     try {
       await action();
@@ -153,6 +156,27 @@ export default function AdminBadgesPage() {
             Search
           </button>
         </form>
+
+        <label className="mt-4 flex items-start gap-2 text-sm text-[#424245]">
+          <input
+            type="checkbox"
+            checked={force}
+            onChange={(e) => setForce(e.target.checked)}
+            className="mt-0.5"
+          />
+          <span>
+            Override billing rules (start the plan now, even for a
+            downgrade). Off: an upgrade starts now; a downgrade,
+            monthly↔yearly or Free waits until the current period ends;
+            the same plan renews.
+          </span>
+        </label>
+
+        {notice && (
+          <p className="mt-4 rounded-2xl bg-[#34c759]/10 p-4 text-sm text-[#1d7a37]">
+            {notice}
+          </p>
+        )}
 
         {error && (
           <p className="mt-5 rounded-2xl bg-[#ff3b30]/10 p-4 text-sm text-[#d70015]">
@@ -316,13 +340,26 @@ export default function AdminBadgesPage() {
                         type="button"
                         disabled={busy}
                         onClick={() =>
-                          run(row.id, () =>
-                            adminSetPlan(
+                          run(row.id, async () => {
+                            const res = await adminSetPlan(
                               row.id,
                               draft.plan,
                               draft.cycle,
-                            ),
-                          )
+                              force,
+                            );
+
+                            const r = res.data;
+
+                            setNotice(
+                              r.applied === 'NOW'
+                                ? `${row.name}: plan changed now.`
+                                : r.applied === 'RENEWED'
+                                  ? `${row.name}: plan renewed until ${formatDate(r.effectiveAt)}.`
+                                  : r.applied === 'SCHEDULED'
+                                    ? `${row.name}: change scheduled for ${formatDate(r.effectiveAt)} (when the current period ends).`
+                                    : `${row.name}: no change.`,
+                            );
+                          })
                         }
                         className={btn}
                       >
@@ -330,11 +367,19 @@ export default function AdminBadgesPage() {
                       </button>
                     </div>
 
-                    <p className="mt-1.5 text-xs text-[#86868b]">
-                      The plan starts now and runs for one month or one
-                      year. Locked services unlock or lock to match the
-                      new limit.
-                    </p>
+                    {row.plan.nextPlan && (
+                      <p className="mt-2 text-xs font-medium text-[#0066cc]">
+                        Scheduled:{' '}
+                        {row.plan.nextPlan === 'FREE'
+                          ? 'cancel → Free'
+                          : `${row.plan.nextPlan} (${
+                              row.plan.nextBillingCycle === 'YEARLY'
+                                ? 'yearly'
+                                : 'monthly'
+                            })`}{' '}
+                        on {formatDate(row.plan.endsAt)}
+                      </p>
+                    )}
                   </div>
                 </article>
               );

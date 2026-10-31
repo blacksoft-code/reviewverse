@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional } from 'class-validator';
+import { IsBoolean, IsEnum, IsOptional } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { BillingCycle, PlanTier } from '@prisma/client';
 
@@ -15,4 +15,13 @@ export class SetPlanDto {
   @IsOptional()
   @IsEnum(BillingCycle)
   billingCycle?: BillingCycle;
+
+  @ApiPropertyOptional({
+    example: false,
+    description:
+      'true = নিয়ম না মেনে এখনই বসাও (Admin override)। না দিলে billing-এর নিয়ম: upgrade সাথে সাথে, downgrade/মাসিক→বার্ষিক মেয়াদ শেষে',
+  })
+  @IsOptional()
+  @IsBoolean()
+  force?: boolean;
 }

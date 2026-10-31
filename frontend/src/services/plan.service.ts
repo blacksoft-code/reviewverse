@@ -21,6 +21,9 @@ export type EffectivePlan = {
   billingCycle: BillingCycle | null;
   endsAt: string | null;
   graceEndsAt: string | null;
+  // মেয়াদ শেষে যে বদল কার্যকর হবে (downgrade, মাসিক↔বার্ষিক, বাতিল)
+  nextPlan: PlanTier | null;
+  nextBillingCycle: BillingCycle | null;
   config: PlanConfig;
 };
 
@@ -41,6 +44,7 @@ export type PlanUsage = {
   totalCount: number;
   publicCount: number;
   lockedCount: number;
+  pinnedCount: number;
   publicLimit: number;
   totalLimit: number;
 };
@@ -80,6 +84,8 @@ export type AdminEntityRow = {
     billingCycle: BillingCycle | null;
     endsAt: string | null;
     graceEndsAt: string | null;
+    nextPlan: PlanTier | null;
+    nextBillingCycle: BillingCycle | null;
   };
   badge: BadgeState;
 };
@@ -90,16 +96,25 @@ export async function getAdminEntities(q?: string) {
   );
 }
 
+export type PlanChangeResult = {
+  // NOW = এখনই, SCHEDULED = মেয়াদ শেষে, RENEWED = মেয়াদ বাড়ল, NO_CHANGE
+  applied: 'NOW' | 'SCHEDULED' | 'RENEWED' | 'NO_CHANGE';
+  effectiveAt: string | null;
+  usage: PlanUsage;
+};
+
+// force = true হলে billing-এর নিয়ম না মেনে এখনই বসে (Admin override)
 export async function adminSetPlan(
   entityId: string,
   plan: PlanTier,
   billingCycle: BillingCycle,
+  force = false,
 ) {
-  return apiFetch<ApiEnvelope<PlanUsage>>(
+  return apiFetch<ApiEnvelope<PlanChangeResult>>(
     `/plans/admin/entity/${entityId}`,
     {
       method: 'PUT',
-      body: JSON.stringify({ plan, billingCycle }),
+      body: JSON.stringify({ plan, billingCycle, force }),
     },
   );
 }

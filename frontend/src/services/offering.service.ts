@@ -10,6 +10,8 @@ export type Offering = {
   averageRating: number;
   // false = locked (plan-এর limit-এর বাইরে) — শুধু owner-এর dashboard-এ দেখা যায়
   isPublic: boolean;
+  // Plan শেষ/কমলে এটা আগে public থাকবে (owner "pin" করেছে)
+  isPinned: boolean;
   media: { id: string; url: string }[];
   createdAt: string;
   updatedAt: string;
@@ -105,5 +107,19 @@ export async function deleteOffering(offeringId: string) {
 export async function searchOfferingTypes(q: string) {
   return apiFetch<ApiEnvelope<string[]>>(
     `/offerings/types/search?q=${encodeURIComponent(q)}`,
+  );
+}
+
+// Plan শেষ বা কমলে যেগুলো আগে public রাখতে চাও সেগুলো pin করা (সর্বোচ্চ ২০টা)
+export async function setOfferingPinned(
+  offeringId: string,
+  isPinned: boolean,
+) {
+  return apiFetch<ApiEnvelope<Offering>>(
+    `/offerings/${offeringId}/pin`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ isPinned }),
+    },
   );
 }

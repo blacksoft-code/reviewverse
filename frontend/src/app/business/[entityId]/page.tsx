@@ -55,6 +55,7 @@ import {
   deleteOffering,
   getOfferingsByEntity,
   setOfferingVisibility,
+  setOfferingPinned,
   updateOffering,
 } from '@/services/offering.service';
 
@@ -581,6 +582,23 @@ export default function BusinessHomePage() {
     }
   }
 
+  // "Pin": plan শেষ বা কমলে এটা আগে public থাকবে
+  async function handleTogglePin(offering: Offering) {
+    setActingOnOffering(offering.id);
+    setError('');
+
+    try {
+      await setOfferingPinned(offering.id, !offering.isPinned);
+      await refreshOfferingsAndUsage();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Could not pin service',
+      );
+    } finally {
+      setActingOnOffering(null);
+    }
+  }
+
   async function handleDeleteOffering(
     offeringId: string,
   ) {
@@ -768,7 +786,7 @@ export default function BusinessHomePage() {
       badge: latestReviews.length,
     },
     { key: 'posts', label: 'Posts', icon: 'posts' },
-    { key: 'offerings', label: 'Offerings', icon: 'services' },
+    { key: 'offerings', label: 'Services', icon: 'services' },
     {
       key: 'qa',
       label: 'Q&A',
@@ -793,7 +811,7 @@ export default function BusinessHomePage() {
       sub: 'Share updates with the people who follow you.',
     },
     offerings: {
-      title: 'Offerings',
+      title: 'Services',
       sub: 'The products and services you offer.',
     },
     qa: {
@@ -1380,6 +1398,29 @@ export default function BusinessHomePage() {
                     />
                   </div>
 
+                  {/* Plan শেষ হওয়ার কাছাকাছি/grace/নামার নির্ধারিত বদল থাকলে সতর্কতা */}
+                  {(planUsage.plan.status === 'GRACE' ||
+                    (planUsage.plan.status === 'ACTIVE' &&
+                      planUsage.plan.endsAt &&
+                      new Date(planUsage.plan.endsAt).getTime() -
+                        Date.now() <=
+                        7 * 24 * 60 * 60 * 1000 &&
+                      !planUsage.plan.nextPlan) ||
+                    planUsage.plan.nextPlan === 'FREE') && (
+                    <p className="mt-4 rounded-2xl bg-[#ff9f0a]/10 p-4 text-sm text-[#a15c00]">
+                      Your plan is ending. Services beyond the Free
+                      limit (5) will be locked — pin ★ the ones you
+                      want to keep public first (the oldest stay if
+                      you don&apos;t choose).
+                    </p>
+                  )}
+
+                  <p className="mt-4 text-xs text-[#86868b]">
+                    ★ Pinned: {planUsage.pinnedCount} / 20 — pinned
+                    services stay public first if your plan ends or
+                    drops.
+                  </p>
+
                   {planUsage.lockedCount > 0 && (
                     <p className="mt-4 rounded-2xl bg-[#ff9f0a]/10 p-4 text-sm text-[#a15c00]">
                       🔒 {planUsage.lockedCount} locked{' '}
@@ -1546,6 +1587,16 @@ export default function BusinessHomePage() {
                           className={ui.btnGhostSm}
                         >
                           {offering.isPublic ? 'Lock' : 'Make public'}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleTogglePin(offering)}
+                          disabled={actingOnOffering === offering.id}
+                          title="Pinned services stay public first if your plan ends or drops"
+                          className={ui.btnGhostSm}
+                        >
+                          {offering.isPinned ? '★ Pinned' : '☆ Pin'}
                         </button>
 
                         <button

@@ -104,16 +104,33 @@ export class PlansController {
   @ApiBearerAuth()
   @ApiOperation({
     summary:
-      '[Admin] Set the plan of a business by hand (until payment is added)',
+      '[Admin] Change the plan of a business by hand (follows billing rules; force=true overrides)',
   })
-  setPlan(
+  async setPlan(
     @Param('entityId') entityId: string,
     @Body() dto: SetPlanDto,
   ) {
-    return this.plansService.setPlan(
+    // force = নিয়ম না মেনে এখনই (override)
+    if (dto.force) {
+      const usage = await this.plansService.setPlan(
+        entityId,
+        dto.plan,
+        dto.billingCycle,
+      );
+
+      return { applied: 'NOW', effectiveAt: null, usage };
+    }
+
+    // নইলে billing-এর নিয়ম: upgrade সাথে সাথে, downgrade ও মাসিক→বার্ষিক মেয়াদ শেষে
+    const result = await this.plansService.changePlan(
       entityId,
       dto.plan,
       dto.billingCycle,
     );
+
+    return {
+      ...result,
+      usage: await this.plansService.getUsage(entityId),
+    };
   }
 }

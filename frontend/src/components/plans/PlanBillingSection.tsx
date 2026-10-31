@@ -142,6 +142,32 @@ export default function PlanBillingSection({
           </p>
         )}
 
+        {current.nextPlan && current.endsAt && (
+          <p className="mt-2 text-sm text-[#0066cc]">
+            {current.nextPlan === 'FREE'
+              ? `Your plan will end on ${formatDate(current.endsAt)} and move to Free.`
+              : `On ${formatDate(current.endsAt)} your plan changes to ${
+                  plans.find((p) => p.tier === current.nextPlan)?.name ??
+                  current.nextPlan
+                } (${
+                  current.nextBillingCycle === 'YEARLY'
+                    ? 'yearly'
+                    : 'monthly'
+                }).`}
+          </p>
+        )}
+
+        {current.status === 'ACTIVE' &&
+          !current.nextPlan &&
+          current.endsAt &&
+          new Date(current.endsAt).getTime() - Date.now() <=
+            7 * 24 * 60 * 60 * 1000 && (
+            <p className="mt-2 text-sm text-[#a15c00]">
+              Your plan ends on {formatDate(current.endsAt)}. Renew to
+              keep your services and blue badge.
+            </p>
+          )}
+
         {current.status === 'GRACE' && (
           <p className="mt-2 text-sm text-[#a15c00]">
             Your plan ended on {formatDate(current.endsAt)}. You have

@@ -8,6 +8,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { EntityMembershipsService } from '../entity-memberships/entity-memberships.service';
 import { PlansService } from '../plans/plans.service';
+import { MAX_PINNED_OFFERINGS } from '../plans/plans.config';
 import { CreateOfferingDto } from './dto/create-offering.dto';
 import { UpdateOfferingDto } from './dto/update-offering.dto';
 
@@ -330,6 +331,54 @@ export class OfferingsService {
     return this.prisma.offering.update({
       where: { id: offeringId },
       data: { isPublic },
+      include: {
+        media: { orderBy: { createdAt: 'asc' } },
+      },
+    });
+  }
+
+  // ─────────────────────────────
+  // PIN — plan শেষ বা কমলে যেগুলো আগে public রাখতে চাও (না দিলে সবচেয়ে পুরনোগুলো)
+  // ─────────────────────────────
+  async setPinned(
+    offeringId: string,
+    userId: string,
+    isPinned: boolean,
+  ) {
+    const offering = await this.prisma.offering.findUnique({
+      where: { id: offeringId },
+    });
+
+    if (!offering) {
+      throw new NotFoundException('Offering not found.');
+    }
+
+    const hasAccess = await this.entityMemberships.hasAccess(
+      offering.entityId,
+      userId,
+    );
+
+    if (!hasAccess) {
+      throw new ForbiddenException(
+        'Only the business owner, manager, or employee can change this offering.',
+      );
+    }
+
+    if (isPinned && !offering.isPinned) {
+      const pinned = await this.prisma.offering.count({
+        where: { entityId: offering.entityId, isPinned: true },
+      });
+
+      if (pinned >= MAX_PINNED_OFFERINGS) {
+        throw new ConflictException(
+          `You can pin up to ${MAX_PINNED_OFFERINGS} services.`,
+        );
+      }
+    }
+
+    return this.prisma.offering.update({
+      where: { id: offeringId },
+      data: { isPinned },
       include: {
         media: { orderBy: { createdAt: 'asc' } },
       },

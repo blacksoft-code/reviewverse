@@ -43,6 +43,7 @@ const BUSINESS_NOTIFICATION_TYPES = new Set([
   'ENTITY_COMMENT_REPLY',
   'POST_SHARED',
   'VERIFICATION_UPDATE',
+  'PLAN_UPDATE',
 ]);
 
 export default function NotificationBell() {

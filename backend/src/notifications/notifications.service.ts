@@ -27,6 +27,7 @@ const BUSINESS_NOTIFICATION_TYPES: NotificationType[] = [
   'ENTITY_COMMENT_REPLY',
   'POST_SHARED',
   'VERIFICATION_UPDATE',
+  'PLAN_UPDATE',
 ];
 
 interface NotifyParams {

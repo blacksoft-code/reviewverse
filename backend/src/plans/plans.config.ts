@@ -57,3 +57,17 @@ export const PLANS: Record<PlanTier, PlanConfig> = {
 
 // Plan-এর মেয়াদ শেষের পর এত দিন সুবিধা (limit, badge) থেকে যায়
 export const GRACE_DAYS = 3;
+
+// মেয়াদ শেষের এত দিন আগে "plan শীঘ্রই শেষ হবে" জানানো হয়
+export const RENEWAL_REMINDER_DAYS = 7;
+
+// Plan শেষ হলে/কমলে যে offering গুলো আগে public রাখতে owner "pin" করে — সর্বোচ্চ কয়টা
+export const MAX_PINNED_OFFERINGS = 20;
+
+// Plan-এর ক্রম (upgrade না downgrade বোঝার জন্য)
+export const PLAN_RANK = {
+  FREE: 0,
+  STARTER: 1,
+  GROWTH: 2,
+  PRO: 3,
+} as const;

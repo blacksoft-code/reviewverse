@@ -25,6 +25,7 @@ import { UpdateOfferingDto } from './dto/update-offering.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { SetOfferingVisibilityDto } from './dto/set-offering-visibility.dto';
+import { SetOfferingPinnedDto } from './dto/set-offering-pinned.dto';
 
 @ApiTags('Offerings')
 @Controller('offerings')
@@ -135,6 +136,25 @@ export class OfferingsController {
       offeringId,
       req.user.userId,
       dto.isPublic,
+    );
+  }
+
+  @Patch(':offeringId/pin')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary:
+      '[Owner/Manager/Employee] Pin an offering so it stays public first when the plan ends or drops',
+  })
+  setPinned(
+    @Param('offeringId') offeringId: string,
+    @Body() dto: SetOfferingPinnedDto,
+    @Req() req: any,
+  ) {
+    return this.offeringsService.setPinned(
+      offeringId,
+      req.user.userId,
+      dto.isPinned,
     );
   }
 }

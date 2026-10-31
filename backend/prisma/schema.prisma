@@ -121,6 +121,7 @@ enum NotificationType {
   REVIEW_SHARED
   POST_SHARED
   VERIFICATION_UPDATE
+  PLAN_UPDATE
 }
 
 model Notification {
@@ -352,6 +353,7 @@ model Offering {
 
   averageRating Float   @default(0)
   isPublic      Boolean @default(true)
+  isPinned      Boolean @default(false)
 
   media   Media[]
   reviews Review[]
@@ -893,6 +895,9 @@ model EntitySubscription {
 
   nextPlan         PlanTier?
   nextBillingCycle BillingCycle?
+
+  renewalReminderSentAt DateTime?
+  graceNoticeSentAt     DateTime?
 
   source SubscriptionSource @default(ADMIN)
 

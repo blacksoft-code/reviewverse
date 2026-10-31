@@ -25,6 +25,9 @@ export function getNotificationHref(
           n.postId ? `&postId=${n.postId}` : ''
         }`;
 
+      case 'PLAN_UPDATE':
+        return `${dashboard}/settings#plan`;
+
       case 'VERIFICATION_UPDATE':
         return `${dashboard}/settings`;
 
