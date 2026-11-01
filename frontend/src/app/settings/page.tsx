@@ -36,6 +36,19 @@ export default function SettingsPage() {
 
         <div className="mt-8 space-y-3">
           <Link
+            href={`/profile/${user.id}/edit`}
+            className="flex items-center justify-between rounded-lg border p-4 hover:bg-gray-50"
+          >
+            <span>
+              <span className="block font-medium">Edit profile</span>
+              <span className="text-sm text-gray-500">
+                Change your name, bio and other details
+              </span>
+            </span>
+            <span className="text-gray-400">›</span>
+          </Link>
+
+          <Link
             href="/settings/claims"
             className="flex items-center justify-between rounded-lg border p-4 hover:bg-gray-50"
           >
