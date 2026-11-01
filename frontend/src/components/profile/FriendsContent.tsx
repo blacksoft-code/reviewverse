@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 
 import { useAuth } from '@/context/AuthContext';
-import BlockedContent from '@/components/profile/BlockedContent';
 import FriendListPrivacy from '@/components/profile/FriendListPrivacy';
 
 import {
@@ -42,7 +41,7 @@ export default function FriendsContent({
   const isOwner = currentUser?.id === userId;
 
   const [activeTab, setActiveTab] =
-    useState<'friends' | 'requests' | 'blocked'>('friends');
+    useState<'friends' | 'requests'>('friends');
 
   const [canView, setCanView] = useState(true);
   const [restrictedReason, setRestrictedReason] =
@@ -118,7 +117,7 @@ export default function FriendsContent({
   };
 
   const handleTabChange = (
-    tab: 'friends' | 'requests' | 'blocked',
+    tab: 'friends' | 'requests',
   ) => {
     setActiveTab(tab);
 
@@ -291,20 +290,6 @@ export default function FriendsContent({
             >
               Friend Request
             </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                handleTabChange('blocked')
-              }
-              className={`pb-4 text-sm font-semibold ${
-                activeTab === 'blocked'
-                  ? 'border-b-2 border-black text-black'
-                  : 'text-gray-500'
-              }`}
-            >
-              Blocked
-            </button>
           </div>
         </div>
         )}
@@ -448,8 +433,6 @@ export default function FriendsContent({
               </div>
             )}
           </div>
-        ) : activeTab === 'blocked' ? (
-          <BlockedContent />
         ) : (
           <div className="mt-6">
             <div className="mb-5">

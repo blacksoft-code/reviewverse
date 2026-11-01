@@ -49,6 +49,19 @@ export default function SettingsPage() {
           </Link>
 
           <Link
+            href="/settings/blocked"
+            className="flex items-center justify-between rounded-lg border p-4 hover:bg-gray-50"
+          >
+            <span>
+              <span className="block font-medium">Blocked</span>
+              <span className="text-sm text-gray-500">
+                People and businesses you have blocked
+              </span>
+            </span>
+            <span className="text-gray-400">›</span>
+          </Link>
+
+          <Link
             href="/settings/claims"
             className="flex items-center justify-between rounded-lg border p-4 hover:bg-gray-50"
           >
