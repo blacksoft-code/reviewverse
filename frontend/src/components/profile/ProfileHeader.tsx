@@ -19,7 +19,7 @@ export type ProfileHeaderData = {
 };
 
 const TABS = [
-  { label: 'Reviews', href: '' },
+  { label: 'Timeline', href: '' },
   { label: 'About', href: '/about' },
   { label: 'Friends', href: '/friends' },
   { label: 'Photos', href: '/photos' },

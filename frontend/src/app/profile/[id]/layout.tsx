@@ -1,3 +1,5 @@
+import { notFound } from 'next/navigation';
+
 import { getUserProfile } from '@/services/user.service';
 import ProfileHeader from '@/components/profile/ProfileHeader';
 import BlockGuard from '@/components/blocks/BlockGuard';
@@ -19,7 +21,19 @@ export default async function ProfileLayout({
 }: ProfileLayoutProps) {
   const { id } = await params;
 
-  const response = await getUserProfile(id);
+  // অচেনা/ভুল id হলে 500 error না দেখিয়ে সাধারণ 404 page। শুধু "not found" হলেই;
+  // অন্য কোনো সমস্যা (যেমন server বন্ধ) আগের মতোই error হিসেবে দেখায়।
+  let response: Awaited<ReturnType<typeof getUserProfile>>;
+
+  try {
+    response = await getUserProfile(id);
+  } catch (err) {
+    if (err instanceof Error && /not found/i.test(err.message)) {
+      notFound();
+    }
+
+    throw err;
+  }
 
   const profile = response.data as {
     id: string;

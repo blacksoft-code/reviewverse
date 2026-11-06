@@ -1,54 +1,41 @@
 'use client';
 
-import ShareButton from '@/components/shares/ShareButton';
 import SharedCard from '@/components/shares/SharedCard';
 import { getUserShares, ShareItem } from '@/services/share.service';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 
+import { useAuth } from '@/context/AuthContext';
 import { getUserProfile } from '@/services/user.service';
+import { Review } from '@/services/review.service';
 
-import ReactionButton from '@/components/reviews/ReactionButton';
-import CommentSection from '@/components/reviews/CommentSection';
-import PhotoGrid from '@/components/media/PhotoGrid';
+import ReviewCard from '@/components/reviews/ReviewCard';
+import {
+  groupReviews,
+  removeReview,
+} from '@/components/reviews/review-groups';
 
 type ProfileUser = {
   id: string;
   name: string;
   createdAt: string;
   reviewCount: number;
-  reviews: {
-    id: string;
-    rating: number;
-    content: string;
-    createdAt: string;
-    media?: { id: string; url: string }[];
-    entity: {
-      id: string;
-      name: string;
-      slug: string;
-      location: string | null;
-      category: {
-        id: string;
-        name: string;
-        slug: string;
-      };
-    };
-  }[];
+  reviews: Review[];
 };
 
 export default function ProfilePage() {
   const params = useParams();
+  const router = useRouter();
+  const { user: currentUser } = useAuth();
   const profileId = params.id as string;
 
   const [profile, setProfile] =
     useState<ProfileUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [openCommentsFor, setOpenCommentsFor] =
-    useState<string | null>(null);
+  // Review গুলো আলাদা state-এ, যাতে ReviewCard থেকে edit/delete করলে সাথে সাথে বদলায়
+  const [reviews, setReviews] = useState<Review[]>([]);
 
   // এই user-এর share করা review/post — reviews-এর সাথে মিশিয়ে দেখানো হয়
   const [shares, setShares] = useState<ShareItem[]>([]);
@@ -63,6 +50,7 @@ export default function ProfilePage() {
           getUserShares(profileId).catch(() => null),
         ]);
         setProfile(response.data as ProfileUser);
+        setReviews((response.data as ProfileUser).reviews ?? []);
         setShares(sharesRes?.data ?? []);
       } catch (err) {
         setError(
@@ -90,13 +78,14 @@ export default function ProfilePage() {
     );
   }
 
-  // Review আর share এক timeline-এ, সবচেয়ে নতুন আগে
+  // Review (প্রতি group-এর latest, পুরনোগুলো "more..."-এ) আর share এক
+  // timeline-এ, সবচেয়ে নতুন আগে
   const timeline = [
-    ...profile.reviews.map((review) => ({
+    ...groupReviews(reviews).map((group) => ({
       kind: 'review' as const,
-      id: review.id,
-      createdAt: review.createdAt,
-      review,
+      id: group.latest.id,
+      createdAt: group.latest.createdAt,
+      group,
     })),
     ...shares.map((share) => ({
       kind: 'share' as const,
@@ -112,6 +101,9 @@ export default function ProfilePage() {
 
   return (
     <section>
+      <h2 className="text-2xl font-bold text-gray-900">
+        Reviews &amp; shares
+      </h2>
 
       <div className="mt-4 space-y-5">
         {timeline.length === 0 ? (
@@ -138,74 +130,31 @@ export default function ProfilePage() {
               );
             }
 
-            const review = item.review;
+            const { latest, older } = item.group;
 
             return (
-            <article
-              key={review.id}
-              className="rounded-xl bg-white p-6 shadow-sm"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <Link
-                    href={`/entities/${review.entity.slug}`}
-                    className="text-lg font-semibold text-gray-900 hover:underline"
-                  >
-                    {review.entity.name}
-                  </Link>
-
-                  <p className="mt-1 text-sm text-gray-500">
-                    {review.entity.category.name}
-                    {review.entity.location
-                      ? ` • ${review.entity.location}`
-                      : ''}
-                  </p>
-                </div>
-
-                <time
-                  dateTime={review.createdAt}
-                  className="text-sm text-gray-500"
-                >
-                  {new Date(
-                    review.createdAt,
-                  ).toLocaleDateString()}
-                </time>
-              </div>
-
-              <div className="mt-3 text-sm">
-                <span>{'⭐'.repeat(review.rating)}</span>
-              </div>
-
-              <p className="mt-4 whitespace-pre-wrap text-gray-700">
-                {review.content}
-              </p>
-               {review.media && review.media.length > 0 && (
-                <PhotoGrid photos={review.media} />
-              )}
-
-              <div className="mt-5 flex items-center gap-6 border-t pt-4 text-sm">
-                <ReactionButton reviewId={review.id} />
-
-                <ShareButton reviewId={review.id} />
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setOpenCommentsFor((prev) =>
-                      prev === review.id ? null : review.id,
-                    )
-                  }
-                  className="font-medium text-gray-500 hover:underline"
-                >
-                  💬 Comments
-                </button>
-
-              </div>
-
-              {openCommentsFor === review.id && (
-                <CommentSection reviewId={review.id} />
-              )}
-            </article>
+              <ReviewCard
+                key={latest.id}
+                review={latest}
+                olderReviews={older}
+                variant="profile"
+                currentUserId={currentUser?.id}
+                entityId={latest.entityId}
+                onUpdated={(updated) => {
+                  setReviews((current) =>
+                    current.map((r) =>
+                      r.id === updated.id ? updated : r,
+                    ),
+                  );
+                  router.refresh();
+                }}
+                onDeleted={(reviewId, promoted) => {
+                  setReviews((current) =>
+                    removeReview(current, reviewId, promoted),
+                  );
+                  router.refresh();
+                }}
+              />
             );
           })
         )}

@@ -687,6 +687,12 @@ async getUserProfile(
           rating: true,
           content: true,
           createdAt: true,
+          // ReviewCard (entity page-এর সাথে এক component) এগুলো চায়:
+          userId: true,
+          entityId: true,
+          offeringId: true,
+          isLatest: true,
+          offering: { select: { id: true, name: true } },
           media: {
             select: { id: true, url: true },
             orderBy: { createdAt: 'asc' },

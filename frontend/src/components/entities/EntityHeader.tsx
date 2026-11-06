@@ -229,27 +229,6 @@ export default function EntityHeader({
             >
               Add review
             </Link>
-
-            <button
-              type="button"
-              className="rounded-lg border px-4 py-3 text-sm font-medium hover:bg-[#B91C1C]"
-            >
-              📷 Add photos
-            </button>
-
-            <button
-              type="button"
-              className="rounded-lg border px-4 py-3 text-sm font-medium hover:bg-[#B91C1C]"
-            >
-              🔖 Save
-            </button>
-
-            <button
-              type="button"
-              className="rounded-lg border px-4 py-3 text-sm font-medium hover:bg-[#B91C1C]"
-            >
-              ↗ Share
-            </button>
           </div>
         </section>
       </div>

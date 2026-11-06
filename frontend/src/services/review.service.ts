@@ -12,6 +12,15 @@ export type ReviewMedia = {
   url: string;
 };
 
+// User profile-এ review-এর সাথে business-এর তথ্য আসে
+export type ReviewEntityInfo = {
+  id: string;
+  name: string;
+  slug: string;
+  location: string | null;
+  category?: { id: string; name: string; slug: string } | null;
+};
+
 export type Review = {
   id: string;
   rating: number;
@@ -30,6 +39,7 @@ export type Review = {
     name: string;
   };
   media?: ReviewMedia[];
+  entity?: ReviewEntityInfo;
 };
 
 export type CreateReviewResponse = {
