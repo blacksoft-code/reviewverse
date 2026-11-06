@@ -5,6 +5,7 @@ import {
   getTopRated,
 } from '@/services/entity.service';
 import FeedSection from '@/components/feed/FeedSection';
+import WriteReviewPrompt from '@/components/reviews/WriteReviewPrompt';
 
 export default async function Home() {
   const [
@@ -28,7 +29,7 @@ export default async function Home() {
       <div className="mt-6">
    
       </div>
-  
+       <WriteReviewPrompt />
        <FeedSection />
 
     </main>

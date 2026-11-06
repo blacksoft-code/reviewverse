@@ -318,7 +318,7 @@ export default function ReviewCard({
           <div className="mt-4 flex items-center gap-6 border-t pt-3">
             <ReactionButton reviewId={review.id} />
 
-            <ShareButton reviewId={review.id} />
+            
 
             <button
               type="button"
@@ -327,6 +327,8 @@ export default function ReviewCard({
             >
               💬 Comments
             </button>
+
+            <ShareButton reviewId={review.id} />
 
             {olderReviews.length > 0 && (
               <button
