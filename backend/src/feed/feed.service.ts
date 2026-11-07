@@ -206,6 +206,8 @@ export class FeedService {
         },
         include: {
             user: { select: { id: true, name: true } },
+            // কোন offering-এর review সেটা card-এ দেখানোর জন্য
+            offering: { select: { id: true, name: true } },
             entity: {
               select: {
                 id: true,

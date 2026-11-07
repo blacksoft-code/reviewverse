@@ -4,6 +4,7 @@ import Link from 'next/link';
 
 import { useAuth } from '@/context/AuthContext';
 import PhotoGrid from '@/components/media/PhotoGrid';
+import OptionsMenu from '@/components/common/OptionsMenu';
 import { deleteShare, ShareItem } from '@/services/share.service';
 
 import ShareButton from './ShareButton';
@@ -66,14 +67,18 @@ export default function SharedCard({
           </Link>
         </div>
 
+        {/* Review card-এর মতোই ডান পাশে ⋮ — Delete এর ভেতরে */}
         {isMine && (
-          <button
-            type="button"
-            onClick={handleDelete}
-            className="text-xs font-medium text-red-500 hover:underline"
-          >
-            Delete
-          </button>
+          <OptionsMenu
+            label="Share options"
+            items={[
+              {
+                label: 'Delete',
+                onClick: handleDelete,
+                danger: true,
+              },
+            ]}
+          />
         )}
       </div>
 
@@ -154,17 +159,13 @@ export default function SharedCard({
         )}
       </div>
 
-      {/* Engagement — শুধু এই share-এর; ShareButton মূল review/post-কে
-          share করে এবং মূলটার মোট share count দেখায় */}
       <div className="mt-4 border-t pt-3">
         <ShareReactionButton shareId={share.id} />
-
+        <ShareCommentSection shareId={share.id} />
         <ShareButton
           reviewId={review?.id}
           entityPostId={post?.id}
         />
-
-        <ShareCommentSection shareId={share.id} />
       </div>
     </div>
   );

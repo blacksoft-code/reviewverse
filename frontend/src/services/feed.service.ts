@@ -7,6 +7,9 @@ export type FeedReview = {
   content: string;
   userId: string;
   entityId: string;
+  offeringId?: string | null;
+  isLatest?: boolean;
+  offering?: { id: string; name: string } | null;
   createdAt: string;
   updatedAt: string;
   user: {

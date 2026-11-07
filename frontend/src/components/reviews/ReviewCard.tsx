@@ -18,10 +18,14 @@ type ReviewCardProps = {
   review: Review;
   // একই (user + offering)-এর পুরনো review ("more..." এর নিচে)
   olderReviews: Review[];
-  // 'entity' = business-এর page (review-এর লেখকের নাম দেখায়)
+  // 'entity'  = business-এর page (review-এর লেখকের নাম দেখায়)
   // 'profile' = user-এর profile (কোন business-এর review সেটা দেখায়)
-  variant: 'entity' | 'profile';
+  // 'feed'    = home feed (লেখক আর business দুটোই link সহ দেখায়)
+  variant: 'entity' | 'profile' | 'feed';
   currentUserId?: string | null;
+  // Review যার লেখা তার id — profile-এ সব review ঐ profile-এর মালিকের, তাই
+  // review-তে userId না এলেও ⋮ ঠিকমতো দেখায়
+  ownerId?: string;
   // CommentSection-এর জন্য — এই review যে business-এর
   entityId: string;
   // Notification link থেকে এলে comment খোলা অবস্থায় আসে
@@ -30,21 +34,25 @@ type ReviewCardProps = {
   onDeleted: (reviewId: string, promoted: Review | null) => void;
 };
 
-// একটা review card — Entity page আর User profile দুই জায়গায় এটাই ব্যবহার হয়।
-// ⋮ menu (Edit / Delete), rating, offering, ছবি, reaction/share/comment আর
-// পুরনো review ("more...") সবই এখানে — এক জায়গায় বদলালে সব জায়গায় বদলায়।
+// একটা review card — Entity page, User profile আর Home feed তিন জায়গায় এটাই
+// ব্যবহার হয়। ⋮ menu (Edit / Delete), rating, offering, ছবি, reaction/comment/share
+// আর পুরনো review ("more...") সবই এখানে — এক জায়গায় বদলালে সব জায়গায় বদলায়।
 export default function ReviewCard({
   review,
   olderReviews,
   variant,
   currentUserId,
+  ownerId,
   entityId,
   autoOpenComments = false,
   onUpdated,
   onDeleted,
 }: ReviewCardProps) {
+  // শুধু নিজের review, আর শুধু latest version (পুরনো version edit করা যায় না)
   const isOwner =
-    !!currentUserId && currentUserId === review.userId;
+    !!currentUserId &&
+    currentUserId === (review.userId ?? ownerId) &&
+    review.isLatest !== false;
 
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -242,15 +250,35 @@ export default function ReviewCard({
         </>
       ) : (
         <>
-          {variant === 'entity' ? (
-            <div className="flex items-center justify-between gap-3">
-              <strong>{review.user?.name ?? 'User'}</strong>
+          {variant !== 'profile' ? (
+            <>
+              <div className="flex items-center justify-between gap-3">
+                {variant === 'feed' ? (
+                  <Link
+                    href={`/profile/${encodeURIComponent(review.userId)}`}
+                    className="font-medium hover:underline"
+                  >
+                    {review.user?.name ?? 'User'}
+                  </Link>
+                ) : (
+                  <strong>{review.user?.name ?? 'User'}</strong>
+                )}
 
-              <div className="flex items-center gap-1">
-                <span>⭐ {review.rating}</span>
-                {optionsMenu}
+                <div className="flex items-center gap-1">
+                  <span>⭐ {review.rating}</span>
+                  {optionsMenu}
+                </div>
               </div>
-            </div>
+
+              {variant === 'feed' && review.entity && (
+                <Link
+                  href={`/entities/${encodeURIComponent(review.entity.slug)}`}
+                  className="mt-1 block text-sm text-gray-500 hover:underline"
+                >
+                  {review.entity.name}
+                </Link>
+              )}
+            </>
           ) : (
             <>
               <div className="flex items-start justify-between gap-4">
@@ -305,7 +333,9 @@ export default function ReviewCard({
             className={`whitespace-pre-wrap ${
               variant === 'profile'
                 ? 'mt-4 text-gray-700'
-                : 'mt-3'
+                : variant === 'feed'
+                  ? 'mt-3 text-sm'
+                  : 'mt-3'
             }`}
           >
             {review.content}
@@ -317,8 +347,6 @@ export default function ReviewCard({
 
           <div className="mt-4 flex items-center gap-6 border-t pt-3">
             <ReactionButton reviewId={review.id} />
-
-            
 
             <button
               type="button"
