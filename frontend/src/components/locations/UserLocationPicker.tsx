@@ -10,6 +10,8 @@ import {
 type UserLocationPickerProps = {
   initialDisplayName?: string | null;
   onChange: (locationId: string | null) => void;
+  // অন্য theme-এ (যেমন business dashboard) বসাতে চাইলে input-এর style বদলানো যায়
+  inputClassName?: string;
 };
 
 // LocationPicker (business-এর জন্য) breadcrumb chip style দেখায়
@@ -21,6 +23,7 @@ type UserLocationPickerProps = {
 export default function UserLocationPicker({
   initialDisplayName,
   onChange,
+  inputClassName = 'mt-1 w-full rounded-lg border p-2.5 text-sm',
 }: UserLocationPickerProps) {
   const [query, setQuery] = useState(
     initialDisplayName ?? '',
@@ -138,7 +141,7 @@ export default function UserLocationPicker({
         }
         onFocus={() => setOpen(true)}
         placeholder="যেমন: Mirpur, Dhaka, Bangladesh"
-        className="mt-1 w-full rounded-lg border p-2.5 text-sm"
+        className={inputClassName}
       />
 
       {open && query.trim().length > 0 && (

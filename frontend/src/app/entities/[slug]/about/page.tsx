@@ -23,110 +23,169 @@ export default async function AboutPage({
   ).catch(() => null);
   const hours = businessHoursResponse?.data.hours ?? [];
 
+  // "Located in" = locationId থেকে full path ("Mirpur, Dhaka, Bangladesh"),
+  // "Address" = free-text (বাড়ি/রাস্তা)। দুটো একই হলে একবারই দেখাবে।
+  const locatedIn = entity.locationDisplay || null;
+  const address =
+    entity.location && entity.location !== locatedIn
+      ? entity.location
+      : null;
+
   return (
     <div className="mt-4 space-y-4">
-      {/* About */}
+      {/* About — user profile-এর About এর মতো label/value style */}
       <section className="rounded-xl bg-black p-6">
-        <h2 className="text-2xl font-semibold text-white">
-          About
+        <h2 className="text-2xl font-bold text-white">
+          About {entity.name}
         </h2>
 
-        <div className="mt-5 space-y-6">
+        <div className="mt-6 space-y-5">
           {/* Description */}
           <div>
-            <h3 className="font-semibold text-white">
-              About this business
-            </h3>
-
-            <p className="mt-2 leading-7 text-gray-400">
+            <p className="text-sm text-gray-500">About</p>
+            <p className="mt-1 whitespace-pre-wrap font-medium text-white">
               {entity.description ||
                 'No business description has been added yet.'}
             </p>
           </div>
 
-          {/* Location */}
+          {/* Category */}
           <div>
-            <h3 className="font-semibold text-white">
-              Location
-            </h3>
-
-            <p className="mt-2 text-gray-400">
-              {entity.location || 'Not provided'}
+            <p className="text-sm text-gray-500">
+              Category
             </p>
+            <p className="mt-1 font-medium text-white">
+              {entity.category.name}
+            </p>
+          </div>
 
-            {entity.googleMapsUrl && (
+          {/* Located in */}
+          {locatedIn && (
+            <div>
+              <p className="text-sm text-gray-500">
+                Located in
+              </p>
+              <p className="mt-1 font-medium text-white">
+                {locatedIn}
+              </p>
+
+              {entity.googleMapsUrl && (
+                <a
+                  href={entity.googleMapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-block text-sm text-blue-400 hover:underline"
+                >
+                  📍 View on Google Maps
+                </a>
+              )}
+            </div>
+          )}
+
+          {/* Address (free-text) */}
+          {address && (
+            <div>
+              <p className="text-sm text-gray-500">
+                Address
+              </p>
+              <p className="mt-1 font-medium text-white">
+                {address}
+              </p>
+
+              {/* Located in নেই হলে Maps link এখানে */}
+              {!locatedIn && entity.googleMapsUrl && (
+                <a
+                  href={entity.googleMapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-block text-sm text-blue-400 hover:underline"
+                >
+                  📍 View on Google Maps
+                </a>
+              )}
+            </div>
+          )}
+
+          {/* Google Maps link আছে কিন্তু location/address কিছুই নেই */}
+          {!locatedIn && !address && entity.googleMapsUrl && (
+            <div>
+              <p className="text-sm text-gray-500">
+                Location
+              </p>
               <a
                 href={entity.googleMapsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-2 inline-block text-sm text-blue-400 hover:underline"
+                className="mt-1 inline-block font-medium text-blue-400 hover:underline"
               >
                 📍 View on Google Maps
               </a>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Phone */}
-          <div>
-            <h3 className="font-semibold text-white">
-              Phone
-            </h3>
-
-            {entity.phone ? (
+          {entity.phone && (
+            <div>
+              <p className="text-sm text-gray-500">
+                Phone
+              </p>
               <a
                 href={`tel:${entity.phone}`}
-                className="mt-2 block text-blue-400 hover:underline"
+                className="mt-1 block font-medium text-blue-400 hover:underline"
               >
                 {entity.phone}
               </a>
-            ) : (
-              <p className="mt-2 text-gray-500">
-                Not provided
-              </p>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Website */}
-          <div>
-            <h3 className="font-semibold text-white">
-              Website
-            </h3>
-
-            {entity.website ? (
+          {entity.website && (
+            <div>
+              <p className="text-sm text-gray-500">
+                Website
+              </p>
               <a
                 href={entity.website}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-2 block break-all text-blue-400 hover:underline"
+                className="mt-1 block break-all font-medium text-blue-400 hover:underline"
               >
                 {entity.website}
               </a>
-            ) : (
-              <p className="mt-2 text-gray-500">
-                Not provided
-              </p>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Email */}
-          <div>
-            <h3 className="font-semibold text-white">
-              Email
-            </h3>
-
-            {entity.email ? (
+          {entity.email && (
+            <div>
+              <p className="text-sm text-gray-500">
+                Email
+              </p>
               <a
                 href={`mailto:${entity.email}`}
-                className="mt-2 block text-blue-400 hover:underline"
+                className="mt-1 block font-medium text-blue-400 hover:underline"
               >
                 {entity.email}
               </a>
-            ) : (
-              <p className="mt-2 text-gray-500">
-                Not provided
+            </div>
+          )}
+
+          {/* Member since */}
+          {entity.createdAt && (
+            <div>
+              <p className="text-sm text-gray-500">
+                On Review Verse since
               </p>
-            )}
-          </div>
+              <p className="mt-1 font-medium text-white">
+                {new Date(
+                  entity.createdAt,
+                ).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                })}
+              </p>
+            </div>
+          )}
         </div>
       </section>
 

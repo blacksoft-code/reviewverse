@@ -10,6 +10,8 @@ export type EntityDetail = {
 
   location: string | null;
   locationId: string | null;
+  // "Mirpur, Dhaka, Bangladesh" — backend locationId থেকে বানিয়ে দেয় (read-only)
+  locationDisplay?: string | null;
   phone: string | null;
   website: string | null;
   googleMapsUrl: string | null;
@@ -60,6 +62,7 @@ export type UpdateEntityInput = Partial<
     | 'updatedAt'
     | 'amenities'
     | 'paymentMethods'
+    | 'locationDisplay'
   >
 > & {
   // amenities read করার সময় {id, name}[] আসে, কিন্তু update পাঠানোর

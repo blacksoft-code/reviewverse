@@ -43,7 +43,7 @@ import SingleImageUploader from '@/components/media/SingleImageUploader';
 import { uploadImages } from '@/services/media.service';
 import PostReactionButton from '@/components/entities/posts/PostReactionButton';
 import PostCommentSection from '@/components/entities/posts/PostCommentSection';
-import LocationPicker from '@/components/locations/LocationPicker';
+import UserLocationPicker from '@/components/locations/UserLocationPicker';
 import AmenitySelector from '@/components/amenities/AmenitySelector';
 import PaymentMethodSelector from '@/components/payment-methods/PaymentMethodSelector';
 import BusinessHoursEditor from '@/components/business-hours/BusinessHoursEditor';
@@ -1780,6 +1780,25 @@ export default function BusinessHomePage() {
                     )}
                   </div>
 
+                  {/* Profile-এর "Lives in" এর মতো — search করে select */}
+                  <div className="sm:col-span-2">
+                    <label className={ui.label}>Located in</label>
+                    <UserLocationPicker
+                      initialDisplayName={
+                        form.locationDisplay ??
+                        entity.locationDisplay
+                      }
+                      onChange={(id) =>
+                        handleFormChange('locationId', id)
+                      }
+                      inputClassName={ui.input}
+                    />
+                    <p className="mt-1.5 text-xs text-[#86868b]">
+                      Start typing your area, e.g. Mirpur — then
+                      pick from the list.
+                    </p>
+                  </div>
+
                   <div className="sm:col-span-2">
                     <label className={ui.label}>Address</label>
                     <input
@@ -1787,15 +1806,11 @@ export default function BusinessHomePage() {
                       onChange={(e) =>
                         handleFormChange('location', e.target.value)
                       }
+                      placeholder="e.g. House 12, Road 5"
                       className={ui.input}
                     />
                   </div>
                 </div>
-
-                <LocationPicker
-                  initialLocationId={form.locationId}
-                  onChange={(id) => handleFormChange('locationId', id)}
-                />
               </div>
 
               {/* Branding */}

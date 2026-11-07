@@ -35,6 +35,20 @@ export class EntitiesService {
     return { ...entity, showBlueBadge: badge.show };
   }
 
+  // User profile-এর "lives in" এর মতো — locationId থেকে "Mirpur, Dhaka,
+  // Bangladesh" display বানিয়ে response-এ যোগ করে
+  private async withLocationDisplay<
+    T extends { locationId?: string | null },
+  >(entity: T) {
+    const locationDisplay = entity.locationId
+      ? await this.locationsService.getDisplayPath(
+          entity.locationId,
+        )
+      : null;
+
+    return { ...entity, locationDisplay };
+  }
+
 async create(
   createEntityDto: CreateEntityDto,
   userId: string,
@@ -169,7 +183,9 @@ async findById(id: string) {
     throw new NotFoundException('Business not found.');
   }
 
-  return this.withBadge(entity);
+  const result = await this.withBadge(entity);
+
+  return this.withLocationDisplay(result!);
 }
 
 // Owner/Manager/Employee (যেকোনো EntityMembership role) business info edit করতে পারবে
@@ -203,7 +219,7 @@ async update(
   const { amenityIds, paymentMethodIds, googleMapsUrl, ...rest } =
     dto;
  
-  return this.prisma.entity.update({
+  const updated = await this.prisma.entity.update({
     where: { id },
     data: {
       ...rest,
@@ -229,6 +245,8 @@ async update(
       }),
     },
   });
+
+  return this.withLocationDisplay(updated);
 } 
 
 
@@ -306,7 +324,11 @@ async update(
       },
     });
 
-    return this.withBadge(entity);
+    const result = await this.withBadge(entity);
+
+    if (!result) return result;
+
+    return this.withLocationDisplay(result);
   }
 
   async search(query: string) {
