@@ -15,9 +15,10 @@ export default function OfferingCard({
 }: OfferingCardProps) {
   return (
     <Link
+      // Business-এর Services page-এ যাবে, আর এই offering-টা highlight হবে
       href={`/entities/${encodeURIComponent(
         offering.entity.slug,
-      )}`}
+      )}/services?offering=${encodeURIComponent(offering.id)}`}
       className="overflow-hidden rounded-xl border bg-white transition hover:-translate-y-0.5 hover:shadow-md"
     >
       <div className="aspect-video w-full bg-gray-100">
