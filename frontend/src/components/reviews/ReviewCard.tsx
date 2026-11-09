@@ -253,16 +253,16 @@ export default function ReviewCard({
           {variant !== 'profile' ? (
             <>
               <div className="flex items-center justify-between gap-3">
-                {variant === 'feed' ? (
-                  <Link
-                    href={`/profile/${encodeURIComponent(review.userId)}`}
-                    className="font-medium hover:underline"
-                  >
-                    {review.user?.name ?? 'User'}
-                  </Link>
-                ) : (
-                  <strong>{review.user?.name ?? 'User'}</strong>
-                )}
+                {/* Feed আর entity page — দুই জায়গাতেই reviewer-এর নামে click করলে
+                    তার profile-এ যায় */}
+                <Link
+                  href={`/profile/${encodeURIComponent(review.userId)}`}
+                  className={`hover:underline ${
+                    variant === 'feed' ? 'font-medium' : 'font-bold'
+                  }`}
+                >
+                  {review.user?.name ?? 'User'}
+                </Link>
 
                 <div className="flex items-center gap-1">
                   <span>⭐ {review.rating}</span>
