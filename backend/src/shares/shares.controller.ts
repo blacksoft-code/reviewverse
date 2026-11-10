@@ -5,6 +5,7 @@ import {
   Get,
   Headers,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -19,6 +20,7 @@ import {
 import { SharesService } from './shares.service';
 import { ShareEngagementService } from './share-engagement.service';
 import { CreateShareDto } from './dto/create-share.dto';
+import { UpdateShareDto } from './dto/update-share.dto';
 import { ReactToShareDto } from './dto/react-to-share.dto';
 import { CreateShareCommentDto } from './dto/create-share-comment.dto';
 
@@ -93,6 +95,22 @@ export class SharesController {
     return this.sharesService.findOne(
       shareId,
       req.user?.userId ?? null,
+    );
+  }
+
+  @Patch(':shareId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Edit the caption of your own share (max 500)' })
+  update(
+    @Param('shareId') shareId: string,
+    @Body() dto: UpdateShareDto,
+    @Req() req: any,
+  ) {
+    return this.sharesService.updateCaption(
+      shareId,
+      req.user.userId,
+      dto,
     );
   }
 

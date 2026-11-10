@@ -2,10 +2,15 @@
 
 import Link from 'next/link';
 
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import PhotoGrid from '@/components/media/PhotoGrid';
 import OptionsMenu from '@/components/common/OptionsMenu';
-import { deleteShare, ShareItem } from '@/services/share.service';
+import {
+  deleteShare,
+  updateShare,
+  ShareItem,
+} from '@/services/share.service';
 
 import ShareButton from './ShareButton';
 import ShareReactionButton from './ShareReactionButton';
@@ -16,11 +21,49 @@ import ShareCommentSection from './ShareCommentSection';
 export default function SharedCard({
   share,
   onDeleted,
+  onUpdated,
 }: {
   share: ShareItem;
   onDeleted?: (shareId: string) => void;
+  onUpdated?: (share: ShareItem) => void;
 }) {
   const { user } = useAuth();
+
+  // Caption edit — ⋮ → Edit দিলে card-এর ভেতরেই textarea খোলে
+  const [caption, setCaption] = useState(share.caption);
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [editError, setEditError] = useState('');
+
+  useEffect(() => {
+    setCaption(share.caption);
+  }, [share.caption]);
+
+  function startEditing() {
+    setDraft(caption ?? '');
+    setEditError('');
+    setIsEditing(true);
+  }
+
+  async function handleSaveCaption() {
+    setSaving(true);
+    setEditError('');
+
+    try {
+      const res = await updateShare(share.id, draft);
+
+      setCaption(res.data.caption);
+      setIsEditing(false);
+      onUpdated?.(res.data);
+    } catch (err) {
+      setEditError(
+        err instanceof Error ? err.message : 'Could not save',
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
 
   const isMine = user?.id === share.userId;
   const { review, post } = share;
@@ -72,6 +115,7 @@ export default function SharedCard({
           <OptionsMenu
             label="Share options"
             items={[
+              { label: 'Edit', onClick: startEditing },
               {
                 label: 'Delete',
                 onClick: handleDelete,
@@ -82,10 +126,51 @@ export default function SharedCard({
         )}
       </div>
 
-      {share.caption && (
-        <p className="mt-3 whitespace-pre-wrap text-sm">
-          {share.caption}
-        </p>
+      {isEditing ? (
+        <div className="mt-3">
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            maxLength={500}
+            rows={3}
+            placeholder="Say something about this (optional)..."
+            className="w-full rounded-lg border p-3 text-sm text-gray-900"
+          />
+
+          <div className="mt-1 text-right text-xs text-gray-400">
+            {draft.length}/500
+          </div>
+
+          {editError && (
+            <p className="text-xs text-red-600">{editError}</p>
+          )}
+
+          <div className="mt-2 flex gap-2">
+            <button
+              type="button"
+              disabled={saving}
+              onClick={handleSaveCaption}
+              className="rounded-lg bg-black px-4 py-2 text-sm text-white disabled:opacity-50"
+            >
+              {saving ? 'Saving...' : 'Save'}
+            </button>
+
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => setIsEditing(false)}
+              className="rounded-lg border px-4 py-2 text-sm"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        caption && (
+          <p className="mt-3 whitespace-pre-wrap text-sm">
+            {caption}
+          </p>
+        )
       )}
 
       {/* Original review / post */}
@@ -159,6 +244,8 @@ export default function SharedCard({
         )}
       </div>
 
+      {/* Engagement — শুধু এই share-এর; ShareButton মূল review/post-কে
+          share করে এবং মূলটার মোট share count দেখায় */}
       <div className="mt-4 border-t pt-3">
         <ShareReactionButton shareId={share.id} />
         <ShareCommentSection shareId={share.id} />

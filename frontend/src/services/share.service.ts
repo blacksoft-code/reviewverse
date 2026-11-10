@@ -95,6 +95,14 @@ export async function getUserShares(userId: string) {
   );
 }
 
+// নিজের share-এর caption বদলানো (খালি পাঠালে caption মুছে যায়)
+export async function updateShare(shareId: string, caption: string) {
+  return apiFetch<ApiEnvelope<ShareItem>>(`/shares/${shareId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ caption }),
+  });
+}
+
 export async function deleteShare(shareId: string) {
   return apiFetch<ApiEnvelope<{ message: string }>>(
     `/shares/${shareId}`,

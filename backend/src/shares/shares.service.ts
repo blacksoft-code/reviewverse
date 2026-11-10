@@ -10,6 +10,7 @@ import { BlocksService } from '../blocks/blocks.service';
 import { NotificationsService } from '../notifications/notifications.service';
 
 import { CreateShareDto } from './dto/create-share.dto';
+import { UpdateShareDto } from './dto/update-share.dto';
 import { SHARE_INCLUDE, toShareDto } from './share.helpers';
 
 @Injectable()
@@ -202,6 +203,38 @@ export class SharesService {
           !(s.review && hiddenUserIds.includes(s.review.userId)),
       )
       .map(toShareDto);
+  }
+
+  // ─────────────────────────────
+  // নিজের share-এর caption বদলানো (বা মুছে ফেলা)
+  // ─────────────────────────────
+  async updateCaption(
+    shareId: string,
+    userId: string,
+    dto: UpdateShareDto,
+  ) {
+    const share = await this.prisma.share.findUnique({
+      where: { id: shareId },
+      select: { userId: true },
+    });
+
+    if (!share) {
+      throw new NotFoundException('Share not found.');
+    }
+
+    if (share.userId !== userId) {
+      throw new ForbiddenException(
+        'You can only edit your own share.',
+      );
+    }
+
+    const updated = await this.prisma.share.update({
+      where: { id: shareId },
+      data: { caption: dto.caption?.trim() || null },
+      include: SHARE_INCLUDE,
+    });
+
+    return toShareDto(updated);
   }
 
   // ─────────────────────────────
