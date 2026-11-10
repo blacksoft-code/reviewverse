@@ -2,6 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { BlocksService } from '../blocks/blocks.service';
 
+// ১২ অক্ষরের public ID (A-Z + 0-9) কি না
+const PUBLIC_ID_PATTERN = /^[A-Za-z0-9]{12}$/;
+
 @Injectable()
 export class SearchService {
   constructor(
@@ -45,14 +48,24 @@ export class SearchService {
     query: string,
     hiddenUserIds: string[] = [],
   ) {
+    // Public ID দিয়ে search করলে ঠিক ঐ user-ই আসবে
+    const isPublicId = PUBLIC_ID_PATTERN.test(query);
+
     const users = await this.prisma.user.findMany({
       where: {
         isActive: true,
         id: { notIn: hiddenUserIds },
-        name: {
-          contains: query,
-          mode: 'insensitive',
-        },
+        OR: [
+          {
+            name: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+          ...(isPublicId
+            ? [{ publicId: query.toUpperCase() }]
+            : []),
+        ],
       },
       select: {
         id: true,
@@ -102,6 +115,9 @@ export class SearchService {
     query: string,
     blockedEntityIds: string[] = [],
   ) {
+    // Public ID দিয়ে search করলে ঠিক ঐ business-ই আসবে
+    const isPublicId = PUBLIC_ID_PATTERN.test(query);
+
     const entities = await this.prisma.entity.findMany({
       where: {
         id: { notIn: blockedEntityIds },
@@ -118,6 +134,9 @@ export class SearchService {
               mode: 'insensitive',
             },
           },
+          ...(isPublicId
+            ? [{ publicId: query.toUpperCase() }]
+            : []),
         ],
       },
       select: {

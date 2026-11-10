@@ -33,6 +33,7 @@ export class AuthService {
         name: registerDto.name,
         email: registerDto.email,
         password: hashedPassword,
+        publicId: await this.prisma.generatePublicId(),
       },
     });
 

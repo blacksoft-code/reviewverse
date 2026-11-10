@@ -660,6 +660,7 @@ async getUserProfile(
     },
     select: {
       id: true,
+      publicId: true,
       name: true,
       createdAt: true,
       worksAtEntityId: true,
@@ -748,6 +749,7 @@ async getUserProfile(
 
   return {
   id: user.id,
+  publicId: user.publicId,
   name: user.name,
   createdAt: user.createdAt,
   worksAtEntityId: user.worksAtEntityId,

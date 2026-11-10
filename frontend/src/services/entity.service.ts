@@ -17,9 +17,9 @@ export type Entity = {
   createdAt: string;
   updatedAt: string;
   category: Category;
+  publicId?: string | null;
   location?: string | null;
   locationId?: string | null;
-  // "Mirpur, Dhaka, Bangladesh" — backend locationId থেকে বানিয়ে দেয়
   locationDisplay?: string | null;
   googleMapsUrl?: string | null;
   phone?: string | null;

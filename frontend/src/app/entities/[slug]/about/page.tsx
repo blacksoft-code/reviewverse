@@ -1,3 +1,4 @@
+import CopyableId from '@/components/common/CopyableId';
 import { getEntityBySlug } from '@/services/entity.service';
 import {
   DAY_LABELS,
@@ -58,6 +59,19 @@ export default async function AboutPage({
               {entity.category.name}
             </p>
           </div>
+
+          {/* Public ID — এটা দিয়ে search করলে সরাসরি এই business আসবে */}
+          {entity.publicId && (
+            <div>
+              <p className="text-sm text-gray-500">
+                Business ID
+              </p>
+              <CopyableId
+                value={entity.publicId}
+                className="mt-1 font-medium text-white"
+              />
+            </div>
+          )}
 
           {/* Located in */}
           {locatedIn && (

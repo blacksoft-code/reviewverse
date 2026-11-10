@@ -33,9 +33,10 @@ enum Gender {
 }
 
 model User {
-  id       String @id @default(uuid())
+  id       String  @id @default(uuid())
+  publicId String? @unique
   name     String
-  email    String @unique
+  email    String  @unique
   password String
 
   worksAtEntityId String?
@@ -268,10 +269,10 @@ enum EntityCreationType {
 }
 
 model Entity {
-  id String @id @default(uuid())
-
-  name String
-  slug String @unique
+  id       String  @id @default(uuid())
+  publicId String? @unique
+  name     String
+  slug     String  @unique
 
   description String?
 

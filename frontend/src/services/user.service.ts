@@ -30,6 +30,7 @@ category: {
 export type UserProfile = {
 id: string;
 name: string;
+publicId?: string | null;
 createdAt: string;
 reviewCount: number;
 reviews: UserProfileReview[];

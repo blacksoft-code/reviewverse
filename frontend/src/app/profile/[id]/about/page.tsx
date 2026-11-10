@@ -5,10 +5,12 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
 import { useAuth } from '@/context/AuthContext';
+import CopyableId from '@/components/common/CopyableId';
 import { getUserProfile, Gender } from '@/services/user.service';
 
 type AboutUser = {
   id: string;
+  publicId: string | null;
   name: string;
   reviewCount: number;
   createdAt: string;
@@ -118,6 +120,18 @@ export default function AboutPage() {
             {user.name}
           </p>
         </div>
+
+        {user.publicId && (
+          <div>
+            <p className="text-sm text-gray-500">
+              Profile ID
+            </p>
+            <CopyableId
+              value={user.publicId}
+              className="mt-1 font-medium"
+            />
+          </div>
+        )}
 
         {user.worksAtDisplay && (
           <div>

@@ -83,6 +83,7 @@ async create(
     return await this.prisma.$transaction(async (tx) => {
       const entity = await tx.entity.create({
         data: {
+          publicId: await this.prisma.generatePublicId(),
           name: createEntityDto.name,
           slug: createEntityDto.slug,
           categoryId: createEntityDto.categoryId,
