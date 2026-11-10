@@ -7,11 +7,19 @@ import PhotoGrid from '@/components/media/PhotoGrid';
 import ReactionButton from '@/components/reviews/ReactionButton';
 import CommentSection from '@/components/reviews/CommentSection';
 import ShareButton from '@/components/shares/ShareButton';
+import ReviewPhotoEditor, {
+  PhotoEdits,
+} from '@/components/reviews/ReviewPhotoEditor';
 import {
   Review,
+  ReviewMedia,
   deleteReview,
   updateReview,
 } from '@/services/review.service';
+import {
+  deleteMedia,
+  uploadImages,
+} from '@/services/media.service';
 
 type ReviewCardProps = {
   // group-এর latest review
@@ -62,6 +70,15 @@ export default function ReviewCard({
   const [editingContent, setEditingContent] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Edit-এর সময় ছবির পরিবর্তন — আসল delete/upload হয় Save চাপলে
+  const [photoEdits, setPhotoEdits] = useState<PhotoEdits>({
+    removedIds: [],
+    newFiles: [],
+  });
+  const [editError, setEditError] = useState('');
+  // কিছু ছবির কাজ ব্যর্থ হলে editor-কে নতুন করে সাজানোর জন্য
+  const [editorKey, setEditorKey] = useState(0);
+
   const [commentsOpen, setCommentsOpen] = useState(autoOpenComments);
   const [olderOpen, setOlderOpen] = useState(false);
 
@@ -100,35 +117,112 @@ export default function ReviewCard({
     setIsEditing(true);
     setEditingRating(review.rating);
     setEditingContent(review.content);
+    setPhotoEdits({ removedIds: [], newFiles: [] });
+    setEditError('');
   }
 
   function cancelEditing() {
     setIsEditing(false);
     setEditingRating(5);
     setEditingContent('');
+    setPhotoEdits({ removedIds: [], newFiles: [] });
+    setEditError('');
   }
 
   async function handleUpdate() {
     setIsLoading(true);
+    setEditError('');
 
     try {
-      const response = await updateReview(review.id, {
-        rating: editingRating,
-        content: editingContent,
-      });
+      // ১) লেখা/rating — বদলালে তবেই call
+      const textChanged =
+        editingRating !== review.rating ||
+        editingContent !== review.content;
+
+      const updatedFields = textChanged
+        ? (
+            await updateReview(review.id, {
+              rating: editingRating,
+              content: editingContent,
+            })
+          ).data
+        : null;
+
+      // ২) ছবি — আগে মোছা, তারপর নতুন upload
+      let media: ReviewMedia[] = review.media ?? [];
+      const problems: string[] = [];
+
+      const { removedIds, newFiles } = photoEdits;
+
+      if (removedIds.length > 0) {
+        const results = await Promise.allSettled(
+          removedIds.map((id) => deleteMedia(id)),
+        );
+
+        const deletedIds = removedIds.filter(
+          (_, i) => results[i].status === 'fulfilled',
+        );
+
+        media = media.filter((m) => !deletedIds.includes(m.id));
+
+        const failedCount =
+          removedIds.length - deletedIds.length;
+
+        if (failedCount > 0) {
+          problems.push(
+            `${failedCount} photo${failedCount > 1 ? 's' : ''} could not be removed`,
+          );
+        }
+      }
+
+      if (newFiles.length > 0) {
+        try {
+          const uploaded = await uploadImages(
+            newFiles,
+            'REVIEW',
+            review.id,
+          );
+
+          media = [
+            ...media,
+            ...uploaded.map((m) => ({ id: m.id, url: m.url })),
+          ];
+        } catch (uploadError) {
+          problems.push(
+            uploadError instanceof Error
+              ? uploadError.message
+              : 'New photos could not be uploaded',
+          );
+        }
+      }
 
       onUpdated({
         ...review,
-        ...response.data,
+        ...(updatedFields ?? {}),
         user: review.user,
         entity: review.entity,
         offering: review.offering,
-        media: review.media,
+        media,
       });
 
-      cancelEditing();
+      if (problems.length === 0) {
+        cancelEditing();
+        return;
+      }
+
+      // কিছু কাজ ব্যর্থ — edit খোলা রেখে জানাই, editor আসল অবস্থা থেকে নতুন করে শুরু
+      setPhotoEdits({ removedIds: [], newFiles: [] });
+      setEditorKey((key) => key + 1);
+      setEditError(
+        `Review saved, but ${problems.join('; ')}. Please try again.`,
+      );
     } catch (error) {
       console.error(error);
+      setEditError(
+        error instanceof Error
+          ? error.message
+          : 'Could not save your changes.',
+      );
     } finally {
       setIsLoading(false);
     }
@@ -227,6 +321,19 @@ export default function ReviewCard({
             rows={4}
             className="mt-3 w-full rounded-lg border p-3 text-gray-900"
           />
+
+          <ReviewPhotoEditor
+            key={editorKey}
+            existingPhotos={review.media ?? []}
+            disabled={isLoading}
+            onChange={setPhotoEdits}
+          />
+
+          {editError && (
+            <p className="mt-3 text-sm text-red-600">
+              {editError}
+            </p>
+          )}
 
           <div className="mt-3 flex gap-2">
             <button

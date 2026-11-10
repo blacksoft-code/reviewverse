@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   ForbiddenException,
   Get,
   NotFoundException,
@@ -32,6 +33,9 @@ import {
 } from '@nestjs/swagger';
 
 const FILE_SIZE_LIMIT = 10 * 1024 * 1024;
+
+// একটা review-তে সর্বোচ্চ কয়টা ছবি থাকতে পারবে
+const MAX_REVIEW_PHOTOS = 10;
 
 @Controller('media')
 export class MediaController {
@@ -116,6 +120,8 @@ export class MediaController {
       req.user.userId,
     );
 
+    await this.assertReviewPhotoLimit(type, refs, 1);
+
     return this.mediaService.saveMedia(
       file.buffer,
       type,
@@ -198,11 +204,84 @@ export class MediaController {
       req.user.userId,
     );
 
+    // Edit-এর সময় আগের ছবির সাথে যোগ করলে যেন মোট ১০টা ছাড়িয়ে না যায়
+    await this.assertReviewPhotoLimit(
+      type,
+      refs,
+      files.length,
+    );
+
     return this.mediaService.saveMultiple(
       files,
       type,
       refs,
     );
+  }
+
+  // ─────────────────────────────
+  // Review-এর একটা ছবি মুছে ফেলা — শুধু review-এর মালিক পারবে
+  // (Review edit করার সময় ✕ চাপলে এটা call হয়)
+  // ─────────────────────────────
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async deleteReviewPhoto(
+    @Param('id') id: string,
+    @Req() req: any,
+  ) {
+    const media = await this.prisma.media.findUnique({
+      where: { id },
+    });
+
+    if (!media) {
+      throw new NotFoundException('Photo not found.');
+    }
+
+    // এখন শুধু review-এর ছবি মোছা যায়
+    if (media.type !== 'REVIEW' || !media.reviewId) {
+      throw new BadRequestException(
+        'Only review photos can be deleted here.',
+      );
+    }
+
+    const review = await this.prisma.review.findUnique({
+      where: { id: media.reviewId },
+      select: { userId: true },
+    });
+
+    if (!review || review.userId !== req.user.userId) {
+      throw new ForbiddenException(
+        'You can only delete photos from your own review.',
+      );
+    }
+
+    await this.mediaService.deleteMedia(id);
+
+    return { id, deleted: true };
+  }
+
+  // Review-এ আগে থেকে যতগুলো ছবি আছে + নতুন যতগুলো আসছে — মোট ১০-এর বেশি না
+  private async assertReviewPhotoLimit(
+    type: MediaType,
+    refs: MediaRefs,
+    incoming: number,
+  ) {
+    if (type !== 'REVIEW' || !refs.reviewId) return;
+
+    const existing = await this.prisma.media.count({
+      where: { reviewId: refs.reviewId, type: 'REVIEW' },
+    });
+
+    if (existing + incoming > MAX_REVIEW_PHOTOS) {
+      const remaining = Math.max(
+        0,
+        MAX_REVIEW_PHOTOS - existing,
+      );
+
+      throw new BadRequestException(
+        `A review can have at most ${MAX_REVIEW_PHOTOS} photos. You can add ${remaining} more.`,
+      );
+    }
   }
 
   // ─────────────────────────────

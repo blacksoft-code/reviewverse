@@ -105,6 +105,27 @@ export async function uploadImages(
   return data.data;
 }
 
+// একটা ছবি মুছে ফেলা (এখন শুধু review-এর ছবি — মালিক হলেই)
+export async function deleteMedia(
+  mediaId: string,
+): Promise<void> {
+  const response = await fetch(
+    `${API_URL}/media/${mediaId}`,
+    {
+      method: 'DELETE',
+      headers: authHeaders(),
+    },
+  );
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+
+    throw new Error(
+      data?.message ?? 'Failed to delete photo',
+    );
+  }
+}
+
 // ─────────────────────────────
 // Photos tab (public)
 // ─────────────────────────────
