@@ -5,12 +5,15 @@ import { useState } from 'react';
 type CopyableIdProps = {
   value: string;
   className?: string;
+  // Copy বাটনের style বদলাতে চাইলে (যেমন গাঢ় background-এর উপরে)
+  buttonClassName?: string;
 };
 
 // ১২ অক্ষরের public ID দেখায়, পাশে Copy বাটন
 export default function CopyableId({
   value,
   className = '',
+  buttonClassName = 'text-sm font-medium text-blue-400 hover:underline',
 }: CopyableIdProps) {
   const [copied, setCopied] = useState(false);
 
@@ -35,7 +38,7 @@ export default function CopyableId({
       <button
         type="button"
         onClick={copy}
-        className="text-sm font-medium text-blue-400 hover:underline"
+        className={buttonClassName}
       >
         {copied ? 'Copied ✓' : 'Copy'}
       </button>

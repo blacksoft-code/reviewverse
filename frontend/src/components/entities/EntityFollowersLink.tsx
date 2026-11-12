@@ -7,11 +7,13 @@ import { getEntityFollowersCount } from '@/services/entity.service';
 type EntityFollowersLinkProps = {
   entityId: string;
   slug: string;
+  className?: string;
 };
 
 export default function EntityFollowersLink({
   entityId,
   slug,
+  className = 'text-sm text-gray-600 hover:text-black hover:underline',
 }: EntityFollowersLinkProps) {
   const router = useRouter();
   const [count, setCount] = useState<number | null>(null);
@@ -33,7 +35,7 @@ export default function EntityFollowersLink({
     <button
       type="button"
       onClick={() => router.push(`/entities/${slug}/followers`)}
-      className="text-sm text-gray-600 hover:text-black hover:underline"
+      className={className}
     >
       {count ?? 0} followers
     </button>

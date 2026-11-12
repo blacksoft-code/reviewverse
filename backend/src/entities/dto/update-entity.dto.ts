@@ -1,10 +1,13 @@
 import {
   IsArray,
+  IsNumber,
   IsOptional,
   IsString,
   IsUrl,
   Matches,
+  Max,
   MaxLength,
+  Min,
   ValidateIf,
 } from 'class-validator';
 
@@ -92,6 +95,17 @@ export class UpdateEntityDto {
   @IsOptional()
 @IsUrl({ require_tld: false })
 coverPhoto?: string;
+
+  @ApiPropertyOptional({
+    example: 35,
+    description:
+      'Cover photo-র উল্লম্ব অবস্থান (0–100)। 0 = উপরের অংশ, 100 = নিচের অংশ',
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  coverPositionY?: number;
 
   @ApiPropertyOptional({
     example: 'https://example.com/logo.png',

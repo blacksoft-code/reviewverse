@@ -219,6 +219,16 @@ async update(
   // ফিল্ড আগের মতোই সরাসরি dto থেকে যাচ্ছে।
   const { amenityIds, paymentMethodIds, googleMapsUrl, ...rest } =
     dto;
+
+  // নতুন cover photo বসালে position আবার মাঝখানে (50) থেকে শুরু —
+  // তবে একই photo-র সাথে অন্য info save করলে position অক্ষত থাকবে
+  if (
+    rest.coverPhoto &&
+    rest.coverPhoto !== entity.coverPhoto &&
+    rest.coverPositionY === undefined
+  ) {
+    rest.coverPositionY = 50;
+  }
  
   const updated = await this.prisma.entity.update({
     where: { id },

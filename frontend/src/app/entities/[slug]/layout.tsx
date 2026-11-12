@@ -22,6 +22,9 @@ export default async function EntityLayout({
     coverPhoto: string | null;
     logo: string | null;
     googleMapsUrl?: string | null;
+    publicId?: string | null;
+    priceRange?: string | null;
+    coverPositionY?: number;
     showBlueBadge?: boolean;
     averageRating: number;
     category: { name: string };
@@ -43,6 +46,9 @@ export default async function EntityLayout({
           reviewCount: entity.reviews?.length ?? 0,
           category: entity.category,
           googleMapsUrl: entity.googleMapsUrl ?? null,
+          publicId: entity.publicId ?? null,
+          priceRange: entity.priceRange ?? null,
+          coverPositionY: entity.coverPositionY ?? 50,
         }}
       />
 

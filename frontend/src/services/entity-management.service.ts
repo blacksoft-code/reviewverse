@@ -21,6 +21,8 @@ export type EntityDetail = {
   serviceOptions: string | null;
 
   coverPhoto: string | null;
+  // Cover photo-র উল্লম্ব অবস্থান (0–100)
+  coverPositionY?: number;
   logo: string | null;
   
   amenities: { id: string; name: string }[];
