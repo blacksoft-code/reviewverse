@@ -15,7 +15,6 @@ type EntityActionsProps = {
   // "Message" এখনো কোনো page-এর সাথে যুক্ত না — যুক্ত হলে এখানে handler দিলেই হবে
   onMessage?: () => void;
 };
-
 // Follow বাটন + "⋯" menu। Message আর Block এখন ঐ menu-র ভেতরে।
 export default function EntityActions({
   entityId,
@@ -24,7 +23,6 @@ export default function EntityActions({
   const [isFollowing, setIsFollowing] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
-
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -66,7 +64,6 @@ export default function EntityActions({
     try {
       setLoading('block');
       await blockEntity(entityId);
-
       // block-এর পর entity page আর available থাকে না — reload করলে
       // BlockGuard "not available" দেখাবে
       window.location.reload();
@@ -155,8 +152,7 @@ export default function EntityActions({
               ? 'Unfollow'
               : 'Follow'}
         </button>
-      )}
-
+      )}      
       <div ref={menuRef} className="relative">
         <button
           type="button"
@@ -168,7 +164,6 @@ export default function EntityActions({
         >
           ⋯
         </button>
-
         {menuOpen && (
           <div
             role="menu"
@@ -187,7 +182,6 @@ export default function EntityActions({
                 Message
               </button>
             )}
-
             {isBlocked ? (
               <button
                 type="button"

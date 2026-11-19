@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Entity" ADD COLUMN     "coverPositionY" DOUBLE PRECISION NOT NULL DEFAULT 50;

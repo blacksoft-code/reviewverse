@@ -1,24 +1,28 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import CopyableId from '@/components/common/CopyableId';
-import EntityActions from '@/components/entities/EntityActions';
 import EntityCover from '@/components/entities/EntityCover';
 import EntityFollowersLink from '@/components/entities/EntityFollowersLink';
-import ClaimBusinessButton from '@/components/entities/ClaimBusinessButton';
-import { useAuth } from '@/context/AuthContext';
+import {
+  ClaimState,
+  useClaimStatus,
+} from '@/components/entities/ClaimBusinessButton';
 import {
   BusinessHour,
   getBusinessHours,
 } from '@/services/business-hour.service';
 import { updateEntity } from '@/services/entity-management.service';
 import {
-  getEntityMemberships,
-  getMyMemberships,
-} from '@/services/entity-membership.service';
+  blockEntity,
+  followEntity,
+  getEntityRelationshipStatus,
+  unblockEntity,
+  unfollowEntity,
+} from '@/services/user.service';
 
 export type EntityHeaderData = {
   id: string;
@@ -109,6 +113,311 @@ function StarBox({ filled }: { filled: boolean }) {
   );
 }
 
+// ─────────────────────────────────────────────
+// Action সারি — ক্রম: Follow/Unfollow → View on Google Maps → "⋯" menu
+// "⋯" menu-র ভেতরে: Message, Claim this business (শুধু claim করা যাবে এমন
+// business-এ), Block
+// ক্রম বদলাতে চাইলে নিচের return-এর ভেতরে লাইনগুলো উপর-নিচ করলেই হবে
+// ─────────────────────────────────────────────
+// ⋯ menu-র প্রস্থ (w-56 = 224px)
+const MENU_WIDTH = 224;
+
+function EntityActions({
+  entityId,
+  googleMapsUrl,
+  claim,
+  onMessage,
+}: {
+  entityId: string;
+  googleMapsUrl?: string | null;
+  // Claim-এর অবস্থা (useClaimStatus) — ⋯ menu-র "Claim this business"-এর জন্য
+  claim: ClaimState;
+  // "Message" এখনো কোনো page-এর সাথে যুক্ত না — যুক্ত হলে এখানে handler দিলেই হবে
+  onMessage?: () => void;
+}) {
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [loading, setLoading] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  // মোবাইলে ⋯ ডান প্রান্তের কাছে পড়লে menu ডান দিকে align হবে, যাতে screen-এর বাইরে না যায়
+  const [alignRight, setAlignRight] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  function toggleMenu() {
+    if (!menuOpen && menuRef.current) {
+      const rect = menuRef.current.getBoundingClientRect();
+      setAlignRight(
+        rect.left + MENU_WIDTH > window.innerWidth - 8,
+      );
+    }
+
+    setMenuOpen((open) => !open);
+  }
+
+  function showError(error: unknown) {
+    alert(
+      error instanceof Error
+        ? error.message
+        : 'Something went wrong',
+    );
+  }
+
+  async function handleFollow() {
+    try {
+      setLoading('follow');
+      await followEntity(entityId);
+      setIsFollowing(true);
+    } catch (error) {
+      showError(error);
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function handleUnfollow() {
+    try {
+      setLoading('follow');
+      await unfollowEntity(entityId);
+      setIsFollowing(false);
+    } catch (error) {
+      showError(error);
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function handleBlock() {
+    setMenuOpen(false);
+
+    try {
+      setLoading('block');
+      await blockEntity(entityId);
+
+      // block-এর পর entity page আর available থাকে না — reload করলে
+      // BlockGuard "not available" দেখাবে
+      window.location.reload();
+    } catch (error) {
+      showError(error);
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function handleUnblock() {
+    setMenuOpen(false);
+
+    try {
+      setLoading('block');
+      await unblockEntity(entityId);
+      setIsBlocked(false);
+    } catch (error) {
+      showError(error);
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  useEffect(() => {
+    async function loadStatus() {
+      try {
+        const result =
+          await getEntityRelationshipStatus(entityId);
+
+        setIsFollowing(result.data.isFollowing);
+        setIsBlocked(result.data.isBlocked);
+      } catch {
+        // login করা না থাকলে status পাওয়া যায় না — default অবস্থাই থাকবে
+      }
+    }
+
+    loadStatus();
+  }, [entityId]);
+
+  // বাইরে click বা Esc চাপলে menu বন্ধ
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    function onClick(e: MouseEvent) {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(e.target as Node)
+      ) {
+        setMenuOpen(false);
+      }
+    }
+
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setMenuOpen(false);
+    }
+
+    document.addEventListener('mousedown', onClick);
+    document.addEventListener('keydown', onKey);
+
+    return () => {
+      document.removeEventListener('mousedown', onClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [menuOpen]);
+
+  const menuItemClass =
+    'block w-full px-4 py-2.5 text-left text-sm hover:bg-black/5 disabled:opacity-50';
+
+  // Claim-সংক্রান্ত সারি দেখানো হবে কি না
+  const showClaimRow =
+    claim.status === 'claimable' ||
+    claim.status === 'pending' ||
+    claim.status === 'not-logged-in';
+
+  // Block/Unblock-এর আগে separator লাগবে কি না
+  const hasItemsAbove = !isBlocked || showClaimRow;
+
+  return (
+    <div className="flex flex-wrap items-center gap-2.5">
+      {/* ১) Follow / Unfollow */}
+      {!isBlocked && (
+        <button
+          type="button"
+          onClick={isFollowing ? handleUnfollow : handleFollow}
+          disabled={loading === 'follow'}
+          className={`rounded-full px-5 py-2.5 text-sm font-semibold transition disabled:opacity-50 ${
+            isFollowing
+              ? 'bg-white/15 text-white hover:bg-white/25'
+              : 'bg-white text-black hover:bg-white/90'
+          }`}
+        >
+          {loading === 'follow'
+            ? 'Loading...'
+            : isFollowing
+              ? 'Unfollow'
+              : 'Follow'}
+        </button>
+      )}
+
+      {/* ২) Google Maps — click করলে নতুন tab-এ location খোলে */}
+      {googleMapsUrl && (
+        <a
+          href={googleMapsUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="rounded-full bg-white/10 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-white/20"
+        >
+          📍 View on Google Maps
+        </a>
+      )}
+
+      {/* ৩) ⋯ More — Message, Claim this business, Block */}
+      <div ref={menuRef} className="relative">
+        <button
+          type="button"
+          onClick={toggleMenu}
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
+          aria-label="More options"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-xl leading-none text-white transition hover:bg-white/20"
+        >
+          ⋯
+        </button>
+
+        {menuOpen && (
+          <div
+            role="menu"
+            className={`absolute top-full z-30 mt-2 w-56 overflow-hidden rounded-2xl bg-white py-1 shadow-[0_8px_30px_rgba(0,0,0,0.25)] ring-1 ring-black/5 ${
+              alignRight ? 'right-0' : 'left-0'
+            }`}
+          >
+            {!isBlocked && (
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setMenuOpen(false);
+                  onMessage?.();
+                }}
+                className={`${menuItemClass} text-[#1d1d1f]`}
+              >
+                Message
+              </button>
+            )}
+
+            {/* Claim this business — শুধু যে business-এর owner নেই, সেখানে */}
+            {claim.status === 'claimable' && (
+              <>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={claim.submitClaim}
+                  disabled={claim.submitting}
+                  className={`${menuItemClass} text-[#1d1d1f]`}
+                >
+                  {claim.submitting
+                    ? 'Submitting...'
+                    : 'Claim this business'}
+                </button>
+
+                {claim.error && (
+                  <p className="px-4 pb-2 text-xs text-red-600">
+                    {claim.error}
+                  </p>
+                )}
+              </>
+            )}
+
+            {claim.status === 'pending' && (
+              <p
+                role="menuitem"
+                aria-disabled="true"
+                className="px-4 py-2.5 text-sm text-gray-500"
+              >
+                Claim pending review
+              </p>
+            )}
+
+            {claim.status === 'not-logged-in' && (
+              <Link
+                href="/login"
+                role="menuitem"
+                onClick={() => setMenuOpen(false)}
+                className={`${menuItemClass} text-[#1d1d1f]`}
+              >
+                Login to claim this business
+              </Link>
+            )}
+
+            {hasItemsAbove && (
+              <div className="my-1 border-t border-black/5" />
+            )}
+
+            {isBlocked ? (
+              <button
+                type="button"
+                role="menuitem"
+                onClick={handleUnblock}
+                disabled={loading === 'block'}
+                className={`${menuItemClass} text-[#1d1d1f]`}
+              >
+                {loading === 'block' ? 'Loading...' : 'Unblock'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                role="menuitem"
+                onClick={handleBlock}
+                disabled={loading === 'block'}
+                className={`${menuItemClass} text-red-600`}
+              >
+                {loading === 'block' ? 'Loading...' : 'Block'}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// Entity Header
+// ─────────────────────────────────────────────
 export default function EntityHeader({
   entity,
 }: {
@@ -116,7 +425,9 @@ export default function EntityHeader({
 }) {
   const pathname = usePathname();
   const basePath = `/entities/${entity.slug}`;
-  const { user } = useAuth();
+  // Claimed কিনা, আমি member কিনা, claim করা যাবে কিনা — সব এক hook থেকে
+  const claim = useClaimStatus(entity.id);
+  const canManage = claim.myRole !== null;
 
   const [isOpenNow, setIsOpenNow] = useState<boolean | null>(
     null,
@@ -124,8 +435,6 @@ export default function EntityHeader({
   const [hoursLabel, setHoursLabel] = useState<string | null>(
     null,
   );
-  const [isClaimed, setIsClaimed] = useState(false);
-  const [canManage, setCanManage] = useState(false);
 
   // Cover reposition
   const initialY = entity.coverPositionY ?? 50;
@@ -155,53 +464,12 @@ export default function EntityHeader({
       }
     }
 
-    async function loadClaimed() {
-      try {
-        const response = await getEntityMemberships(entity.id);
-
-        if (!cancelled) {
-          setIsClaimed(
-            response.data.some((m) => m.role === 'OWNER'),
-          );
-        }
-      } catch {
-        // চেক ব্যর্থ হলে "Claimed" লেখা দেখানো হবে না
-      }
-    }
-
     loadHours();
-    loadClaimed();
 
     return () => {
       cancelled = true;
     };
   }, [entity.id]);
-
-  // এই business-এর member (owner/manager/employee) হলে cover reposition করতে পারবে
-  useEffect(() => {
-    let cancelled = false;
-
-    if (!user) {
-      setCanManage(false);
-      return;
-    }
-
-    getMyMemberships()
-      .then((response) => {
-        if (!cancelled) {
-          setCanManage(
-            response.data.some((m) => m.entityId === entity.id),
-          );
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setCanManage(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [user, entity.id]);
 
   async function saveReposition() {
     setSaving(true);
@@ -379,18 +647,36 @@ export default function EntityHeader({
 
           {/* Claimed • $$ • Category */}
           <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[15px] font-medium">
-            {isClaimed && (
+            {claim.hasOwner !== null && (
               <>
-                <span className="flex items-center gap-1.5 text-[#64b5ff]">
-                  <svg
-                    viewBox="0 0 20 20"
-                    className="h-4 w-4 fill-current"
-                    aria-hidden="true"
-                  >
-                    <path d="M10 1.5a8.5 8.5 0 100 17 8.5 8.5 0 000-17zm4.1 6.6l-4.8 5a.8.8 0 01-1.1 0L5.9 10.8a.8.8 0 111.1-1.1l1.8 1.7 4.2-4.4a.8.8 0 111.1 1.1z" />
-                  </svg>
-                  Claimed
-                </span>
+                {claim.hasOwner ? (
+                  <span className="flex items-center gap-1.5 text-[#64b5ff]">
+                    <svg
+                      viewBox="0 0 20 20"
+                      className="h-4 w-4 fill-current"
+                      aria-hidden="true"
+                    >
+                      <path d="M10 1.5a8.5 8.5 0 100 17 8.5 8.5 0 000-17zm4.1 6.6l-4.8 5a.8.8 0 01-1.1 0L5.9 10.8a.8.8 0 111.1-1.1l1.8 1.7 4.2-4.4a.8.8 0 111.1 1.1z" />
+                    </svg>
+                    Claimed
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1.5 text-white/70">
+                    <svg
+                      viewBox="0 0 20 20"
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      aria-hidden="true"
+                    >
+                      <circle cx="10" cy="10" r="7.7" />
+                      <path d="M6.8 10h6.4" />
+                    </svg>
+                    Not claimed
+                  </span>
+                )}
                 <span className="text-white/50">•</span>
               </>
             )}
@@ -434,33 +720,23 @@ export default function EntityHeader({
               </Link>
             </div>
           )}
+
+          <div>
+            <EntityFollowersLink
+              entityId={entity.id}
+              slug={entity.slug}
+              className="px-2 text-sm text-white/70 hover:text-white hover:underline"
+            />
+          </div>
         </div>
       </section>
 
       {/* ───────── Actions ───────── */}
-      <section className="mt-3 flex flex-wrap items-center gap-2.5 rounded-3xl bg-black px-4 py-3 text-white sm:px-5">
-        <EntityActions entityId={entity.id} />
-
-        <div className="[&_a]:rounded-full [&_button]:rounded-full [&_button:hover]:bg-white/10 [&_span]:rounded-full">
-          <ClaimBusinessButton entityId={entity.id} />
-        </div>
-
-        {/* Google Maps — click করলে নতুন tab-এ location খোলে */}
-        {entity.googleMapsUrl && (
-          <a
-            href={entity.googleMapsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-full bg-white/10 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-white/20"
-          >
-            📍 View on Google Maps
-          </a>
-        )}
-
-        <EntityFollowersLink
+      <section className="mt-3 rounded-3xl bg-black px-4 py-3 text-white sm:px-5">
+        <EntityActions
           entityId={entity.id}
-          slug={entity.slug}
-          className="px-2 text-sm text-white/70 hover:text-white hover:underline"
+          googleMapsUrl={entity.googleMapsUrl}
+          claim={claim}
         />
       </section>
 
@@ -486,17 +762,6 @@ export default function EntityHeader({
           })}
         </div>
       </nav>
-
-      <section className="mt-4 rounded-xl bg-black p-4">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Link
-            href={`${basePath}/add_a_review`}
-            className="rounded-lg border px-4 py-3 text-center text-sm font-medium hover:bg-[#B91C1C]"
-          >
-            Add review
-          </Link>
-        </div>
-      </section>
     </div>
   );
 }

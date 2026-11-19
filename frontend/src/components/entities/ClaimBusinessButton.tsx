@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 
 import {
   claimBusiness,
+  EntityRole,
   getEntityMemberships,
   getMyClaims,
   getMyMemberships,
@@ -16,28 +17,36 @@ type ClaimBusinessButtonProps = {
   entityId: string;
 };
 
-type Status =
+export type ClaimStatus =
   | 'checking'
   | 'not-logged-in'
   | 'claimable'
   | 'pending'
   | 'owner'
   | 'has-other-role'
-  // NEW: এই business-এর ইতিমধ্যে একজন owner আছে,
+  // এই business-এর ইতিমধ্যে একজন owner আছে,
   // কিন্তু সেটা এই viewer না
   | 'already-owned-by-other';
 
-export default function ClaimBusinessButton({
-  entityId,
-}: ClaimBusinessButtonProps) {
+// Claim-সংক্রান্ত সব তথ্য এক জায়গায় — Entity header (উপরের "Claimed / Not claimed"
+// আর ⋯ menu-র "Claim this business") আর নিচের বাটন দুটোই এটা ব্যবহার করে
+export function useClaimStatus(entityId: string) {
   const { user, loading: authLoading } = useAuth();
 
   const [status, setStatus] =
-    useState<Status>('checking');
+    useState<ClaimStatus>('checking');
 
-  const [submitting, setSubmitting] =
-    useState(false);
+  // business-টার কোনো OWNER আছে কিনা (জানা না গেলে null)
+  const [hasOwner, setHasOwner] = useState<boolean | null>(
+    null,
+  );
 
+  // এই viewer এই business-এর member হলে তার role
+  const [myRole, setMyRole] = useState<EntityRole | null>(
+    null,
+  );
+
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -46,9 +55,10 @@ export default function ClaimBusinessButton({
         return;
       }
 
-      // NEW: viewer login করা থাকুক বা না থাকুক, business-টার
+      // viewer login করা থাকুক বা না থাকুক, business-টার
       // আদৌ owner আছে কিনা সেটা সবার আগে চেক করা হচ্ছে
       let entityHasOwner = false;
+      let ownerKnown = false;
 
       try {
         const membershipsRes =
@@ -56,9 +66,13 @@ export default function ClaimBusinessButton({
         entityHasOwner = membershipsRes.data.some(
           (m) => m.role === 'OWNER',
         );
+        ownerKnown = true;
       } catch {
         // চেক ব্যর্থ হলেও নিচের normal flow চলবে
       }
+
+      setHasOwner(ownerKnown ? entityHasOwner : null);
+      setMyRole(null);
 
       if (!user) {
         setStatus(
@@ -81,11 +95,15 @@ export default function ClaimBusinessButton({
         );
 
         if (myMembership) {
-          setStatus(
-            myMembership.role === 'OWNER'
-              ? 'owner'
-              : 'has-other-role',
-          );
+          setMyRole(myMembership.role);
+
+          if (myMembership.role === 'OWNER') {
+            setHasOwner(true);
+            setStatus('owner');
+          } else {
+            setStatus('has-other-role');
+          }
+
           return;
         }
 
@@ -118,7 +136,7 @@ export default function ClaimBusinessButton({
     loadStatus();
   }, [entityId, user, authLoading]);
 
-  async function handleClaim() {
+  async function submitClaim() {
     setError('');
     setSubmitting(true);
 
@@ -136,6 +154,26 @@ export default function ClaimBusinessButton({
     }
   }
 
+  return {
+    status,
+    hasOwner,
+    myRole,
+    submitting,
+    error,
+    submitClaim,
+  };
+}
+
+export type ClaimState = ReturnType<typeof useClaimStatus>;
+
+// আগের মতোই একটা আলাদা বাটন হিসেবে ব্যবহার করা যাবে (এখন Entity header এটা
+// ব্যবহার করে না — সেখানে "Claim this business" ⋯ menu-র ভেতরে)
+export default function ClaimBusinessButton({
+  entityId,
+}: ClaimBusinessButtonProps) {
+  const { status, submitting, error, submitClaim } =
+    useClaimStatus(entityId);
+
   if (status === 'checking') {
     return null;
   }
@@ -152,7 +190,7 @@ export default function ClaimBusinessButton({
     return null;
   }
 
-  // NEW: অন্য কারো owned business — claim বাটনই দেখাবে না
+  // অন্য কারো owned business — claim বাটনই দেখাবে না
   if (status === 'already-owned-by-other') {
     return (
       <span className="rounded-lg border px-5 py-2.5 text-sm font-medium text-gray-400">
@@ -184,7 +222,7 @@ export default function ClaimBusinessButton({
     <div className="flex flex-col gap-1">
       <button
         type="button"
-        onClick={handleClaim}
+        onClick={submitClaim}
         disabled={submitting}
         className="rounded-lg border px-5 py-2.5 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
       >

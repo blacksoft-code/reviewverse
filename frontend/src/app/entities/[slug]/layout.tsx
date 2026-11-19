@@ -28,7 +28,7 @@ export default async function EntityLayout({
     showBlueBadge?: boolean;
     averageRating: number;
     category: { name: string };
-    reviews: unknown[];
+    reviews: { isLatest?: boolean }[];
   };
 
   return (
@@ -43,7 +43,10 @@ export default async function EntityLayout({
           logo: entity.logo,
           showBlueBadge: entity.showBlueBadge ?? false,
           averageRating: entity.averageRating,
-          reviewCount: entity.reviews?.length ?? 0,
+          // শুধু latest review — Customer Reviews overview-এর সংখ্যার সাথে মেলে
+          reviewCount:
+            entity.reviews?.filter((r) => r.isLatest !== false)
+              .length ?? 0,
           category: entity.category,
           googleMapsUrl: entity.googleMapsUrl ?? null,
           publicId: entity.publicId ?? null,

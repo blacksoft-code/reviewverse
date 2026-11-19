@@ -289,6 +289,7 @@ model Entity {
   serviceOptions String?
 
   coverPhoto String?
+  coverPositionY Float @default(50)
   logo       String?
 
   amenities      Amenity[]
