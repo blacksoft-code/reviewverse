@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useConfirm } from '@/components/common/ConfirmDialog';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -139,6 +140,7 @@ function EntityActions({
   onMessage?: () => void;
 }) {
   const [isFollowing, setIsFollowing] = useState(false);
+  const { confirm, confirmDialog } = useConfirm();
   const [isBlocked, setIsBlocked] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -191,6 +193,15 @@ function EntityActions({
 
   async function handleBlock() {
     setMenuOpen(false);
+
+    const ok = await confirm({
+      title: 'Block this business?',
+      message:
+        'Are you sure you want to block this business? This page will become unavailable to you.',
+      confirmLabel: 'Block',
+      danger: true,
+    });
+    if (!ok) return;
 
     try {
       setLoading('block');
@@ -276,6 +287,7 @@ function EntityActions({
 
   return (
     <div className="flex flex-wrap items-center gap-2.5">
+      {confirmDialog}
       {/* ১) Follow / Unfollow */}
       {!isBlocked && (
         <button

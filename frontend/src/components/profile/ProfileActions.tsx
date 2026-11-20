@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { getProfile } from '@/services/auth.service';
+import { useConfirm } from '@/components/common/ConfirmDialog';
 
 import {
   acceptFriendRequest,
@@ -25,6 +26,7 @@ export default function ProfileActions({
   userId,
   userName,
 }: ProfileActionsProps) {
+  const { confirm, confirmDialog } = useConfirm();
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFriend, setIsFriend] = useState(false);
 
@@ -185,8 +187,8 @@ export default function ProfileActions({
 
   // NEW: "•••"/"Following ▾" dropdown-এর ভেতর থেকে Block — action শেষে menu বন্ধ
   const handleBlockFromMenu = async () => {
-    await handleBlock();
     setMoreMenuOpen(false);
+    await handleBlock();
   };
 
   const handleAcceptFriendRequest = async () => {
@@ -247,6 +249,18 @@ export default function ProfileActions({
   };
 
   const handleBlock = async () => {
+    // Block করার আগে confirm — Unblock-এ লাগবে না
+    if (!isBlocked) {
+      const ok = await confirm({
+        title: `Block ${userName}?`,
+        message:
+          'Are you sure you want to block this user? This profile will become unavailable to you.',
+        confirmLabel: 'Block',
+        danger: true,
+      });
+      if (!ok) return;
+    }
+
     try {
       setLoading('block');
 
@@ -304,6 +318,7 @@ export default function ProfileActions({
 
   return (
     <>
+      {confirmDialog}
       {!isOwnProfile && (
         <div className="mt-5 flex flex-wrap gap-3">
           {/* ───────────────────────────────

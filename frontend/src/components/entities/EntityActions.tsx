@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useConfirm } from '@/components/common/ConfirmDialog';
 
 import {
   blockEntity,
@@ -21,6 +22,7 @@ export default function EntityActions({
   onMessage,
 }: EntityActionsProps) {
   const [isFollowing, setIsFollowing] = useState(false);
+  const { confirm, confirmDialog } = useConfirm();
   const [isBlocked, setIsBlocked] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -60,6 +62,15 @@ export default function EntityActions({
 
   async function handleBlock() {
     setMenuOpen(false);
+
+    const ok = await confirm({
+      title: 'Block this business?',
+      message:
+        'Are you sure you want to block this business? This page will become unavailable to you.',
+      confirmLabel: 'Block',
+      danger: true,
+    });
+    if (!ok) return;
 
     try {
       setLoading('block');
@@ -135,6 +146,7 @@ export default function EntityActions({
 
   return (
     <div className="flex items-center gap-2.5">
+      {confirmDialog}
       {!isBlocked && (
         <button
           type="button"

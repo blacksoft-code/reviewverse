@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 
 import { useAuth } from '@/context/AuthContext';
 import FriendListPrivacy from '@/components/profile/FriendListPrivacy';
+import { useConfirm } from '@/components/common/ConfirmDialog';
 
 import {
   acceptFriendRequest,
@@ -51,6 +52,7 @@ export default function FriendsContent({
   const [restrictedReason, setRestrictedReason] =
     useState<string | null>(null);
 
+  const { confirm, confirmDialog } = useConfirm();
   const [friends, setFriends] =
     useState<Friend[]>([]);
 
@@ -182,6 +184,20 @@ export default function FriendsContent({
   const handleBlock = async (
     friendId: string,
   ) => {
+    const friendName =
+      friends.find((f) => f.id === friendId)?.name ??
+      'this user';
+
+    setOpenMenu(null);
+
+    const ok = await confirm({
+      title: `Block ${friendName}?`,
+      message: `Are you sure you want to block ${friendName}?`,
+      confirmLabel: 'Block',
+      danger: true,
+    });
+    if (!ok) return;
+
     try {
       setLoading(friendId);
 
@@ -262,6 +278,7 @@ export default function FriendsContent({
 
   return (
     <section className="mx-auto max-w-5xl px-6 py-8">
+      {confirmDialog}
       <div className="rounded-xl bg-white p-6 shadow-sm">
 
         {isOwner && (
