@@ -1,5 +1,7 @@
 'use client';
 
+import UserAvatar from '@/components/common/UserAvatar';
+import { getAvatarUrl } from '@/lib/avatar';
 import { FormEvent, useState } from 'react';
 import { useConfirm } from '@/components/common/ConfirmDialog';
 
@@ -260,9 +262,10 @@ function PostCommentItem({
   return (
     <div>
       <div className="flex items-start gap-2">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-600">
-          {comment.user.name.charAt(0).toUpperCase()}
-        </div>
+        <UserAvatar
+          name={comment.user.name}
+          url={getAvatarUrl(comment.user)}
+        />
 
         <div className="flex-1">
           <div className="rounded-2xl bg-gray-100 px-3 py-2">
@@ -352,11 +355,11 @@ function PostCommentItem({
                   key={reply.id}
                   className="flex items-start gap-2"
                 >
-                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-200 text-[10px] font-bold text-gray-600">
-                    {reply.user.name
-                      .charAt(0)
-                      .toUpperCase()}
-                  </div>
+                  <UserAvatar
+                    name={reply.user.name}
+                    url={getAvatarUrl(reply.user)}
+                    size="sm"
+                  />
 
                   <div className="flex-1">
                     <div className="rounded-2xl bg-gray-100 px-3 py-1.5">

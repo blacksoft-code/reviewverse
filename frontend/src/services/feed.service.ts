@@ -21,6 +21,7 @@ export type FeedReview = {
     id: string;
     name: string;
     slug: string;
+    logo?: string | null;
     location: string | null;
   };
   media?: { id: string; url: string }[];

@@ -29,6 +29,7 @@ export type ShareReview = {
     id: string;
     name: string;
     slug: string;
+    logo?: string | null;
     location: string | null;
   };
   media: ShareMedia[];

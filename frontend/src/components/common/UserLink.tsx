@@ -13,6 +13,7 @@ export type UserLinkEntity = {
 export default function UserLink({
   userId,
   name,
+  avatarUrl,
   entity,
   suffix,
   onNavigate,
@@ -20,6 +21,8 @@ export default function UserLink({
 }: {
   userId: string;
   name: string;
+  // user-এর profile ছবি (business হিসেবে হলে entity.logo-ই আগে)
+  avatarUrl?: string | null;
   entity?: UserLinkEntity | null;
   suffix?: string;
   onNavigate?: () => void;
@@ -38,9 +41,9 @@ export default function UserLink({
       className={`flex min-w-0 items-center gap-3 ${className}`}
     >
       <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-200 text-sm font-bold text-gray-600">
-        {entity?.logo ? (
+        {(entity ? entity.logo : avatarUrl) ? (
           <img
-            src={entity.logo}
+            src={(entity ? entity.logo : avatarUrl) as string}
             alt={displayName}
             className="h-full w-full object-cover"
           />

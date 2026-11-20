@@ -475,6 +475,7 @@ async getFollowers(entityId: string) {
           id: true,
           name: true,
           createdAt: true,
+          media: USER_BRIEF_SELECT.media,
         },
       },
     },

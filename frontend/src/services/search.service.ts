@@ -4,12 +4,14 @@ export type SearchUser = {
   id: string;
   name: string;
   createdAt: string;
+  media?: { url: string }[];
 };
 
 export type SearchEntity = {
   id: string;
   name: string;
   slug: string;
+  logo?: string | null;
   location: string | null;
   averageRating: number;
 

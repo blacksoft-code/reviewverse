@@ -1,5 +1,6 @@
 'use client';
 
+import UserAvatar from '@/components/common/UserAvatar';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -109,6 +110,11 @@ export default function BusinessClaimsPage() {
                 key={claim.id}
                 className="flex items-center justify-between gap-4 rounded-lg border p-4"
               >
+                <div className="flex min-w-0 items-center gap-3">
+                  <UserAvatar
+                    name={claim.entity?.name ?? 'B'}
+                    url={claim.entity?.logo}
+                  />
                 <div className="min-w-0">
                   {claim.entity?.slug ? (
                     <Link
@@ -129,6 +135,7 @@ export default function BusinessClaimsPage() {
                       claim.createdAt,
                     ).toLocaleDateString()}
                   </p>
+                </div>
                 </div>
 
                 <div className="flex items-center gap-3">

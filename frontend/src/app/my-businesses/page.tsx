@@ -1,5 +1,6 @@
 'use client';
 
+import UserAvatar from '@/components/common/UserAvatar';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -87,13 +88,19 @@ export default function MyBusinessesPage() {
                 key={membership.id}
                 className="flex items-center justify-between rounded-lg border p-4"
               >
-                <div>
-                  <p className="font-medium">
-                    {membership.entity?.name}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    Role: {membership.role}
-                  </p>
+                <div className="flex items-center gap-3">
+                  <UserAvatar
+                    name={membership.entity?.name ?? 'B'}
+                    url={membership.entity?.logo}
+                  />
+                  <div>
+                    <p className="font-medium">
+                      {membership.entity?.name}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Role: {membership.role}
+                    </p>
+                  </div>
                 </div>
 
                 <Link

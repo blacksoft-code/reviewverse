@@ -17,17 +17,21 @@ import {
 import { searchLocations, Location } from '@/services/location.service';
 import { getCategories } from '@/services/category.service';
 import { searchOfferingTypes } from '@/services/offering.service';
+import UserAvatar from '@/components/common/UserAvatar';
+import { getAvatarUrl } from '@/lib/avatar';
 
 type SearchUser = {
   id: string;
   name: string;
   createdAt: string;
+  media?: { url: string }[];
 };
 
 type SearchEntity = {
   id: string;
   name: string;
   slug: string;
+  logo?: string | null;
   location: string | null;
   averageRating: number;
 
@@ -506,11 +510,10 @@ export default function SearchBox() {
                         }
                         className="flex w-full items-center gap-3 border-b px-4 py-3 text-left transition hover:bg-gray-50"
                       >
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-200 text-sm font-bold text-gray-700">
-                          {user.name
-                            .charAt(0)
-                            .toUpperCase()}
-                        </div>
+                        <UserAvatar
+                          name={user.name}
+                          url={getAvatarUrl(user)}
+                        />
 
                         <div className="min-w-0">
                           <p className="truncate text-sm font-medium text-gray-900">
@@ -545,9 +548,10 @@ export default function SearchBox() {
                         }
                         className="flex w-full items-center gap-3 border-b px-4 py-3 text-left transition hover:bg-gray-50"
                       >
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-lg">
-                          🏢
-                        </div>
+                        <UserAvatar
+                          name={entity.name}
+                          url={entity.logo}
+                        />
 
                         <div className="min-w-0">
                           <p className="truncate text-sm font-medium text-gray-900">

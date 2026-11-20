@@ -17,6 +17,7 @@ export type ReactionSummary = {
 export type Reactor = {
   userId: string;
   name: string;
+  avatarUrl?: string | null;
   type: ReactionType;
   createdAt: string;
   // business হিসেবে react করলে business-এর তথ্য

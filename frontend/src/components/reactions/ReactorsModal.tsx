@@ -157,6 +157,7 @@ export default function ReactorsModal({
                     <UserLink
                       userId={r.userId}
                       name={r.name}
+                      avatarUrl={r.avatarUrl}
                       entity={r.entity}
                       suffix={
                         user?.id === r.userId && !r.entity

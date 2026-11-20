@@ -1,5 +1,7 @@
 'use client';
 
+import UserAvatar from '@/components/common/UserAvatar';
+import { getAvatarUrl } from '@/lib/avatar';
 import { useEffect, useState } from 'react';
 
 import {
@@ -96,9 +98,11 @@ export default function BlockedUsersList() {
               className="flex items-center justify-between gap-4 py-4"
             >
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-200 text-lg font-bold text-gray-600">
-                  {blocked.name.charAt(0).toUpperCase()}
-                </div>
+                <UserAvatar
+                  name={blocked.name}
+                  url={getAvatarUrl(blocked)}
+                  size="lg"
+                />
 
                 <span className="font-semibold text-gray-900">
                   {blocked.name}

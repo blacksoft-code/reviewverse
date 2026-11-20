@@ -12,6 +12,7 @@ export const SHARE_INCLUDE = {
           id: true,
           name: true,
           slug: true,
+          logo: true,
           location: true,
         },
       },

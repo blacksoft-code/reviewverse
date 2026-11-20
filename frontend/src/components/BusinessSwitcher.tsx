@@ -1,5 +1,6 @@
 'use client';
 
+import UserAvatar from '@/components/common/UserAvatar';
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -186,8 +187,15 @@ export default function BusinessSwitcher() {
                       : ''
                   }`}
                 >
-                  <span>
-                    {membership.entity?.name}
+                  <span className="flex min-w-0 items-center gap-2">
+                    <UserAvatar
+                      name={membership.entity?.name ?? 'B'}
+                      url={membership.entity?.logo}
+                      size="sm"
+                    />
+                    <span className="truncate">
+                      {membership.entity?.name}
+                    </span>
                   </span>
                   <span className="text-xs text-gray-400">
                     {membership.role}

@@ -12,6 +12,7 @@ export type EntityQuestion = {
   asker: {
     id: string;
     name: string;
+    media?: { url: string }[];
   };
 };
 

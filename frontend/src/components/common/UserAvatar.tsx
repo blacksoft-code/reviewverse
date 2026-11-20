@@ -7,10 +7,16 @@ export default function UserAvatar({
 }: {
   name: string;
   url?: string | null;
-  size?: 'sm' | 'md';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
 }) {
   const box =
-    size === 'sm' ? 'h-7 w-7 text-xs' : 'h-9 w-9 text-sm';
+    size === 'xs'
+      ? 'h-5 w-5 text-[10px]'
+      : size === 'sm'
+        ? 'h-7 w-7 text-xs'
+        : size === 'lg'
+        ? 'h-12 w-12 text-lg'
+        : 'h-9 w-9 text-sm';
 
   return (
     <span

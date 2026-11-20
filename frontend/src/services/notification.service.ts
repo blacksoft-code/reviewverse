@@ -35,7 +35,11 @@ export interface AppNotification {
   postId?: string | null;
   isRead: boolean;
   createdAt: string;
-  actor: { id: string; name: string } | null;
+  actor: {
+    id: string;
+    name: string;
+    media?: { url: string }[];
+  } | null;
 }
 
 // Backend সব response { success, data, ... }-তে মুড়ে পাঠায় — ভেতরের data বের করা

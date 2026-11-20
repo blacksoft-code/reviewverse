@@ -1,3 +1,4 @@
+import { USER_BRIEF_SELECT } from '../common/user-select';
 import {
   ConflictException,
   ForbiddenException,
@@ -167,7 +168,7 @@ export class ShareEngagementService {
         parentId: parentId ?? null,
       },
       include: {
-        user: { select: { id: true, name: true } },
+        user: { select: USER_BRIEF_SELECT },
       },
     });
 
@@ -206,11 +207,11 @@ export class ShareEngagementService {
           userId: { notIn: hiddenUserIds },
         },
         include: {
-          user: { select: { id: true, name: true } },
+          user: { select: USER_BRIEF_SELECT },
           replies: {
             where: { userId: { notIn: hiddenUserIds } },
             include: {
-              user: { select: { id: true, name: true } },
+              user: { select: USER_BRIEF_SELECT },
             },
             orderBy: { createdAt: 'asc' },
           },
@@ -259,7 +260,7 @@ export class ShareEngagementService {
       select: {
         type: true,
         createdAt: true,
-        user: { select: { id: true, name: true } },
+        user: { select: USER_BRIEF_SELECT },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -267,6 +268,7 @@ export class ShareEngagementService {
     return rows.map((r) => ({
       userId: r.user.id,
       name: r.user.name,
+      avatarUrl: r.user.media[0]?.url ?? null,
       type: r.type,
       createdAt: r.createdAt,
       entity: null,

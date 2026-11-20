@@ -3,6 +3,7 @@ import { apiFetch } from '@/lib/api';
 export type CommentAuthor = {
   id: string;
   name: string;
+  media?: { url: string }[];
 };
 
 // Business profile থেকে লেখা comment-এ এটা থাকে — তখন owner-এর নামের

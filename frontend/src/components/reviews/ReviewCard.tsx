@@ -393,8 +393,13 @@ export default function ReviewCard({
               {variant === 'feed' && review.entity && (
                 <Link
                   href={`/entities/${encodeURIComponent(review.entity.slug)}`}
-                  className="mt-1 block text-sm text-gray-500 hover:underline"
+                  className="mt-1 flex items-center gap-2 text-sm text-gray-500 hover:underline"
                 >
+                  <UserAvatar
+                    name={review.entity.name}
+                    url={review.entity.logo}
+                    size="sm"
+                  />
                   {review.entity.name}
                 </Link>
               )}
@@ -407,8 +412,12 @@ export default function ReviewCard({
                     <>
                       <Link
                         href={`/entities/${review.entity.slug}`}
-                        className="text-lg font-semibold text-gray-900 hover:underline"
+                        className="flex items-center gap-2 text-lg font-semibold text-gray-900 hover:underline"
                       >
+                        <UserAvatar
+                          name={review.entity.name}
+                          url={review.entity.logo}
+                        />
                         {review.entity.name}
                       </Link>
 

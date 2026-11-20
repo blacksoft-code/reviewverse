@@ -1,5 +1,6 @@
 'use client';
 
+import UserAvatar from '@/components/common/UserAvatar';
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -356,13 +357,19 @@ function ExplorePageContent() {
                   className="block rounded-lg border bg-white p-4 hover:bg-gray-50"
                 >
                   <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold">
-                        {entity.name}
-                      </h3>
-                      <span className="text-xs text-gray-500">
-                        {entity.category?.name}
-                      </span>
+                    <div className="flex items-center gap-3">
+                      <UserAvatar
+                        name={entity.name}
+                        url={entity.logo}
+                      />
+                      <div>
+                        <h3 className="font-semibold">
+                          {entity.name}
+                        </h3>
+                        <span className="text-xs text-gray-500">
+                          {entity.category?.name}
+                        </span>
+                      </div>
                     </div>
                     <span className="text-sm font-medium">
                       ⭐ {entity.averageRating.toFixed(1)}

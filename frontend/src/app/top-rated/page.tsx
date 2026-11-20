@@ -1,3 +1,4 @@
+import UserAvatar from '@/components/common/UserAvatar';
 import Link from 'next/link';
 import HideIfBlocked from '@/components/blocks/HideIfBlocked';
 import { getTopRated } from '@/services/entity.service';
@@ -49,9 +50,15 @@ export default async function TopRatedPage() {
                 </p>
 
                 {/* Entity name */}
-                <h2 className="mt-2 text-xl font-semibold">
-                  {entity.name}
-                </h2>
+                <div className="mt-2 flex items-center gap-3">
+                  <UserAvatar
+                    name={entity.name}
+                    url={entity.logo}
+                  />
+                  <h2 className="text-xl font-semibold">
+                    {entity.name}
+                  </h2>
+                </div>
 
                 {/* Rating */}
                 <p className="mt-3 text-lg">

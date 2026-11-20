@@ -11,6 +11,7 @@ export type Entity = {
   id: string;
   name: string;
   slug: string;
+  logo?: string | null;
   description: string | null;
   averageRating: number;
   categoryId: string;
@@ -120,6 +121,7 @@ export type OfferingSearchResult = {
     id: string;
     name: string;
     slug: string;
+    logo?: string | null;
     location: string | null;
     category: { id: string; name: string } | null;
   };
@@ -209,6 +211,7 @@ export type EntityFollower = {
   id: string;
   name: string;
   createdAt: string;
+  media?: { url: string }[];
 };
 
 export async function getEntityFollowersCount(

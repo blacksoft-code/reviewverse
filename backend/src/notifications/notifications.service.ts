@@ -1,3 +1,4 @@
+import { USER_BRIEF_SELECT } from '../common/user-select';
 import {
   Injectable,
   Logger,
@@ -125,7 +126,7 @@ export class NotificationsService
         postId: params.postId,
       },
       include: {
-        actor: { select: { id: true, name: true } },
+        actor: { select: USER_BRIEF_SELECT },
       },
     });
 
@@ -155,7 +156,7 @@ export class NotificationsService
         createdAt: { gte: this.retentionCutoff() },
       },
       include: {
-        actor: { select: { id: true, name: true } },
+        actor: { select: USER_BRIEF_SELECT },
       },
       orderBy: { createdAt: 'desc' },
       take: 50,
@@ -192,7 +193,7 @@ export class NotificationsService
         ...scope,
       },
       include: {
-        actor: { select: { id: true, name: true } },
+        actor: { select: USER_BRIEF_SELECT },
       },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: limit + 1,

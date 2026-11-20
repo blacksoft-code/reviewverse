@@ -1,5 +1,7 @@
 'use client';
 
+import UserAvatar from '@/components/common/UserAvatar';
+import { getAvatarUrl } from '@/lib/avatar';
 import {
   FormEvent,
   useEffect,
@@ -1167,11 +1169,10 @@ export default function BusinessHomePage() {
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f5f7] text-sm font-semibold text-[#6e6e73]">
-                          {(review.user?.name ?? 'C')
-                            .charAt(0)
-                            .toUpperCase()}
-                        </div>
+                        <UserAvatar
+                          name={review.user?.name ?? 'C'}
+                          url={getAvatarUrl(review.user)}
+                        />
                         <div>
                           <p className="text-[15px] font-semibold">
                             {review.user?.name ?? 'Customer'}

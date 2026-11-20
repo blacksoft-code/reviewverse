@@ -1,3 +1,4 @@
+import { USER_BRIEF_SELECT } from '../common/user-select';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { BlocksService } from '../blocks/blocks.service';
@@ -71,6 +72,7 @@ export class SearchService {
         id: true,
         name: true,
         createdAt: true,
+        media: USER_BRIEF_SELECT.media,
       },
       take: 10,
     });
@@ -143,6 +145,7 @@ export class SearchService {
         id: true,
         name: true,
         slug: true,
+        logo: true,
         location: true,
         averageRating: true,
 

@@ -1,5 +1,7 @@
 'use client';
 
+import UserAvatar from '@/components/common/UserAvatar';
+import { getAvatarUrl } from '@/lib/avatar';
 import { useEffect, useState } from 'react';
 
 import { useAuth } from '@/context/AuthContext';
@@ -18,6 +20,7 @@ import {
 type Friend = {
   id: string;
   name: string;
+  media?: { url: string }[];
 };
 
 type FriendRequest = {
@@ -25,6 +28,7 @@ type FriendRequest = {
   sender: {
     id: string;
     name: string;
+    media?: { url: string }[];
   };
 };
 
@@ -357,11 +361,11 @@ export default function FriendsContent({
                       href={`/profile/${friend.id}`}
                       className="flex items-center gap-4"
                     >
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-200 text-lg font-bold text-gray-600">
-                        {friend.name
-                          .charAt(0)
-                          .toUpperCase()}
-                      </div>
+                      <UserAvatar
+                        name={friend.name}
+                        url={getAvatarUrl(friend)}
+                        size="lg"
+                      />
 
                       <span className="font-semibold text-gray-900 hover:underline">
                         {friend.name}
@@ -474,11 +478,11 @@ export default function FriendsContent({
                       href={`/profile/${request.sender.id}`}
                       className="flex items-center gap-4"
                     >
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-200 text-lg font-bold text-gray-600">
-                        {request.sender.name
-                          .charAt(0)
-                          .toUpperCase()}
-                      </div>
+                      <UserAvatar
+                        name={request.sender.name}
+                        url={getAvatarUrl(request.sender)}
+                        size="lg"
+                      />
 
                       <span className="font-semibold text-gray-900 hover:underline">
                         {request.sender.name}

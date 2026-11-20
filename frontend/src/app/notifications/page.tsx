@@ -1,5 +1,7 @@
 'use client';
 
+import UserAvatar from '@/components/common/UserAvatar';
+import { getAvatarUrl } from '@/lib/avatar';
 import { getNotificationHref } from '@/lib/notification-link';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -251,10 +253,16 @@ export default function NotificationsPage() {
                       key={n.id}
                       type="button"
                       onClick={() => handleClick(n)}
-                      className={`block w-full border-b px-4 py-3 text-left text-sm last:border-b-0 hover:bg-gray-50 ${
+                      className={`flex w-full items-start gap-3 border-b px-4 py-3 text-left text-sm last:border-b-0 hover:bg-gray-50 ${
                         n.isRead ? 'bg-white' : 'bg-blue-50'
                       }`}
                     >
+                      <UserAvatar
+                        name={n.actor?.name ?? n.message ?? '?'}
+                        url={getAvatarUrl(n.actor)}
+                      />
+
+                      <div className="min-w-0 flex-1">
                       <p>
                         {/* actor না থাকলে (business reply করলে) message-ই পুরো বাক্য,
                             যেমন "biomed commented on your review." */}
@@ -271,6 +279,7 @@ export default function NotificationsPage() {
                       <p className="mt-1 text-xs text-gray-400">
                         {timeLabel(n.createdAt)}
                       </p>
+                      </div>
                     </button>
                   ))}
                 </div>

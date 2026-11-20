@@ -17,6 +17,7 @@ export type ReviewEntityInfo = {
   id: string;
   name: string;
   slug: string;
+  logo?: string | null;
   location: string | null;
   category?: { id: string; name: string; slug: string } | null;
 };

@@ -1,5 +1,7 @@
 'use client';
 
+import UserAvatar from '@/components/common/UserAvatar';
+import { getAvatarUrl } from '@/lib/avatar';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -364,7 +366,16 @@ export default function EntityQASection({
                     </p>
 
                     <p className={t.meta}>
-                      Asked by {q.asker.name} ·{' '}
+                      Asked by{' '}
+                      <span className="inline-flex items-center gap-1.5 align-middle">
+                        <UserAvatar
+                          name={q.asker.name}
+                          url={getAvatarUrl(q.asker)}
+                          size="xs"
+                        />
+                        {q.asker.name}
+                      </span>{' '}
+                      ·{' '}
                       {new Date(q.createdAt).toLocaleDateString()}
                     </p>
                   </div>

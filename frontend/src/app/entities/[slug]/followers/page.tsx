@@ -1,3 +1,5 @@
+import UserAvatar from '@/components/common/UserAvatar';
+import { getAvatarUrl } from '@/lib/avatar';
 import Link from 'next/link';
 import {
   getEntityBySlug,
@@ -47,9 +49,10 @@ export default async function EntityFollowersPage({
               key={follower.id}
               className="flex items-center gap-4 p-4"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 text-sm font-medium">
-                {follower.user.name.charAt(0).toUpperCase()}
-              </div>
+              <UserAvatar
+                name={follower.user.name}
+                url={getAvatarUrl(follower.user)}
+              />
 
               <div>
                 <p className="font-medium">

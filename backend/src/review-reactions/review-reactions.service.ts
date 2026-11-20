@@ -1,3 +1,4 @@
+import { USER_BRIEF_SELECT } from '../common/user-select';
 import {
   Injectable,
   NotFoundException,
@@ -167,7 +168,7 @@ export class ReviewReactionsService {
       select: {
         type: true,
         createdAt: true,
-        user: { select: { id: true, name: true } },
+        user: { select: USER_BRIEF_SELECT },
         entity: {
           select: { id: true, name: true, slug: true, logo: true },
         },
@@ -178,6 +179,7 @@ export class ReviewReactionsService {
     return rows.map((r) => ({
       userId: r.user.id,
       name: r.user.name,
+      avatarUrl: r.user.media[0]?.url ?? null,
       type: r.type,
       createdAt: r.createdAt,
       entity: r.entity,

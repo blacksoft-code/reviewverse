@@ -1,5 +1,7 @@
 'use client';
 
+import { getAvatarUrl } from '../lib/avatar';
+import UserAvatar from './common/UserAvatar';
 import { useEffect, useRef, useState } from 'react';
 import { useNotifications } from '../hooks/useNotifications';
 import { useBusinessContext } from '../context/BusinessContext';
@@ -282,9 +284,10 @@ export default function NotificationBell() {
                       n.isRead ? 'bg-white' : 'bg-blue-50'
                     }`}
                   >
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-gray-600">
-                      {(n.actor?.name ?? n.message ?? '?').charAt(0).toUpperCase()}
-                    </span>
+                    <UserAvatar
+                      name={n.actor?.name ?? n.message ?? '?'}
+                      url={getAvatarUrl(n.actor)}
+                    />
 
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm text-gray-800">

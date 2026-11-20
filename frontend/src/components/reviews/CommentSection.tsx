@@ -1,5 +1,6 @@
 'use client';
 
+import { getAvatarUrl } from '@/lib/avatar';
 import { FormEvent, useEffect, useState } from 'react';
 import { useConfirm } from '@/components/common/ConfirmDialog';
 
@@ -37,10 +38,14 @@ function Avatar({
     <div
       className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-200 font-bold text-gray-600 ${box}`}
     >
-      {c.entity?.logo ? (
+      {(c.entity ? c.entity.logo : getAvatarUrl(c.user)) ? (
         <img
-          src={c.entity.logo}
-          alt={c.entity.name}
+          src={
+            (c.entity
+              ? c.entity.logo
+              : getAvatarUrl(c.user)) as string
+          }
+          alt={authorName(c)}
           className="h-full w-full object-cover"
         />
       ) : (

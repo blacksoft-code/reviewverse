@@ -1,3 +1,4 @@
+import { USER_BRIEF_SELECT } from '../common/user-select';
 import {
   BadRequestException,
   ConflictException,
@@ -326,18 +327,8 @@ async getFriends(userId: string) {
         ],
       },
       include: {
-        user1: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        user2: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
+        user1: { select: USER_BRIEF_SELECT },
+        user2: { select: USER_BRIEF_SELECT },
       },
       orderBy: {
         createdAt: 'desc',
@@ -429,12 +420,7 @@ async getPendingFriendRequests(
       status: 'PENDING',
     },
     include: {
-      sender: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
+      sender: { select: USER_BRIEF_SELECT },
     },
     orderBy: {
       createdAt: 'desc',
@@ -703,6 +689,7 @@ async getUserProfile(
               id: true,
               name: true,
               slug: true,
+              logo: true,
               location: true,
               category: {
                 select: {
@@ -1269,8 +1256,8 @@ async getEntityRelationshipStatus(
         OR: [{ userId1: profileUserId }, { userId2: profileUserId }],
       },
       include: {
-        user1: { select: { id: true, name: true } },
-        user2: { select: { id: true, name: true } },
+        user1: { select: USER_BRIEF_SELECT },
+        user2: { select: USER_BRIEF_SELECT },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -1322,7 +1309,12 @@ async getEntityRelationshipStatus(
       where: { blockerId: userId },
       include: {
         blocked: {
-          select: { id: true, name: true, isActive: true },
+          select: {
+            id: true,
+            name: true,
+            isActive: true,
+            media: USER_BRIEF_SELECT.media,
+          },
         },
       },
       orderBy: { createdAt: 'desc' },
@@ -1333,6 +1325,7 @@ async getEntityRelationshipStatus(
       .map((b) => ({
         id: b.blocked.id,
         name: b.blocked.name,
+        media: b.blocked.media,
         blockedAt: b.createdAt,
       }));
 
@@ -1352,6 +1345,7 @@ async getEntityRelationshipStatus(
             id: true,
             name: true,
             slug: true,
+            logo: true,
             location: true,
             category: { select: { id: true, name: true } },
           },
@@ -1364,6 +1358,7 @@ async getEntityRelationshipStatus(
       id: b.entity.id,
       name: b.entity.name,
       slug: b.entity.slug,
+      logo: b.entity.logo,
       location: b.entity.location,
       category: b.entity.category,
       blockedAt: b.createdAt,

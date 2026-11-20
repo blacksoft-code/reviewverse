@@ -1,3 +1,4 @@
+import UserAvatar from '@/components/common/UserAvatar';
 import Link from 'next/link';
 import HideIfBlocked from '@/components/blocks/HideIfBlocked';
 import { getCategoryBySlug } from '@/services/category.service';
@@ -62,9 +63,15 @@ export default async function CategoryPage({
                   )}`}
                   className="rounded-lg border p-5 transition hover:shadow-md"
                 >
-                  <h3 className="text-xl font-semibold">
-                    {entity.name}
-                  </h3>
+                  <div className="flex items-center gap-3">
+                    <UserAvatar
+                      name={entity.name}
+                      url={entity.logo}
+                    />
+                    <h3 className="text-xl font-semibold">
+                      {entity.name}
+                    </h3>
+                  </div>
 
                   <p className="mt-3">
                     ⭐ {entity.averageRating.toFixed(1)}

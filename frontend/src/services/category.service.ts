@@ -36,6 +36,7 @@ export async function getCategoryBySlug(
         id: string;
         name: string;
         slug: string;
+        logo?: string | null;
         description: string | null;
         averageRating: number;
         categoryId: string;

@@ -1,3 +1,4 @@
+import { USER_BRIEF_SELECT } from '../common/user-select';
 import {
   ConflictException,
   ForbiddenException,
@@ -23,7 +24,7 @@ export class ReviewCommentsService {
 
   // কমেন্টে কে লিখেছে দেখানোর জন্য — business হিসেবে লিখলে business-এর নাম/লোগো
   private readonly authorSelect = {
-    user: { select: { id: true, name: true } },
+    user: { select: USER_BRIEF_SELECT },
     entity: { select: { id: true, name: true, logo: true, slug: true } },
   } as const;
 

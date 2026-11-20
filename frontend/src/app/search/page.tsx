@@ -6,6 +6,8 @@ import { parseExploreQuery } from '@/lib/parseExploreQuery';
 import { searchLocations } from '@/services/location.service';
 import { getCategories } from '@/services/category.service';
 import OfferingCard from '@/components/offerings/OfferingCard';
+import UserAvatar from '@/components/common/UserAvatar';
+import { getAvatarUrl } from '@/lib/avatar';
 import {
   Entity,
   LocationSort,
@@ -210,9 +212,15 @@ export default async function SearchPage({
                         {entity.category?.name}
                       </p>
 
-                      <h3 className="mt-2 text-xl font-semibold text-black">
-                        {entity.name}
-                      </h3>
+                      <div className="mt-2 flex items-center gap-3">
+                        <UserAvatar
+                          name={entity.name}
+                          url={entity.logo}
+                        />
+                        <h3 className="text-xl font-semibold text-black">
+                          {entity.name}
+                        </h3>
+                      </div>
 
                       {entity.location && (
                         <p className="mt-2 text-sm text-gray-500">
@@ -328,11 +336,11 @@ export default async function SearchPage({
                 >
                   {/* PFP */}
 
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-200 text-lg font-bold text-gray-700">
-                    {user.name
-                      .charAt(0)
-                      .toUpperCase()}
-                  </div>
+                  <UserAvatar
+                    name={user.name}
+                    url={getAvatarUrl(user)}
+                    size="lg"
+                  />
 
                   {/* USER INFO */}
 
@@ -388,9 +396,15 @@ export default async function SearchPage({
 
                   {/* NAME */}
 
-                  <h3 className="mt-2 text-xl font-semibold text-black">
-                    {entity.name}
-                  </h3>
+                  <div className="mt-2 flex items-center gap-3">
+                    <UserAvatar
+                      name={entity.name}
+                      url={entity.logo}
+                    />
+                    <h3 className="text-xl font-semibold text-black">
+                      {entity.name}
+                    </h3>
+                  </div>
 
                   {/* LOCATION */}
 

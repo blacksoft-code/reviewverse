@@ -1,3 +1,4 @@
+import { USER_BRIEF_SELECT } from '../common/user-select';
 import {
   ConflictException,
   ForbiddenException,
@@ -75,9 +76,7 @@ export class PostCommentsService {
         parentId: parentId ?? null,
       },
       include: {
-        user: {
-          select: { id: true, name: true },
-        },
+        user: { select: USER_BRIEF_SELECT },
       },
     });
 
@@ -124,15 +123,11 @@ export class PostCommentsService {
           userId: { notIn: hiddenUserIds },
         },
         include: {
-          user: {
-            select: { id: true, name: true },
-          },
+          user: { select: USER_BRIEF_SELECT },
           replies: {
             where: { userId: { notIn: hiddenUserIds } },
             include: {
-              user: {
-                select: { id: true, name: true },
-              },
+              user: { select: USER_BRIEF_SELECT },
             },
             orderBy: { createdAt: 'asc' },
           },

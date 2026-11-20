@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import { OfferingSearchResult } from '@/services/entity.service';
+import UserAvatar from '@/components/common/UserAvatar';
 
 type OfferingCardProps = {
   offering: OfferingSearchResult;
@@ -44,9 +45,14 @@ export default function OfferingCard({
           {offering.name}
         </h3>
 
-        <p className="mt-1 text-sm text-gray-600">
-          {offering.entity.name}
-        </p>
+        <div className="mt-2 flex items-center gap-2 text-sm text-gray-600">
+          <UserAvatar
+            name={offering.entity.name}
+            url={offering.entity.logo}
+            size="sm"
+          />
+          <span className="truncate">{offering.entity.name}</span>
+        </div>
 
         {offering.entity.location && (
           <p className="mt-1 text-sm text-gray-500">

@@ -110,6 +110,7 @@ export class OfferingsService {
             id: true,
             name: true,
             slug: true,
+            logo: true,
             location: true,
             category: {
               select: { id: true, name: true },

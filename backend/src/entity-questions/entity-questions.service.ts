@@ -1,3 +1,4 @@
+import { USER_BRIEF_SELECT } from '../common/user-select';
 import {
   ForbiddenException,
   Injectable,
@@ -43,7 +44,7 @@ export class EntityQuestionsService {
         answer: true,
         answeredAt: true,
         createdAt: true,
-        asker: { select: { id: true, name: true } },
+        asker: { select: USER_BRIEF_SELECT },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -96,7 +97,7 @@ export class EntityQuestionsService {
         answer: true,
         answeredAt: true,
         createdAt: true,
-        asker: { select: { id: true, name: true } },
+        asker: { select: USER_BRIEF_SELECT },
       },
     });
 
@@ -178,7 +179,7 @@ export class EntityQuestionsService {
         answer: true,
         answeredAt: true,
         createdAt: true,
-        asker: { select: { id: true, name: true } },
+        asker: { select: USER_BRIEF_SELECT },
       },
     });
 

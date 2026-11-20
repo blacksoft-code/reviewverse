@@ -314,6 +314,7 @@ export type FriendListVisibility =
 export type BlockedUser = {
   id: string;
   name: string;
+  media?: { url: string }[];
   blockedAt: string;
 };
 
@@ -351,6 +352,7 @@ export type BlockedEntity = {
   id: string;
   name: string;
   slug: string;
+  logo?: string | null;
   location: string | null;
   category: { id: string; name: string } | null;
   blockedAt: string;

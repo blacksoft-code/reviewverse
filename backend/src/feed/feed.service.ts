@@ -37,6 +37,7 @@ export type FeedItem =
           id: string;
           name: string;
           slug: string;
+          logo?: string | null;
           location: string | null;
         };
         media: { id: string; url: string }[];
@@ -214,6 +215,7 @@ export class FeedService {
                 id: true,
                 name: true,
                 slug: true,
+                logo: true,
                 location: true,
               },
             },
