@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
+import { useConfirm } from '@/components/common/ConfirmDialog';
 
 import { useAuth } from '@/context/AuthContext';
 import { useBusinessContext } from '@/context/BusinessContext';
@@ -166,8 +167,17 @@ export default function CommentSection({
     });
   }
 
+  const { confirm, confirmDialog } = useConfirm();
+
   async function handleDelete(commentId: string) {
-    if (!confirm('Delete this comment?')) return;
+    const ok = await confirm({
+      title: 'Delete this comment?',
+      message: 'This comment will be permanently removed.',
+      confirmLabel: 'Delete',
+      danger: true,
+    });
+
+    if (!ok) return;
 
     try {
       await deleteComment(commentId);
@@ -191,6 +201,7 @@ export default function CommentSection({
 
   return (
     <div className="mt-4 border-t pt-4">
+      {confirmDialog}
       {user && (
         <form
           onSubmit={handleSubmit}

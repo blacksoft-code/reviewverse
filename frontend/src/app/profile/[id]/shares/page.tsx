@@ -22,11 +22,6 @@ export default function ProfileSharesPage() {
   return (
     <section className="rounded-xl bg-black p-6 shadow-sm">
       <h2 className="text-2xl font-bold">Shares</h2>
-
-      <p className="mt-1 text-sm text-gray-500">
-        Reviews and posts shared by this user
-      </p>
-
       {loading ? (
         <p className="mt-6 text-sm text-gray-500">Loading…</p>
       ) : shares.length === 0 ? (

@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
+import { useConfirm } from '@/components/common/ConfirmDialog';
 
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -119,8 +120,17 @@ export default function PostCommentSection({
     });
   }
 
+  const { confirm, confirmDialog } = useConfirm();
+
   async function handleDelete(commentId: string) {
-    if (!confirm('Delete this comment?')) return;
+    const ok = await confirm({
+      title: 'Delete this comment?',
+      message: 'This comment will be permanently removed.',
+      confirmLabel: 'Delete',
+      danger: true,
+    });
+
+    if (!ok) return;
 
     try {
       await deletePostComment(commentId);
@@ -136,6 +146,7 @@ export default function PostCommentSection({
 
   return (
     <>
+      {confirmDialog}
       <button
         type="button"
         onClick={handleToggle}

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useConfirm } from '@/components/common/ConfirmDialog';
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -28,6 +29,7 @@ export default function SharedCard({
   onUpdated?: (share: ShareItem) => void;
 }) {
   const { user } = useAuth();
+  const { confirm, confirmDialog } = useConfirm();
 
   // Caption edit — ⋮ → Edit দিলে card-এর ভেতরেই textarea খোলে
   const [caption, setCaption] = useState(share.caption);
@@ -69,7 +71,14 @@ export default function SharedCard({
   const { review, post } = share;
 
   async function handleDelete() {
-    if (!confirm('Delete this share?')) return;
+    const ok = await confirm({
+      title: 'Delete this share?',
+      message: 'This share will be permanently removed.',
+      confirmLabel: 'Delete',
+      danger: true,
+    });
+
+    if (!ok) return;
 
     try {
       await deleteShare(share.id);
@@ -83,6 +92,7 @@ export default function SharedCard({
 
   return (
     <div className="rounded-lg border p-5">
+      {confirmDialog}
       {/* Sharer */}
       <div className="flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-600">

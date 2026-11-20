@@ -101,9 +101,7 @@ export default function ProfilePage() {
 
   return (
     <section>
-      <h2 className="text-2xl font-bold text-gray-900">
-        Reviews &amp; shares
-      </h2>
+
 
       <div className="mt-4 space-y-5">
         {timeline.length === 0 ? (

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useConfirm } from '@/components/common/ConfirmDialog';
 import Link from 'next/link';
 
 import PhotoGrid from '@/components/media/PhotoGrid';
@@ -228,12 +229,17 @@ export default function ReviewCard({
     }
   }
 
+  const { confirm, confirmDialog } = useConfirm();
+
   async function handleDelete() {
     setMenuOpen(false);
 
-    const confirmed = window.confirm(
-      'Are you sure you want to delete this review?',
-    );
+    const confirmed = await confirm({
+      title: 'Delete this review?',
+      message: 'This review will be permanently removed.',
+      confirmLabel: 'Delete',
+      danger: true,
+    });
 
     if (!confirmed) return;
 
@@ -297,6 +303,7 @@ export default function ReviewCard({
 
   return (
     <article id={`review-${review.id}`} className={containerClass}>
+      {confirmDialog}
       {isEditing ? (
         <>
           <select

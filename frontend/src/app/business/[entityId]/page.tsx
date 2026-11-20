@@ -7,6 +7,7 @@ import {
   useState,
 } from 'react';
 import Link from 'next/link';
+import { useConfirm } from '@/components/common/ConfirmDialog';
 import { useParams, useRouter } from 'next/navigation';
 
 import { useAuth } from '@/context/AuthContext';
@@ -86,6 +87,7 @@ export default function BusinessHomePage() {
   const entityId = params.entityId as string;
 
   const { user, loading: authLoading } = useAuth();
+  const { confirm, confirmDialog } = useConfirm();
 
   const [tab, setTab] = useState<Tab>('overview');
 
@@ -469,6 +471,15 @@ export default function BusinessHomePage() {
   // ─────────────────────────────
 
   async function handleDeletePost(postId: string) {
+    const ok = await confirm({
+      title: 'Delete this post?',
+      message: 'This post will be permanently removed.',
+      confirmLabel: 'Delete',
+      danger: true,
+    });
+
+    if (!ok) return;
+
     setActingOn(postId);
     setError('');
 
@@ -831,6 +842,7 @@ export default function BusinessHomePage() {
 
   return (
     <main className="apple-ui min-h-screen pb-20">
+      {confirmDialog}
 
       {/* ───────────────────────────── */}
       {/* Top bar (frosted glass) */}
