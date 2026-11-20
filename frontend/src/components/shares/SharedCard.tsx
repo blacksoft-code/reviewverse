@@ -7,6 +7,8 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import PhotoGrid from '@/components/media/PhotoGrid';
 import OptionsMenu from '@/components/common/OptionsMenu';
+import UserAvatar from '@/components/common/UserAvatar';
+import { getAvatarUrl } from '@/lib/avatar';
 import {
   deleteShare,
   updateShare,
@@ -95,9 +97,12 @@ export default function SharedCard({
       {confirmDialog}
       {/* Sharer */}
       <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-600">
-          {share.user.name.charAt(0).toUpperCase()}
-        </div>
+        <Link href={`/profile/${encodeURIComponent(share.userId)}`}>
+          <UserAvatar
+            name={share.user.name}
+            url={getAvatarUrl(share.user)}
+          />
+        </Link>
 
         <div className="min-w-0 flex-1">
           <p className="text-sm">
@@ -190,8 +195,13 @@ export default function SharedCard({
             <div className="flex items-center justify-between">
               <Link
                 href={`/profile/${encodeURIComponent(review.userId)}`}
-                className="text-sm font-medium hover:underline"
+                className="flex items-center gap-2 text-sm font-medium hover:underline"
               >
+                <UserAvatar
+                  name={review.user.name}
+                  url={getAvatarUrl(review.user)}
+                  size="sm"
+                />
                 {review.user.name}
               </Link>
               <p className="text-sm">⭐ {review.rating}</p>

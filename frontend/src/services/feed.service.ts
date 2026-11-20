@@ -15,6 +15,7 @@ export type FeedReview = {
   user: {
     id: string;
     name: string;
+    media?: { url: string }[];
   };
   entity: {
     id: string;

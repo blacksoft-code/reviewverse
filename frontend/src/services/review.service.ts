@@ -37,6 +37,7 @@ export type Review = {
   user?: {
     id: string;
     name: string;
+    media?: { url: string }[];
   };
   media?: ReviewMedia[];
   entity?: ReviewEntityInfo;

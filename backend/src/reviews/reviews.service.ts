@@ -1,3 +1,4 @@
+import { USER_BRIEF_SELECT } from '../common/user-select';
 import { 
   BadRequestException,
   Injectable,
@@ -180,12 +181,7 @@ async findByEntity(entityId: string) {
       entityId,
     },
     include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
+      user: { select: USER_BRIEF_SELECT },
       offering: {
         select: {
           id: true,

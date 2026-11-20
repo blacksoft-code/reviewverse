@@ -24,7 +24,7 @@ export type ShareReview = {
   entityId: string;
   createdAt: string;
   updatedAt: string;
-  user: { id: string; name: string };
+  user: { id: string; name: string; media?: { url: string }[] };
   entity: {
     id: string;
     name: string;
@@ -54,7 +54,7 @@ export type ShareItem = {
   caption: string | null;
   createdAt: string;
   userId: string;
-  user: { id: string; name: string };
+  user: { id: string; name: string; media?: { url: string }[] };
   review: ShareReview | null;
   post: SharePost | null;
 };

@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useConfirm } from '@/components/common/ConfirmDialog';
+import UserAvatar from '@/components/common/UserAvatar';
+import { getAvatarUrl } from '@/lib/avatar';
 import Link from 'next/link';
 
 import PhotoGrid from '@/components/media/PhotoGrid';
@@ -371,10 +373,14 @@ export default function ReviewCard({
                     তার profile-এ যায় */}
                 <Link
                   href={`/profile/${encodeURIComponent(review.userId)}`}
-                  className={`hover:underline ${
+                  className={`flex items-center gap-2 hover:underline ${
                     variant === 'feed' ? 'font-medium' : 'font-bold'
                   }`}
                 >
+                  <UserAvatar
+                    name={review.user?.name ?? 'User'}
+                    url={getAvatarUrl(review.user)}
+                  />
                   {review.user?.name ?? 'User'}
                 </Link>
 

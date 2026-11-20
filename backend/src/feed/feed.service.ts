@@ -1,3 +1,4 @@
+import { USER_BRIEF_SELECT } from '../common/user-select';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -31,7 +32,7 @@ export type FeedItem =
         entityId: string;
         createdAt: Date;
         updatedAt: Date;
-        user: { id: string; name: string };
+        user: { id: string; name: string; media?: { url: string }[] };
         entity: {
           id: string;
           name: string;
@@ -205,7 +206,7 @@ export class FeedService {
           },
         },
         include: {
-            user: { select: { id: true, name: true } },
+            user: { select: USER_BRIEF_SELECT },
             // কোন offering-এর review সেটা card-এ দেখানোর জন্য
             offering: { select: { id: true, name: true } },
             entity: {

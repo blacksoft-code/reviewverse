@@ -1,11 +1,12 @@
 import { Prisma } from '@prisma/client';
+import { USER_BRIEF_SELECT } from '../common/user-select';
 
 // Share আর feed — দুই জায়গাতেই একই shape-এ original review/post সহ আনা হয়
 export const SHARE_INCLUDE = {
-  user: { select: { id: true, name: true } },
+  user: { select: USER_BRIEF_SELECT },
   review: {
     include: {
-      user: { select: { id: true, name: true } },
+      user: { select: USER_BRIEF_SELECT },
       entity: {
         select: {
           id: true,

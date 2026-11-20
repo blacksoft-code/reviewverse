@@ -1,3 +1,4 @@
+import { USER_BRIEF_SELECT } from '../common/user-select';
 import {
   ConflictException,
   ForbiddenException,
@@ -327,12 +328,7 @@ async update(
         },
         reviews: {
           include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
+            user: { select: USER_BRIEF_SELECT },
             media: { 
               orderBy: {
                 createdAt: 'asc',
