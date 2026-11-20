@@ -44,6 +44,7 @@ import { uploadImages } from '@/services/media.service';
 import PostReactionButton from '@/components/entities/posts/PostReactionButton';
 import PostCommentSection from '@/components/entities/posts/PostCommentSection';
 import UserLocationPicker from '@/components/locations/UserLocationPicker';
+import BusinessHeader from '@/components/business/BusinessHeader';
 import AmenitySelector from '@/components/amenities/AmenitySelector';
 import PaymentMethodSelector from '@/components/payment-methods/PaymentMethodSelector';
 import BusinessHoursEditor from '@/components/business-hours/BusinessHoursEditor';
@@ -844,6 +845,9 @@ export default function BusinessHomePage() {
                 src={entity.logo}
                 alt={entity.name}
                 className="h-full w-full object-cover"
+                style={{
+                  objectPosition: `${entity.logoPositionX ?? 50}% ${entity.logoPositionY ?? 50}%`,
+                }}
               />
             ) : (
               entity.name.charAt(0).toUpperCase()
@@ -874,6 +878,30 @@ export default function BusinessHomePage() {
           </Link>
         </div>
       </header>
+
+      {/* ───────────────────────────── */}
+      {/* Entity header — cover ও profile picture এখান থেকেই বদলানো/reposition করা যায় */}
+      {/* ───────────────────────────── */}
+
+      <BusinessHeader
+        entity={entity}
+        reviewCount={latestReviews.length}
+        onChange={(patch) => {
+          // Header-এ যা বদলালো তা dashboard-এর state-এও মিলিয়ে নিচ্ছি, যাতে
+          // নিচের "Business info" save পুরনো ছবি আবার ফিরিয়ে না আনে
+          setEntity((prev) => (prev ? { ...prev, ...patch } : prev));
+          setForm((prev) => ({ ...prev, ...patch }));
+
+          // Navbar-এর business logo-ও বদলে যাবে
+          if (patch.logo !== undefined) {
+            setActiveBusiness({
+              id: entity.id,
+              name: entity.name,
+              logo: patch.logo,
+            });
+          }
+        }}
+      />
 
       <div className="mx-auto max-w-6xl px-6 py-8 lg:grid lg:grid-cols-[210px_minmax(0,1fr)] lg:gap-10">
 

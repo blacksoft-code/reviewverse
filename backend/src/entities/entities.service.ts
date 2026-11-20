@@ -229,6 +229,17 @@ async update(
   ) {
     rest.coverPositionY = 50;
   }
+
+  // নতুন logo বসালে position-ও আবার মাঝখান (50, 50) থেকে শুরু
+  if (
+    rest.logo &&
+    rest.logo !== entity.logo &&
+    rest.logoPositionX === undefined &&
+    rest.logoPositionY === undefined
+  ) {
+    rest.logoPositionX = 50;
+    rest.logoPositionY = 50;
+  }
  
   const updated = await this.prisma.entity.update({
     where: { id },

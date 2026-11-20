@@ -291,6 +291,8 @@ model Entity {
   coverPhoto String?
   coverPositionY Float @default(50)
   logo       String?
+  logoPositionX Float @default(50)
+  logoPositionY Float @default(50)
 
   amenities      Amenity[]
   paymentMethods PaymentMethod[]

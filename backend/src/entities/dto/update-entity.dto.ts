@@ -108,6 +108,26 @@ coverPhoto?: string;
   coverPositionY?: number;
 
   @ApiPropertyOptional({
+    example: 50,
+    description: 'Profile picture-এর ডান-বাম অবস্থান (0–100)',
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  logoPositionX?: number;
+
+  @ApiPropertyOptional({
+    example: 50,
+    description: 'Profile picture-এর উপর-নিচ অবস্থান (0–100)',
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  logoPositionY?: number;
+
+  @ApiPropertyOptional({
     example: 'https://example.com/logo.png',
   })
   @IsOptional()

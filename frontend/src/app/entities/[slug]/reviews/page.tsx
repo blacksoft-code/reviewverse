@@ -64,7 +64,6 @@ export default async function EntityPage({
           </div>
         </div>
       </section>
-
       <section className="bg-black p-6">
         <ReviewSection
           entityId={entity.id}

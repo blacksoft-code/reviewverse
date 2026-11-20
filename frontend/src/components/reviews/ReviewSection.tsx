@@ -180,16 +180,6 @@ export default function ReviewSection({
 
   return (
     <section className="mt-10">
-      <div>
-        <h2 className="text-2xl font-semibold">
-          Reviews
-        </h2>
-
-        <p className="mt-2 text-gray-600">
-          ⭐ {averageRating.toFixed(1)}
-        </p>
-      </div>
-
       <div className="mt-6 space-y-4">
         {reviews.length === 0 ? (
           <p className="text-gray-500">

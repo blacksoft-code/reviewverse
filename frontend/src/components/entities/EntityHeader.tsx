@@ -32,6 +32,9 @@ export type EntityHeaderData = {
   // Cover photo-র উল্লম্ব অবস্থান (0–100), default 50
   coverPositionY?: number;
   logo: string | null;
+  // Profile picture-এর অবস্থান (0–100)
+  logoPositionX?: number;
+  logoPositionY?: number;
   // ১২ অক্ষরের public ID — এটা দিয়ে search করলে সরাসরি এই business আসে
   publicId?: string | null;
   // "$", "$$" ...
@@ -607,6 +610,9 @@ export default function EntityHeader({
                   src={entity.logo}
                   alt={`${entity.name} logo`}
                   className="h-full w-full object-cover"
+                  style={{
+                    objectPosition: `${entity.logoPositionX ?? 50}% ${entity.logoPositionY ?? 50}%`,
+                  }}
                 />
               ) : (
                 <span className="text-2xl font-bold text-gray-500 sm:text-3xl">

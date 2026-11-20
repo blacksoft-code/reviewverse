@@ -25,6 +25,8 @@ export default async function EntityLayout({
     publicId?: string | null;
     priceRange?: string | null;
     coverPositionY?: number;
+    logoPositionX?: number;
+    logoPositionY?: number;
     showBlueBadge?: boolean;
     averageRating: number;
     category: { name: string };
@@ -52,6 +54,8 @@ export default async function EntityLayout({
           publicId: entity.publicId ?? null,
           priceRange: entity.priceRange ?? null,
           coverPositionY: entity.coverPositionY ?? 50,
+          logoPositionX: entity.logoPositionX ?? 50,
+          logoPositionY: entity.logoPositionY ?? 50,
         }}
       />
 

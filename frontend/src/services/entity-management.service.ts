@@ -24,6 +24,11 @@ export type EntityDetail = {
   // Cover photo-র উল্লম্ব অবস্থান (0–100)
   coverPositionY?: number;
   logo: string | null;
+  // Profile picture (logo)-র অবস্থান (0–100) — x = ডান-বাম, y = উপর-নিচ
+  logoPositionX?: number;
+  logoPositionY?: number;
+  // ১২ অক্ষরের public ID (read-only)
+  publicId?: string | null;
   
   amenities: { id: string; name: string }[];
   paymentMethods: { id: string; name: string }[];
@@ -65,6 +70,7 @@ export type UpdateEntityInput = Partial<
     | 'amenities'
     | 'paymentMethods'
     | 'locationDisplay'
+    | 'publicId'
   >
 > & {
   // amenities read করার সময় {id, name}[] আসে, কিন্তু update পাঠানোর

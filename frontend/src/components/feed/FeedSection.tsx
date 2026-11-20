@@ -309,10 +309,6 @@ export default function FeedSection() {
 
   return (
     <section className="mt-8">
-      <h2 className="text-2xl font-semibold">
-        Feed
-      </h2>
-
       {/* Pull-to-refresh indicator */}
       {(pullDistance > 0 || refreshing) && (
         <div
