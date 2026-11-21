@@ -12,6 +12,8 @@ type PostCardProps = {
   createdAt: string;
   authorLabel?: string;
   actions?: ReactNode;
+  // Card-এর উপরের ডান কোণায় বসবে (যেমন ⋯ menu)
+  menu?: ReactNode;
 };
 
 export default function PostCard({
@@ -22,9 +24,14 @@ export default function PostCard({
   createdAt,
   authorLabel,
   actions,
+  menu,
 }: PostCardProps) {
   return (
-    <div className="rounded-xl border bg-black p-5 shadow-sm">
+    <div className="relative rounded-xl border bg-black p-5 shadow-sm">
+      {menu && (
+        <div className="absolute right-3 top-3">{menu}</div>
+      )}
+
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gray-200">
           {logo ? (

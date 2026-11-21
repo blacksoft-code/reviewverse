@@ -43,7 +43,8 @@ import MultiImageUploader from '@/components/media/MultiImageUploader';
 import SingleImageUploader from '@/components/media/SingleImageUploader';
 
 // Media service
-import { uploadImages } from '@/services/media.service';
+import { deleteMedia, uploadImages } from '@/services/media.service';
+import CardMenu from '@/components/common/CardMenu';
 import PostReactionButton from '@/components/entities/posts/PostReactionButton';
 import PostCommentSection from '@/components/entities/posts/PostCommentSection';
 import UserLocationPicker from '@/components/locations/UserLocationPicker';
@@ -152,6 +153,14 @@ export default function BusinessHomePage() {
 
   const [editingContent, setEditingContent] =
     useState('');
+
+  // Edit করার সময় ছবি: কোনগুলো মুছতে চাই, আর নতুন কোনগুলো যোগ করতে চাই
+  // (Save চাপলে তবেই কার্যকর হয়, Cancel করলে কিছু বদলায় না)
+  const [editingRemovedMediaIds, setEditingRemovedMediaIds] =
+    useState<string[]>([]);
+
+  const [editingNewPhotos, setEditingNewPhotos] =
+    useState<File[]>([]);
 
   const [actingOn, setActingOn] = useState<
     string | null
@@ -426,6 +435,8 @@ export default function BusinessHomePage() {
   function startEditing(post: ManagedEntityPost) {
     setEditingPostId(post.id);
     setEditingContent(post.content);
+    setEditingRemovedMediaIds([]);
+    setEditingNewPhotos([]);
   }
 
   // ─────────────────────────────
@@ -435,6 +446,8 @@ export default function BusinessHomePage() {
   function cancelEditing() {
     setEditingPostId(null);
     setEditingContent('');
+    setEditingRemovedMediaIds([]);
+    setEditingNewPhotos([]);
   }
 
   // ─────────────────────────────
@@ -442,17 +455,57 @@ export default function BusinessHomePage() {
   // ─────────────────────────────
 
   async function handleUpdatePost(postId: string) {
+    const original = posts.find((p) => p.id === postId);
+
+    const keptMedia = (original?.media ?? []).filter(
+      (m) => !editingRemovedMediaIds.includes(m.id),
+    );
+
+    if (keptMedia.length + editingNewPhotos.length > 10) {
+      setError('A post can have at most 10 photos.');
+      return;
+    }
+
     setActingOn(postId);
     setError('');
 
     try {
+      // ১) লেখা update
       const response = await updatePost(postId, {
         content: editingContent,
       });
 
+      // ২) মুছতে চাওয়া ছবিগুলো মোছা
+      if (editingRemovedMediaIds.length > 0) {
+        await Promise.all(
+          editingRemovedMediaIds.map((id) => deleteMedia(id)),
+        );
+      }
+
+      // ৩) নতুন ছবি upload
+      let addedMedia: { id: string; url: string }[] = [];
+
+      if (editingNewPhotos.length > 0) {
+        const uploaded = await uploadImages(
+          editingNewPhotos,
+          'ENTITY_POST',
+          postId,
+        );
+
+        addedMedia = uploaded.map((m) => ({
+          id: m.id,
+          url: m.url,
+        }));
+      }
+
       setPosts((prev) =>
         prev.map((p) =>
-          p.id === postId ? response.data : p,
+          p.id === postId
+            ? {
+                ...response.data,
+                media: [...keptMedia, ...addedMedia],
+              }
+            : p,
         ),
       );
 
@@ -611,6 +664,56 @@ export default function BusinessHomePage() {
     } finally {
       setActingOnOffering(null);
     }
+  }
+
+  // Edit করার সময় offering-এর ছবি মুছে ফেলা
+  async function handleRemoveOfferingPhoto(
+    offering: Offering,
+  ) {
+    const photo = offering.media[0];
+    if (!photo) return;
+
+    const ok = await confirm({
+      title: 'Remove this photo?',
+      confirmLabel: 'Remove',
+      danger: true,
+    });
+
+    if (!ok) return;
+
+    setActingOnOffering(offering.id);
+    setError('');
+
+    try {
+      await deleteMedia(photo.id);
+
+      setOfferings((prev) =>
+        prev.map((o) =>
+          o.id === offering.id ? { ...o, media: [] } : o,
+        ),
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to remove photo',
+      );
+    } finally {
+      setActingOnOffering(null);
+    }
+  }
+
+  async function confirmDeleteOffering(offering: Offering) {
+    const ok = await confirm({
+      title: 'Delete this service?',
+      message: 'This service will be permanently removed.',
+      confirmLabel: 'Delete',
+      danger: true,
+    });
+
+    if (!ok) return;
+
+    await handleDeleteOffering(offering.id);
   }
 
   async function handleDeleteOffering(
@@ -1318,6 +1421,56 @@ export default function BusinessHomePage() {
                         className={`${ui.input} resize-none`}
                       />
 
+                      {(() => {
+                        const existingMedia = (post.media ?? []).filter(
+                          (m) =>
+                            !editingRemovedMediaIds.includes(m.id),
+                        );
+
+                        return (
+                          <>
+                            {existingMedia.length > 0 && (
+                              <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-5">
+                                {existingMedia.map((m) => (
+                                  <div
+                                    key={m.id}
+                                    className="relative aspect-square overflow-hidden rounded-lg border"
+                                  >
+                                    <img
+                                      src={m.url}
+                                      alt=""
+                                      className="h-full w-full object-cover"
+                                    />
+
+                                    <button
+                                      type="button"
+                                      aria-label="Remove photo"
+                                      onClick={() =>
+                                        setEditingRemovedMediaIds(
+                                          (prev) => [...prev, m.id],
+                                        )
+                                      }
+                                      className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-xs text-white"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            <MultiImageUploader
+                              key={post.id}
+                              maxFiles={Math.max(
+                                0,
+                                10 - existingMedia.length,
+                              )}
+                              onChange={setEditingNewPhotos}
+                            />
+                          </>
+                        );
+                      })()}
+
                       <div className="mt-4 flex gap-2">
                         <button
                           type="button"
@@ -1354,25 +1507,22 @@ export default function BusinessHomePage() {
                             ? `Posted by ${post.author.name}`
                             : undefined
                         }
-                        actions={
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => startEditing(post)}
-                              className={ui.btnGhostSm}
-                            >
-                              Edit
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => handleDeletePost(post.id)}
-                              disabled={actingOn === post.id}
-                              className={ui.btnDangerSm}
-                            >
-                              {actingOn === post.id ? '…' : 'Delete'}
-                            </button>
-                          </>
+                        menu={
+                          <CardMenu
+                            disabled={actingOn === post.id}
+                            items={[
+                              {
+                                label: 'Edit',
+                                onClick: () => startEditing(post),
+                              },
+                              {
+                                label: 'Delete',
+                                danger: true,
+                                onClick: () =>
+                                  handleDeletePost(post.id),
+                              },
+                            ]}
+                          />
                         }
                       />
                       <div className="px-5 pb-4">
@@ -1490,19 +1640,39 @@ export default function BusinessHomePage() {
                         targetId={offering.id}
                         currentUrl={offering.media[0]?.url ?? null}
                         shape="rectangle"
-                        onUploaded={(url) =>
+                        label={
+                          offering.media[0]?.url
+                            ? 'Change photo'
+                            : 'Add photo'
+                        }
+                        onUploaded={(url, media) =>
                           setOfferings((prev) =>
                             prev.map((o) =>
                               o.id === offering.id
                                 ? {
                                     ...o,
-                                    media: [{ id: 'temp', url }],
+                                    media: [
+                                      { id: media.id, url },
+                                    ],
                                   }
                                 : o,
                             ),
                           )
                         }
                       />
+
+                      {offering.media[0] && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleRemoveOfferingPhoto(offering)
+                          }
+                          disabled={actingOnOffering === offering.id}
+                          className="text-sm font-medium text-[#d70015] hover:underline disabled:opacity-50"
+                        >
+                          Remove photo
+                        </button>
+                      )}
 
                       <input
                         type="text"
@@ -1558,7 +1728,25 @@ export default function BusinessHomePage() {
                       </div>
                     </div>
                   ) : (
-                    <div key={offering.id} className={ui.card}>
+                    <div key={offering.id} className={`${ui.card} relative`}>
+                      <CardMenu
+                        className="absolute right-4 top-4"
+                        disabled={actingOnOffering === offering.id}
+                        items={[
+                          {
+                            label: 'Edit',
+                            onClick: () =>
+                              startEditingOffering(offering),
+                          },
+                          {
+                            label: 'Delete',
+                            danger: true,
+                            onClick: () =>
+                              confirmDeleteOffering(offering),
+                          },
+                        ]}
+                      />
+
                       <div className="flex items-start gap-4">
                         {offering.media[0]?.url && (
                           <img
@@ -1569,7 +1757,7 @@ export default function BusinessHomePage() {
                         )}
 
                         <div className="flex-1">
-                          <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-start justify-between gap-4 pr-9">
                             <div>
                               <h3 className="text-[17px] font-semibold">
                                 {offering.name}
@@ -1601,14 +1789,6 @@ export default function BusinessHomePage() {
                       <div className="mt-4 flex gap-2">
                         <button
                           type="button"
-                          onClick={() => startEditingOffering(offering)}
-                          className={ui.btnGhostSm}
-                        >
-                          Edit
-                        </button>
-
-                        <button
-                          type="button"
                           onClick={() => handleToggleVisibility(offering)}
                           disabled={
                             actingOnOffering === offering.id ||
@@ -1638,15 +1818,6 @@ export default function BusinessHomePage() {
                           className={ui.btnGhostSm}
                         >
                           {offering.isPinned ? '★ Pinned' : '☆ Pin'}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteOffering(offering.id)}
-                          disabled={actingOnOffering === offering.id}
-                          className={ui.btnDangerSm}
-                        >
-                          {actingOnOffering === offering.id ? '…' : 'Delete'}
                         </button>
                       </div>
                     </div>

@@ -165,7 +165,7 @@ export class ReviewsService {
       {
         actorId: userId,
         type: 'NEW_REVIEW',
-        message: 'somebody left a new review on your business.',
+        message: 'left a new review on your business.',
         link: `/entities/${createReviewDto.entityId}/reviews?reviewId=${review.id}`,
         entityId: createReviewDto.entityId,
         reviewId: review.id,

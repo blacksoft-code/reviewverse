@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 
 type PreviewItem = {
   file: File;
@@ -21,6 +21,8 @@ export default function MultiImageUploader({
   >([]);
   const [error, setError] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  // একই page-এ একাধিক uploader থাকলে (create + edit) id যেন না মেলে
+  const inputId = useId();
 
   function handleFiles(fileList: FileList | null) {
     if (!fileList || fileList.length === 0) return;
@@ -67,7 +69,7 @@ export default function MultiImageUploader({
     <div className="mt-3">
       <input
         ref={inputRef}
-        id="multi-image-input"
+        id={inputId}
         type="file"
         accept="image/*"
         multiple
@@ -78,7 +80,7 @@ export default function MultiImageUploader({
       />
 
       <label
-        htmlFor="multi-image-input"
+        htmlFor={inputId}
         className="inline-block cursor-pointer rounded-lg border px-4 py-2 text-sm font-medium hover:bg-gray-50"
       >
         📷 Add photos ({previews.length}/{maxFiles})
