@@ -23,7 +23,7 @@ export default async function Home() {
   ]);
 
   return (
-    <main className="min-h-screen p-8">
+    <main className="min-h-screen px-3 py-6 sm:p-8">
      
 
       <div className="mt-6">

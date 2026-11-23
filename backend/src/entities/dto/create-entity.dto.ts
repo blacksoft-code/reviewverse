@@ -6,6 +6,7 @@ import {
   IsUrl,
 } from 'class-validator';
 
+import { IsImageUrl } from '../../common/validators/is-image-url';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateEntityDto {
@@ -116,14 +117,14 @@ subCategoryId?: string;
     example: 'https://example.com/cover.jpg',
   })
   @IsOptional()
-  @IsUrl({ require_tld: false })
+  @IsImageUrl()
   coverPhoto?: string;
 
   @ApiPropertyOptional({
     example: 'https://example.com/logo.png',
   })
   @IsOptional()
-  @IsUrl({ require_tld: false })
+  @IsImageUrl()
   logo?: string;
 
    @ApiPropertyOptional({

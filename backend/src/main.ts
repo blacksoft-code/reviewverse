@@ -1,3 +1,4 @@
+import { ALLOWED_ORIGINS } from './common/cors';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
@@ -25,9 +26,7 @@ async function bootstrap() {
 
   // CORS Configuration
   app.enableCors({
-    origin: [
-      'http://localhost:3001',
-    ],
+    origin: ALLOWED_ORIGINS,
     credentials: true,
   });
 

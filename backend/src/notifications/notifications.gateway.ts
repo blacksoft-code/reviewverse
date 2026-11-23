@@ -1,3 +1,4 @@
+import { ALLOWED_ORIGINS } from '../common/cors';
 import {
   WebSocketGateway,
   WebSocketServer,
@@ -11,7 +12,7 @@ import { JwtService } from '@nestjs/jwt';
 // notification পাঠানোর সময় শুধু সেই room-এ emit করলেই ঐ ইউজারের কাছে পৌঁছাবে।
 @WebSocketGateway({
   cors: {
-    origin: ['http://localhost:3001'],
+    origin: ALLOWED_ORIGINS,
     credentials: true,
   },
   namespace: '/notifications',

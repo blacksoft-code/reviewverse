@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import { API_URL } from '@/lib/apiUrl';
 
 export type MediaType =
   | 'USER_PROFILE'

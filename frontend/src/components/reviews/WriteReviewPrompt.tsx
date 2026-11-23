@@ -33,7 +33,7 @@ export default function WriteReviewPrompt({
 
   const content = (
     <>
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-300 text-sm font-medium text-black">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#E6F4FD] text-sm font-semibold text-[#5B9BFF] ring-2 ring-[#8FD3F4]/60">
         {user.avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -46,13 +46,20 @@ export default function WriteReviewPrompt({
         )}
       </span>
 
-      <span className="flex-1 rounded-full border bg-gray-50 px-4 py-2.5 text-left text-sm text-gray-500 transition hover:bg-gray-100">
-        What&apos;s on your mind, {firstName}? Write a review...
+      {/* মোবাইলে ছোট লেখা, বড় screen-এ পুরোটা */}
+      <span className="min-w-0 flex-1 truncate rounded-full bg-[#F6F9FC] px-4 py-2.5 text-left text-sm text-[#6e6e73] transition hover:bg-[#E6F4FD]">
+        What&apos;s on your mind, {firstName}?
+        <span className="hidden sm:inline">
+          {' '}
+          Write a review...
+        </span>
       </span>
     </>
   );
 
-  const baseClass = `flex w-full items-center gap-3 rounded-lg border bg-white p-4 shadow-sm ${className}`;
+  // Facebook-এর "What's on your mind" box-এর মতো — parent-এর পুরো চওড়া, বড় screen-এ
+  // সর্বোচ্চ 680px আর মাঝখানে (feed-এর post card-এর সাথে একই চওড়া)
+  const baseClass = `mx-auto flex w-full max-w-[680px] items-center gap-3 rounded-2xl bg-white p-3 text-[#1d1d1f] shadow-[0_4px_24px_rgba(91,155,255,0.12)] ring-1 ring-black/[0.04] sm:rounded-3xl sm:p-4 ${className}`;
 
   if (onClick) {
     return (

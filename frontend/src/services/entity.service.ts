@@ -1,3 +1,4 @@
+import { notFound } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 
 export type Category = {
@@ -65,13 +66,22 @@ export async function getEntities(
 export async function getEntityBySlug(
   slug: string,
 ) {
-  return apiFetch<{
+  const response = await apiFetch<{
     success: boolean;
     statusCode: number;
     data: Entity;
   }>(
     `/entities/${decodeURIComponent(slug)}`,
   );
+
+  // Slug/id-র কোনো business না থাকলে (মুছে গেছে বা ভুল link) backend 200 দিয়ে data: null
+  // পাঠায় — তখন page crash না করে সরাসরি 404 page দেখাও। (শুধু server-এ; client
+  // component-গুলো নিজেরাই null সামলায়)
+  if (!response.data && typeof window === 'undefined') {
+    notFound();
+  }
+
+  return response;
 }
 
 // NEW:

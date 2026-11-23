@@ -11,6 +11,7 @@ import {
   ValidateIf,
 } from 'class-validator';
 
+import { IsImageUrl } from '../../common/validators/is-image-url';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 // শুধু Google Maps-এর link গ্রহণযোগ্য (google.com/maps, maps.google.com,
@@ -93,7 +94,7 @@ export class UpdateEntityDto {
     example: 'https://example.com/cover.jpg',
   })
   @IsOptional()
-@IsUrl({ require_tld: false })
+@IsImageUrl()
 coverPhoto?: string;
 
   @ApiPropertyOptional({
@@ -131,7 +132,7 @@ coverPhoto?: string;
     example: 'https://example.com/logo.png',
   })
   @IsOptional()
-@IsUrl({ require_tld: false })
+@IsImageUrl()
 logo?: string;
 
    @ApiPropertyOptional({

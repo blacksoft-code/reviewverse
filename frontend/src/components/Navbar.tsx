@@ -10,6 +10,14 @@ import SearchBox from '@/components/search/SearchBox';
 import NotificationBell from '@/components/NotificationBell';
 import { useBusinessContext } from '@/context/BusinessContext';
 
+// উপরে হালকা আকাশি নীল bar — দুই mode-এই একই
+const navClass =
+  'border-b border-black/5 bg-gradient-to-b from-[#BFE4FA] to-[#DDF1FC] text-[#1d1d1f] shadow-sm';
+
+// সাদা pill বাটন (Explore, Admin, Login)
+const pillClass =
+  'rounded-full bg-white px-4 py-2 text-sm font-medium text-[#1d1d1f] shadow-sm ring-1 ring-black/[0.04] transition hover:bg-white/70';
+
 export default function Navbar() {
 
   const {
@@ -22,7 +30,7 @@ export default function Navbar() {
   const pathname = usePathname();
 
   // NEW:
-  // Logout করার সময় token এবং global user state
+  // Logout করার সময় token এবং global user state
   // দুটোই clear করছি।
   function handleLogout() {
     
@@ -37,8 +45,8 @@ export default function Navbar() {
   // ─────────────────────────────
   if (user && activeBusiness) {
     return (
-      <nav className="border-b bg-black">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+      <nav className={navClass}>
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
 
           {/* Logo → business dashboard */}
           <Link
@@ -54,12 +62,12 @@ export default function Navbar() {
                 window.location.href = dashboardPath;
               }
             }}
-            className="text-xl font-bold"
+            className="text-xl font-bold tracking-tight"
           >
             ReviewVerse
           </Link>
 
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-3 sm:gap-5">
 
             {/* Entity-র notification (business mode-এর bell) */}
             <NotificationBell />
@@ -76,25 +84,29 @@ export default function Navbar() {
   // Personal mode — আগের মতোই, কোনো পরিবর্তন নেই
   // ─────────────────────────────
   return (
-    <nav className="border-b bg-black">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+    <nav className={navClass}>
+      {/* মোবাইলে দুই লাইন: উপরে logo + বাটন, নিচে search (পুরো চওড়া)।
+          বড় screen-এ আগের মতো এক লাইন। */}
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-3 gap-y-3 px-4 py-3 sm:px-6 sm:py-4 md:flex-nowrap">
 
         {/* Logo */}
         <Link
           href="/"
-          className="text-xl font-bold"
+          className="text-xl font-bold tracking-tight"
         >
           ReviewVerse
         </Link>
 
-        <SearchBox />
+        <div className="order-last w-full md:order-none md:mx-6 md:w-auto md:max-w-md md:flex-1">
+          <SearchBox />
+        </div>
 
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-2 sm:gap-4">
 
             {/* Explore (location-based search) */}
           <Link
             href="/explore"
-            className="rounded-lg border bg-black px-4 py-2 text-sm hover:bg-gray-50"
+            className={pillClass}
           >
             Explore
           </Link>
@@ -112,7 +124,7 @@ export default function Navbar() {
         {user.role === 'ADMIN' && (
           <Link
             href="/admin"
-            className="rounded-lg border bg-black px-4 py-2 text-sm hover:bg-gray-50"
+            className={pillClass}
           >
             Admin
           </Link>
@@ -129,7 +141,7 @@ export default function Navbar() {
                   {/* Login */}
                   <Link
                     href="/login"
-                    className="rounded-lg border bg-black px-4 py-2 text-sm hover:bg-gray-50"
+                    className={pillClass}
                   >
                     Login
                   </Link>
@@ -137,7 +149,7 @@ export default function Navbar() {
                   {/* Register */}
                   <Link
                     href="/register"
-                    className="rounded-lg bg-black px-4 py-2 text-sm text-white hover:bg-gray-800"
+                    className="rounded-full bg-[#5B9BFF] px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-[#4a8cf5]"
                   >
                     Register
                   </Link>

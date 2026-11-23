@@ -266,7 +266,7 @@ export default function ReviewCard({
         aria-expanded={menuOpen}
         aria-label="Review options"
         disabled={isLoading}
-        className="flex h-8 w-8 items-center justify-center rounded-full text-xl leading-none text-gray-500 hover:bg-gray-100 disabled:opacity-50"
+        className="flex h-8 w-8 items-center justify-center rounded-full text-xl leading-none text-[#6e6e73] transition hover:bg-[#F6F9FC] disabled:opacity-50"
       >
         ⋮
       </button>
@@ -274,13 +274,13 @@ export default function ReviewCard({
       {menuOpen && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-20 mt-1 w-36 overflow-hidden rounded-lg border bg-white py-1 text-gray-800 shadow-lg"
+          className="absolute right-0 top-full z-20 mt-1 w-40 overflow-hidden rounded-2xl bg-white py-1 text-[#1d1d1f] shadow-[0_8px_30px_rgba(0,0,0,0.15)] ring-1 ring-black/5"
         >
           <button
             type="button"
             role="menuitem"
             onClick={startEditing}
-            className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100"
+            className="block w-full px-4 py-2.5 text-left text-sm hover:bg-[#F6F9FC]"
           >
             Edit
           </button>
@@ -289,7 +289,7 @@ export default function ReviewCard({
             type="button"
             role="menuitem"
             onClick={handleDelete}
-            className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
+            className="block w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-[#F6F9FC]"
           >
             Delete
           </button>
@@ -298,10 +298,16 @@ export default function ReviewCard({
     </div>
   );
 
-  const containerClass =
-    variant === 'profile'
-      ? 'rounded-xl bg-white p-6 text-gray-900 shadow-sm transition-shadow'
-      : 'rounded-lg border p-5 transition-shadow';
+  // তিনটা variant-এই একই সাদা, বড় গোল কোণের card।
+  // Facebook post-এর মতো — parent-এর পুরো চওড়া নেয়। Feed আর profile-এ বড় screen-এ
+  // সর্বোচ্চ 680px হয়ে মাঝখানে বসে; Entity page-এ ঐ page-এর বাকি card-এর সাথে
+  // মিলিয়ে পুরো চওড়াই থাকে। মোবাইলে ভেতরের ফাঁকা কম (p-4)।
+  const containerClass = `w-full rounded-2xl bg-white p-4 text-[#1d1d1f] shadow-[0_4px_24px_rgba(91,155,255,0.12)] ring-1 ring-black/[0.04] transition-shadow sm:rounded-3xl sm:p-6 ${
+    variant === 'entity' ? '' : 'mx-auto max-w-[680px]'
+  }`;
+
+  const fieldClass =
+    'w-full rounded-2xl bg-[#F6F9FC] px-4 py-3 text-[#1d1d1f] outline-none focus:ring-2 focus:ring-[#5B9BFF]/40';
 
   return (
     <article id={`review-${review.id}`} className={containerClass}>
@@ -313,7 +319,7 @@ export default function ReviewCard({
             onChange={(event) =>
               setEditingRating(Number(event.target.value))
             }
-            className="rounded-lg border p-3 text-gray-900"
+            className={`${fieldClass} sm:w-auto`}
           >
             <option value={5}>⭐⭐⭐⭐⭐ — 5</option>
             <option value={4}>⭐⭐⭐⭐ — 4</option>
@@ -328,7 +334,7 @@ export default function ReviewCard({
               setEditingContent(event.target.value)
             }
             rows={4}
-            className="mt-3 w-full rounded-lg border p-3 text-gray-900"
+            className={`${fieldClass} mt-3 resize-none`}
           />
 
           <ReviewPhotoEditor
@@ -339,17 +345,17 @@ export default function ReviewCard({
           />
 
           {editError && (
-            <p className="mt-3 text-sm text-red-600">
+            <p className="mt-3 rounded-2xl bg-red-50 px-4 py-2 text-sm text-red-600">
               {editError}
             </p>
           )}
 
-          <div className="mt-3 flex gap-2">
+          <div className="mt-4 flex gap-2">
             <button
               type="button"
               disabled={isLoading}
               onClick={handleUpdate}
-              className="rounded-lg bg-black px-4 py-2 text-white disabled:opacity-50"
+              className="flex-1 rounded-full bg-[#5B9BFF] px-5 py-2 text-sm sm:flex-none font-medium text-white transition hover:bg-[#4a8cf5] disabled:opacity-50"
             >
               {isLoading ? 'Saving...' : 'Save'}
             </button>
@@ -358,7 +364,7 @@ export default function ReviewCard({
               type="button"
               disabled={isLoading}
               onClick={cancelEditing}
-              className="rounded-lg border px-4 py-2"
+              className="flex-1 rounded-full bg-[#F6F9FC] px-5 py-2 text-sm sm:flex-none font-medium text-[#1d1d1f] transition hover:bg-[#E6F4FD] disabled:opacity-50"
             >
               Cancel
             </button>
@@ -373,7 +379,7 @@ export default function ReviewCard({
                     তার profile-এ যায় */}
                 <Link
                   href={`/profile/${encodeURIComponent(review.userId)}`}
-                  className={`flex items-center gap-2 hover:underline ${
+                  className={`flex min-w-0 items-center gap-2 hover:underline ${
                     variant === 'feed' ? 'font-medium' : 'font-bold'
                   }`}
                 >
@@ -381,11 +387,15 @@ export default function ReviewCard({
                     name={review.user?.name ?? 'User'}
                     url={getAvatarUrl(review.user)}
                   />
-                  {review.user?.name ?? 'User'}
+                  <span className="truncate">
+                    {review.user?.name ?? 'User'}
+                  </span>
                 </Link>
 
-                <div className="flex items-center gap-1">
-                  <span>⭐ {review.rating}</span>
+                <div className="flex shrink-0 items-center gap-1">
+                  <span className="rounded-full bg-[#FFF6E5] px-3 py-1 text-sm font-medium">
+                    ⭐ {review.rating}
+                  </span>
                   {optionsMenu}
                 </div>
               </div>
@@ -393,35 +403,39 @@ export default function ReviewCard({
               {variant === 'feed' && review.entity && (
                 <Link
                   href={`/entities/${encodeURIComponent(review.entity.slug)}`}
-                  className="mt-1 flex items-center gap-2 text-sm text-gray-500 hover:underline"
+                  className="mt-2 flex min-w-0 items-center gap-2 text-sm text-[#6e6e73] hover:underline"
                 >
                   <UserAvatar
                     name={review.entity.name}
                     url={review.entity.logo}
                     size="sm"
                   />
-                  {review.entity.name}
+                  <span className="truncate">
+                    {review.entity.name}
+                  </span>
                 </Link>
               )}
             </>
           ) : (
             <>
-              <div className="flex items-start justify-between gap-4">
-                <div>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
                   {review.entity ? (
                     <>
                       <Link
                         href={`/entities/${review.entity.slug}`}
-                        className="flex items-center gap-2 text-lg font-semibold text-gray-900 hover:underline"
+                        className="flex min-w-0 items-center gap-2 text-base font-semibold text-[#1d1d1f] hover:underline sm:text-lg"
                       >
                         <UserAvatar
                           name={review.entity.name}
                           url={review.entity.logo}
                         />
-                        {review.entity.name}
+                        <span className="truncate">
+                          {review.entity.name}
+                        </span>
                       </Link>
 
-                      <p className="mt-1 text-sm text-gray-500">
+                      <p className="mt-1 text-sm text-[#6e6e73]">
                         {review.entity.category?.name}
                         {review.entity.location
                           ? `${review.entity.category ? ' • ' : ''}${review.entity.location}`
@@ -433,10 +447,10 @@ export default function ReviewCard({
                   )}
                 </div>
 
-                <div className="flex items-center gap-1">
+                <div className="flex shrink-0 items-center gap-1">
                   <time
                     dateTime={review.createdAt}
-                    className="text-sm text-gray-500"
+                    className="rounded-full bg-[#F6F9FC] px-3 py-1 text-xs text-[#6e6e73]"
                   >
                     {new Date(
                       review.createdAt,
@@ -453,15 +467,15 @@ export default function ReviewCard({
           )}
 
           {review.offering && (
-            <span className="mt-1 inline-block rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
+            <span className="mt-2 inline-block rounded-full bg-[#E6F4FD] px-3 py-1 text-xs font-medium text-[#2F6FDB]">
               {review.offering.name}
             </span>
           )}
 
           <p
-            className={`whitespace-pre-wrap ${
+            className={`whitespace-pre-wrap leading-6 ${
               variant === 'profile'
-                ? 'mt-4 text-gray-700'
+                ? 'mt-4 text-[#3a3a3c]'
                 : variant === 'feed'
                   ? 'mt-3 text-sm'
                   : 'mt-3'
@@ -474,13 +488,13 @@ export default function ReviewCard({
             <PhotoGrid photos={review.media} />
           )}
 
-          <div className="mt-4 flex items-center gap-6 border-t pt-3">
+          <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-black/5 pt-3">
             <ReactionButton reviewId={review.id} />
 
             <button
               type="button"
               onClick={() => setCommentsOpen((open) => !open)}
-              className="text-sm font-medium text-gray-500 hover:underline"
+              className="text-sm font-medium text-[#6e6e73] hover:text-[#1d1d1f] hover:underline"
             >
               💬 Comments
             </button>
@@ -491,7 +505,7 @@ export default function ReviewCard({
               <button
                 type="button"
                 onClick={() => setOlderOpen((open) => !open)}
-                className="text-sm font-medium text-gray-500 hover:underline"
+                className="text-sm font-medium text-[#6e6e73] hover:text-[#1d1d1f] hover:underline"
               >
                 {olderOpen
                   ? 'Hide older reviews'
@@ -508,25 +522,25 @@ export default function ReviewCard({
           )}
 
           {olderOpen && olderReviews.length > 0 && (
-            <div className="mt-4 space-y-3 border-t pt-3">
+            <div className="mt-4 space-y-3 border-t border-black/5 pt-3">
               {olderReviews.map((old) => (
                 <div
                   key={old.id}
-                  className="rounded-lg bg-gray-50 p-3"
+                  className="rounded-2xl bg-[#F6F9FC] p-4"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-gray-400">
+                    <span className="text-xs font-medium text-[#8e8e93]">
                       Old review
                     </span>
 
                     <span className="text-sm">⭐ {old.rating}</span>
                   </div>
 
-                  <p className="mt-2 text-sm text-gray-600">
+                  <p className="mt-2 text-sm text-[#6e6e73]">
                     {old.content}
                   </p>
 
-                  <p className="mt-1 text-xs text-gray-400">
+                  <p className="mt-1 text-xs text-[#8e8e93]">
                     {new Date(old.createdAt).toLocaleDateString()}
                   </p>
                 </div>

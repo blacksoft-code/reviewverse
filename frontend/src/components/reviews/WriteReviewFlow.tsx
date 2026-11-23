@@ -30,11 +30,15 @@ const RATING_LABELS = [
   'Excellent',
 ];
 
+// সাদা, বড় গোল কোণের card — মোবাইলে ভেতরের ফাঁকা কম (p-4)
 const cardClass =
-  'rounded-2xl border border-black/5 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]';
+  'rounded-2xl bg-white p-4 text-[#1d1d1f] shadow-[0_4px_24px_rgba(91,155,255,0.12)] ring-1 ring-black/[0.04] sm:rounded-3xl sm:p-6';
 
 const sectionTitleClass =
-  'text-[13px] font-medium uppercase tracking-wide text-[#86868b]';
+  'text-[13px] font-medium uppercase tracking-wide text-[#6e6e73]';
+
+// Facebook post-এর মতো চওড়া — parent-এর পুরো, বড় screen-এ সর্বোচ্চ 680px
+const columnClass = 'mx-auto w-full max-w-[680px]';
 
 export default function WriteReviewFlow() {
   const router = useRouter();
@@ -156,7 +160,7 @@ export default function WriteReviewFlow() {
   // ─────────────────────────────
   if (authLoading) {
     return (
-      <p className="py-20 text-center text-sm text-[#86868b]">
+      <p className="py-20 text-center text-sm text-[#6e6e73]">
         Loading...
       </p>
     );
@@ -164,16 +168,16 @@ export default function WriteReviewFlow() {
 
   if (!user) {
     return (
-      <div className={`${cardClass} text-center`}>
+      <div className={`${columnClass} ${cardClass} text-center`}>
         <h2 className="text-xl font-semibold">
           Want to write a review?
         </h2>
-        <p className="mt-2 text-[15px] text-[#86868b]">
+        <p className="mt-2 text-[15px] text-[#6e6e73]">
           Please log in to share your experience.
         </p>
         <Link
           href="/login"
-          className="mt-5 inline-block rounded-full bg-[#0071e3] px-6 py-2.5 text-[15px] font-medium text-white transition hover:bg-[#0077ed]"
+          className="mt-5 inline-block rounded-full bg-[#5B9BFF] px-6 py-2.5 text-[15px] font-medium text-white transition hover:bg-[#4a8cf5]"
         >
           Log in
         </Link>
@@ -183,11 +187,11 @@ export default function WriteReviewFlow() {
 
   if (activeBusiness) {
     return (
-      <div className={`${cardClass} text-center`}>
+      <div className={`${columnClass} ${cardClass} text-center`}>
         <h2 className="text-xl font-semibold">
           Switch to your personal account
         </h2>
-        <p className="mt-2 text-[15px] text-[#86868b]">
+        <p className="mt-2 text-[15px] text-[#6e6e73]">
           Reviews can only be written from a personal
           account, not while managing a business.
         </p>
@@ -198,18 +202,18 @@ export default function WriteReviewFlow() {
   const displayRating = hoverRating || rating;
 
   return (
-    <div className="space-y-4">
+    <div className={`${columnClass} space-y-3 sm:space-y-4`}>
       {/* ───────── 1. Business ───────── */}
       <section className={`${cardClass} relative z-10`}>
         <p className={sectionTitleClass}>Business</p>
 
         {entity ? (
-          <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-[#f5f5f7] px-4 py-3">
+          <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-[#F6F9FC] px-4 py-3">
             <div className="min-w-0">
               <p className="truncate text-[17px] font-semibold">
                 {entity.name}
               </p>
-              <p className="truncate text-sm text-[#86868b]">
+              <p className="truncate text-sm text-[#6e6e73]">
                 {entity.category.name}
                 {entity.location
                   ? ` · ${entity.location}`
@@ -220,7 +224,7 @@ export default function WriteReviewFlow() {
             <button
               type="button"
               onClick={changeEntity}
-              className="shrink-0 text-sm font-medium text-[#0071e3] hover:underline"
+              className="shrink-0 rounded-full px-3 py-1.5 text-sm font-medium text-[#2F6FDB] transition hover:bg-[#E6F4FD]"
             >
               Change
             </button>
@@ -233,7 +237,10 @@ export default function WriteReviewFlow() {
       </section>
 
       {entity && (
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-3 sm:space-y-4"
+        >
           {/* ───────── 2. Offering (optional) ───────── */}
           {(offeringsLoading || offerings.length > 0) && (
             <section className={cardClass}>
@@ -249,7 +256,7 @@ export default function WriteReviewFlow() {
                   {[0, 1, 2].map((i) => (
                     <div
                       key={i}
-                      className="h-14 animate-pulse rounded-xl bg-[#f5f5f7]"
+                      className="h-14 animate-pulse rounded-2xl bg-[#F6F9FC]"
                     />
                   ))}
                 </div>
@@ -269,10 +276,10 @@ export default function WriteReviewFlow() {
                           )
                         }
                         aria-pressed={selected}
-                        className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${
+                        className={`flex w-full items-center gap-3 rounded-2xl border px-3 py-2.5 text-left transition ${
                           selected
-                            ? 'border-[#0071e3] bg-[#0071e3]/5'
-                            : 'border-transparent bg-[#f5f5f7] hover:bg-[#ececf0]'
+                            ? 'border-[#5B9BFF] bg-[#E6F4FD]'
+                            : 'border-transparent bg-[#F6F9FC] hover:bg-[#E6F4FD]'
                         }`}
                       >
                         {offering.media?.[0] && (
@@ -280,7 +287,7 @@ export default function WriteReviewFlow() {
                           <img
                             src={offering.media[0].url}
                             alt=""
-                            className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                            className="h-11 w-11 shrink-0 rounded-xl object-cover"
                           />
                         )}
 
@@ -288,7 +295,7 @@ export default function WriteReviewFlow() {
                           <span className="block truncate text-[15px] font-medium">
                             {offering.name}
                           </span>
-                          <span className="block truncate text-xs text-[#86868b]">
+                          <span className="block truncate text-xs text-[#6e6e73]">
                             {offering.type} · ৳
                             {offering.price}
                           </span>
@@ -297,7 +304,7 @@ export default function WriteReviewFlow() {
                         <span
                           className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[11px] text-white ${
                             selected
-                              ? 'border-[#0071e3] bg-[#0071e3]'
+                              ? 'border-[#5B9BFF] bg-[#5B9BFF]'
                               : 'border-[#d2d2d7] bg-white'
                           }`}
                         >
@@ -315,9 +322,9 @@ export default function WriteReviewFlow() {
           <section className={cardClass}>
             <p className={sectionTitleClass}>Rating</p>
 
-            <div className="mt-3 flex items-center gap-3">
+            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
               <div
-                className="flex gap-1"
+                className="flex"
                 onMouseLeave={() => setHoverRating(0)}
               >
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -329,7 +336,8 @@ export default function WriteReviewFlow() {
                       setHoverRating(star)
                     }
                     aria-label={`${star} star${star > 1 ? 's' : ''}`}
-                    className={`text-3xl leading-none transition ${
+                    // মোবাইলে আঙুলে চাপার জন্য বড় touch area (p-1)
+                    className={`p-1 text-3xl leading-none transition ${
                       star <= displayRating
                         ? 'text-[#ff9f0a]'
                         : 'text-[#d2d2d7]'
@@ -340,7 +348,7 @@ export default function WriteReviewFlow() {
                 ))}
               </div>
 
-              <span className="text-sm text-[#86868b]">
+              <span className="text-sm text-[#6e6e73]">
                 {RATING_LABELS[displayRating]}
               </span>
             </div>
@@ -355,11 +363,11 @@ export default function WriteReviewFlow() {
               required
               rows={5}
               placeholder="Share your experience..."
-              className="mt-3 w-full resize-none rounded-xl bg-[#f5f5f7] px-4 py-3 text-[15px] text-[#1d1d1f] outline-none placeholder:text-[#86868b] focus:ring-2 focus:ring-[#0071e3]/40"
+              className="mt-3 w-full resize-none rounded-2xl bg-[#F6F9FC] px-4 py-3 text-[15px] text-[#1d1d1f] outline-none placeholder:text-[#8e8e93] focus:ring-2 focus:ring-[#5B9BFF]/40"
             />
 
             <p className={`${sectionTitleClass} mt-6`}>
-                Photos{' '}
+              Photos{' '}
               <span className="normal-case tracking-normal">
                 (optional, up to 10)
               </span>
@@ -374,7 +382,7 @@ export default function WriteReviewFlow() {
           </section>
 
           {error && (
-            <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
+            <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
               {error}
             </p>
           )}
@@ -382,7 +390,7 @@ export default function WriteReviewFlow() {
           {createdSlug ? (
             <Link
               href={`/entities/${createdSlug}`}
-              className="block w-full rounded-full bg-[#0071e3] py-3 text-center text-[15px] font-medium text-white transition hover:bg-[#0077ed]"
+              className="block w-full rounded-full bg-[#5B9BFF] py-3 text-center text-[15px] font-medium text-white transition hover:bg-[#4a8cf5]"
             >
               View business
             </Link>
@@ -390,7 +398,7 @@ export default function WriteReviewFlow() {
             <button
               type="submit"
               disabled={submitting || uploadingPhotos}
-              className="w-full rounded-full bg-[#0071e3] py-3 text-[15px] font-medium text-white transition hover:bg-[#0077ed] disabled:opacity-50"
+              className="w-full rounded-full bg-[#5B9BFF] py-3 text-[15px] font-medium text-white transition hover:bg-[#4a8cf5] disabled:opacity-50"
             >
               {submitting
                 ? uploadingPhotos

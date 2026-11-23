@@ -93,11 +93,16 @@ export default function SharedCard({
   }
 
   return (
-    <div className="rounded-lg border p-5">
+    // Facebook post-এর মতো — parent-এর পুরো চওড়া নেয়, বড় screen-এ সর্বোচ্চ 680px
+    // আর মাঝখানে বসে। মোবাইলে ভেতরের ফাঁকা জায়গা কম (p-4)।
+    <div className="mx-auto w-full max-w-[680px] rounded-2xl bg-white p-4 text-[#1d1d1f] shadow-[0_4px_24px_rgba(91,155,255,0.12)] ring-1 ring-black/[0.04] sm:rounded-3xl sm:p-6">
       {confirmDialog}
       {/* Sharer */}
       <div className="flex items-center gap-3">
-        <Link href={`/profile/${encodeURIComponent(share.userId)}`}>
+        <Link
+          href={`/profile/${encodeURIComponent(share.userId)}`}
+          className="shrink-0"
+        >
           <UserAvatar
             name={share.user.name}
             url={getAvatarUrl(share.user)}
@@ -105,21 +110,21 @@ export default function SharedCard({
         </Link>
 
         <div className="min-w-0 flex-1">
-          <p className="text-sm">
+          <p className="text-sm leading-5">
             <Link
               href={`/profile/${encodeURIComponent(share.userId)}`}
-              className="font-medium hover:underline"
+              className="font-semibold hover:underline"
             >
               {share.user.name}
             </Link>{' '}
-            <span className="text-gray-500">
+            <span className="text-[#6e6e73]">
               shared {review ? 'a review' : 'a post'}
             </span>
           </p>
 
           <Link
             href={`/shares/${share.id}`}
-            className="text-xs text-gray-400 hover:underline"
+            className="text-xs text-[#8e8e93] hover:underline"
           >
             {new Date(share.createdAt).toLocaleDateString()}
           </Link>
@@ -127,17 +132,19 @@ export default function SharedCard({
 
         {/* Review card-এর মতোই ডান পাশে ⋮ — Delete এর ভেতরে */}
         {isMine && (
-          <OptionsMenu
-            label="Share options"
-            items={[
-              { label: 'Edit', onClick: startEditing },
-              {
-                label: 'Delete',
-                onClick: handleDelete,
-                danger: true,
-              },
-            ]}
-          />
+          <div className="shrink-0">
+            <OptionsMenu
+              label="Share options"
+              items={[
+                { label: 'Edit', onClick: startEditing },
+                {
+                  label: 'Delete',
+                  onClick: handleDelete,
+                  danger: true,
+                },
+              ]}
+            />
+          </div>
         )}
       </div>
 
@@ -149,23 +156,25 @@ export default function SharedCard({
             maxLength={500}
             rows={3}
             placeholder="Say something about this (optional)..."
-            className="w-full rounded-lg border p-3 text-sm text-gray-900"
+            className="w-full resize-none rounded-2xl bg-[#F6F9FC] px-4 py-3 text-sm text-[#1d1d1f] outline-none placeholder:text-[#8e8e93] focus:ring-2 focus:ring-[#5B9BFF]/40"
           />
 
-          <div className="mt-1 text-right text-xs text-gray-400">
+          <div className="mt-1 text-right text-xs text-[#8e8e93]">
             {draft.length}/500
           </div>
 
           {editError && (
-            <p className="text-xs text-red-600">{editError}</p>
+            <p className="mt-1 rounded-2xl bg-red-50 px-4 py-2 text-xs text-red-600">
+              {editError}
+            </p>
           )}
 
-          <div className="mt-2 flex gap-2">
+          <div className="mt-3 flex gap-2">
             <button
               type="button"
               disabled={saving}
               onClick={handleSaveCaption}
-              className="rounded-lg bg-black px-4 py-2 text-sm text-white disabled:opacity-50"
+              className="rounded-full bg-[#5B9BFF] px-5 py-2 text-sm font-medium text-white transition hover:bg-[#4a8cf5] disabled:opacity-50"
             >
               {saving ? 'Saving...' : 'Save'}
             </button>
@@ -174,7 +183,7 @@ export default function SharedCard({
               type="button"
               disabled={saving}
               onClick={() => setIsEditing(false)}
-              className="rounded-lg border px-4 py-2 text-sm"
+              className="rounded-full bg-[#F6F9FC] px-5 py-2 text-sm font-medium text-[#1d1d1f] transition hover:bg-[#E6F4FD] disabled:opacity-50"
             >
               Cancel
             </button>
@@ -182,39 +191,42 @@ export default function SharedCard({
         </div>
       ) : (
         caption && (
-          <p className="mt-3 whitespace-pre-wrap text-sm">
+          <p className="mt-3 whitespace-pre-wrap text-[15px] leading-6">
             {caption}
           </p>
         )
       )}
 
       {/* Original review / post */}
-      <div className="mt-3 rounded-lg border p-4">
+      <div className="mt-3 rounded-2xl bg-[#F6F9FC] p-3 sm:p-4">
         {review && (
           <>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <Link
                 href={`/profile/${encodeURIComponent(review.userId)}`}
-                className="flex items-center gap-2 text-sm font-medium hover:underline"
+                className="flex min-w-0 items-center gap-2 text-sm font-semibold hover:underline"
               >
                 <UserAvatar
                   name={review.user.name}
                   url={getAvatarUrl(review.user)}
                   size="sm"
                 />
-                {review.user.name}
+                <span className="truncate">{review.user.name}</span>
               </Link>
-              <p className="text-sm">⭐ {review.rating}</p>
+
+              <span className="shrink-0 rounded-full bg-[#FFF6E5] px-3 py-1 text-sm font-medium">
+                ⭐ {review.rating}
+              </span>
             </div>
 
             <Link
               href={`/entities/${encodeURIComponent(review.entity.slug)}`}
-              className="mt-1 block text-sm text-gray-500 hover:underline"
+              className="mt-2 block text-sm text-[#6e6e73] hover:underline"
             >
               {review.entity.name}
             </Link>
 
-            <p className="mt-2 whitespace-pre-wrap text-sm">
+            <p className="mt-2 whitespace-pre-wrap text-sm leading-6">
               {review.content}
             </p>
 
@@ -227,7 +239,7 @@ export default function SharedCard({
         {post && (
           <>
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-gray-200">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#E6F4FD] ring-2 ring-[#8FD3F4]/60">
                 {post.entity.logo ? (
                   <img
                     src={post.entity.logo}
@@ -235,7 +247,7 @@ export default function SharedCard({
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <span className="text-xs font-bold text-gray-500">
+                  <span className="text-xs font-bold text-[#5B9BFF]">
                     {post.entity.name.charAt(0).toUpperCase()}
                   </span>
                 )}
@@ -243,17 +255,17 @@ export default function SharedCard({
 
               <Link
                 href={`/entities/${encodeURIComponent(post.entity.slug)}`}
-                className="text-sm font-medium hover:underline"
+                className="min-w-0 truncate text-sm font-semibold hover:underline"
               >
                 {post.entity.name}
               </Link>
 
-              <span className="ml-auto text-xs text-gray-400">
+              <span className="ml-auto shrink-0 text-xs text-[#8e8e93]">
                 {new Date(post.createdAt).toLocaleDateString()}
               </span>
             </div>
 
-            <p className="mt-2 whitespace-pre-wrap text-sm">
+            <p className="mt-2 whitespace-pre-wrap text-sm leading-6">
               {post.content}
             </p>
 
@@ -266,7 +278,7 @@ export default function SharedCard({
 
       {/* Engagement — শুধু এই share-এর; ShareButton মূল review/post-কে
           share করে এবং মূলটার মোট share count দেখায় */}
-      <div className="mt-4 border-t pt-3">
+      <div className="mt-4 border-t border-black/5 pt-3">
         <ShareReactionButton shareId={share.id} />
         <ShareCommentSection shareId={share.id} />
         <ShareButton

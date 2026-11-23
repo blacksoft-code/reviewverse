@@ -11,7 +11,7 @@ import {
   markAllNotificationsRead,
 } from '../services/notification.service';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import { API_URL } from '@/lib/apiUrl';
 
 export function useNotifications() {
   const { user } = useAuth();

@@ -1,6 +1,6 @@
 import { apiFetch } from '@/lib/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import { API_URL } from '@/lib/apiUrl';
 
 export type VerificationStatus =
   | 'PENDING'
